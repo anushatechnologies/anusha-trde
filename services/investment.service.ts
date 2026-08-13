@@ -319,6 +319,14 @@ export const investmentService = {
   },
 
   /**
+   * Get Payment Status Polling Fallback
+   */
+  getPaymentStatus: async (investmentId: string): Promise<any> => {
+    const response = await apiClient.get<any>(`/api/payments/razorpay/investments/${investmentId}`);
+    return response.data;
+  },
+
+  /**
    * Get Active Coupons
    */
   getCoupons: async (): Promise<Coupon[]> => {
