@@ -23,7 +23,7 @@ import { InputField } from '../ui/input-field';
 import { ScreenHeader } from '../ui/screen-header';
 import { SurfaceCard } from '../ui/surface-card';
 
-const TOTAL_SIGNUP_STEPS = 11;
+const TOTAL_SIGNUP_STEPS = 8;
 const MPIN_LENGTH = 4;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
@@ -41,7 +41,7 @@ const formatDobInput = (value: string) => {
 const FLOW_STEPS = [
   {
     route: '/signup/profile',
-    title: 'Account Details',
+    title: 'Personal Details',
     subtitle: 'Add your full name, email, date of birth and address.',
     actionLabel: 'Continue to Password',
     icon: 'person-outline',
@@ -49,22 +49,15 @@ const FLOW_STEPS = [
   {
     route: '/signup/password',
     title: 'Create Password',
-    subtitle: 'Create a strong password for your account.',
-    actionLabel: 'Continue to Referral',
+    subtitle: 'Create a strong password. Add a referral code if you have one.',
+    actionLabel: 'Continue to Terms',
     icon: 'key-outline',
   },
   {
-    route: '/signup/referral',
-    title: 'Referral Code',
-    subtitle: 'Add a referral code if you have one.',
-    actionLabel: 'Continue to Terms',
-    icon: 'pricetag-outline',
-  },
-  {
     route: '/signup/terms',
-    title: 'Accept Terms',
-    subtitle: 'Accept the required policies before activating your account.',
-    actionLabel: 'Register & Submit KYC',
+    title: 'Terms & Consent',
+    subtitle: 'Accept the required policies to create your account.',
+    actionLabel: 'Accept & Create Account',
     icon: 'document-text-outline',
   },
   {
@@ -75,31 +68,17 @@ const FLOW_STEPS = [
     icon: 'id-card-outline',
   },
   {
-    route: '/signup/kyc-status',
-    title: 'KYC Approval',
-    subtitle: 'Waiting for admin to approve your documents.',
-    actionLabel: 'Continue to Bank Linking',
-    icon: 'time-outline',
-  },
-  {
     route: '/signup/bank',
     title: 'Link Bank Account',
     subtitle: 'Link your primary bank account for withdrawals and investments.',
-    actionLabel: 'Submit Bank Details',
+    actionLabel: 'Link Bank Account',
     icon: 'business-outline',
-  },
-  {
-    route: '/signup/activate',
-    title: 'Activate Account',
-    subtitle: 'Activate your account to start investing.',
-    actionLabel: 'Activate Account',
-    icon: 'flash-outline',
   },
   {
     route: '/signup/mpin',
     title: 'Create MPIN',
     subtitle: 'Set a 4-digit MPIN for secure access to your account.',
-    actionLabel: 'Create MPIN & Open Dashboard',
+    actionLabel: 'Create MPIN & Go to Dashboard',
     icon: 'keypad-outline',
   },
 ] as const;
@@ -762,10 +741,6 @@ export const CompleteSignupScreen = () => {
         return true;
       }
       case 2: {
-        patchDraft({ referredByCode: normalizeUpper(draft.referredByCode).slice(0, 12) });
-        return true;
-      }
-      case 3: {
         if (!draft.investorAgreementAccepted || !draft.riskDisclosureAccepted) {
           Alert.alert('Accept policies', 'Accept the Investor Agreement and Risk Disclosure to continue.');
           return false;
@@ -774,7 +749,7 @@ export const CompleteSignupScreen = () => {
         patchDraft(getStatusPatch('TERMS_ACCEPTED'));
         return true;
       }
-      case 4: {
+      case 3: {
         // KYC step — validate document fields
         // In reupload mode, only validate documents that need re-uploading
         const submission = kycStatusData?.submission;
@@ -857,16 +832,7 @@ export const CompleteSignupScreen = () => {
         patchDraft(getStatusPatch('KYC_COMPLETED'));
         return true;
       }
-      case 5: {
-        // KYC Polling step — button is only pressable when kycStatus === 'APPROVED'
-        const latestStatus = kycStatusData?.kycStatus;
-        if (latestStatus !== 'APPROVED') {
-          Alert.alert('KYC Pending', 'Please wait for admin to approve your documents before continuing.');
-          return false;
-        }
-        return true;
-      }
-      case 6: {
+      case 4: {
         // Bank linking step — validate account details
         if (!isAccountNumberValid) {
           Alert.alert('Invalid Account', 'Enter a valid bank account number (9–18 digits).');
@@ -884,17 +850,10 @@ export const CompleteSignupScreen = () => {
           Alert.alert('Bank Name Required', 'Please enter your bank name.');
           return false;
         }
-        if (!draft.bankPassbookPhoto) {
-          Alert.alert('Bank Passbook Required', 'Please upload a photo of your bank passbook or cancelled cheque.');
-          return false;
-        }
         patchDraft(getStatusPatch('BANK_LINKED'));
         return true;
       }
-      case 7: {
-        return true; // Activation step — no frontend inputs to validate
-      }
-      case 8: {
+      case 5: {
         const mpin = normalizeDigits(draft.mpin).slice(0, MPIN_LENGTH);
 
         if (!new RegExp(`^\\d{${MPIN_LENGTH}}$`).test(mpin)) {
@@ -919,6 +878,8 @@ export const CompleteSignupScreen = () => {
         return true;
     }
   };
+
+  // KYC polling is removed — KYC submit goes directly to bank
 
   const stopKycPolling = () => {
     if (kycPollRef.current) {
@@ -966,16 +927,7 @@ export const CompleteSignupScreen = () => {
     kycPollRef.current = setInterval(() => { void fetchStatus(); }, 5000);
   };
 
-  // Start KYC polling when we land on the Activation screen (step 5)
-  useEffect(() => {
-    if (currentStep === 5 && !isLoadingDraft) {
-      startKycPolling();
-    } else {
-      stopKycPolling();
-    }
-    return () => { stopKycPolling(); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStep, isLoadingDraft]);
+  // KYC polling screen removed — no polling needed in new flow
 
   const goNext = async () => {
     if (!draftRef.current || !validateStep()) {
@@ -1174,8 +1126,8 @@ export const CompleteSignupScreen = () => {
       // Update auth store with KYC PENDING status
       await useAuthStore.getState().updateUser({ kycStatus: 'PENDING' });
 
-      // Navigate to KYC polling screen (step index 5)
-      const nextStep = 5;
+      // Navigate directly to Bank Linking (step index 4) — no polling screen
+      const nextStep = 4;
       const nextDraft = { ...latestDraft, currentStep: nextStep };
       await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
     } catch (error: any) {
@@ -1221,10 +1173,10 @@ export const CompleteSignupScreen = () => {
       );
 
       // Sync auth store state so RootNavigator's resolveOnboardingRoute knows bank is verified
-      await useAuthStore.getState().updateUser({ bankVerified: true });
+      await useAuthStore.getState().updateUser({ bankVerified: true, accountStatus: 'ACTIVE' });
 
-      // Step B: Navigate to Activation screen (step index 7)
-      const nextStep = 7;
+      // Navigate directly to MPIN setup (step index 5)
+      const nextStep = 5;
       const nextDraft = { ...latestDraft, currentStep: nextStep };
       await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
     } catch (error: any) {
@@ -1383,7 +1335,7 @@ export const CompleteSignupScreen = () => {
         return (
           <>
             <View style={styles.infoPanel}>
-              <Text style={styles.infoPanelText}>Your verified mobile number is ready. Add your full name, email, DOB, and address to build the profile.</Text>
+              <Text style={styles.infoPanelText}>Your verified mobile number is ready. Enter your personal details to continue.</Text>
             </View>
             <InputField labelStyle={styles.inputLabel}
               label="Full Name"
@@ -1452,15 +1404,7 @@ export const CompleteSignupScreen = () => {
                 ) : undefined
               }
             />
-          </>
-        );
-      }
-      case 2:
-        return (
-          <>
-            <View style={styles.infoPanel}>
-              <Text style={styles.infoPanelText}>Referral code is optional. Leave it blank if you do not have one.</Text>
-            </View>
+
             <InputField labelStyle={styles.inputLabel}
               label="Referral Code (Optional)"
               value={draft.referredByCode}
@@ -1471,11 +1415,12 @@ export const CompleteSignupScreen = () => {
             />
           </>
         );
-      case 3: {
+      }
+      case 2: {
         return (
           <>
             <View style={styles.infoPanel}>
-              <Text style={styles.infoPanelText}>This is the final step. Review the Terms & Conditions before activating your account.</Text>
+              <Text style={styles.infoPanelText}>Review the terms below, then accept to create your account.</Text>
             </View>
 
             <View style={styles.termsTable}>
@@ -1559,7 +1504,7 @@ export const CompleteSignupScreen = () => {
         );
       }
 
-      case 4: {
+      case 3: {
         // KYC Document Upload — supports both initial upload and reupload
         const submission4 = kycStatusData?.submission;
 
@@ -1690,93 +1635,8 @@ export const CompleteSignupScreen = () => {
           </>
         );
       }
-      case 5: {
-        // KYC Polling screen — show status and document chips with rejection reasons
-        const submission5 = kycStatusData?.submission;
-        const overallStatus = kycStatusData?.kycStatus ?? 'PENDING';
-        const isApproved = overallStatus === 'APPROVED';
-        const isRejected = overallStatus === 'REJECTED' || overallStatus === 'REUPLOAD_REQUIRED';
-
-        const statusColor = isApproved ? colors.success : isRejected ? colors.danger : '#F59E0B';
-        const statusIcon = isApproved ? 'checkmark-circle' : isRejected ? 'close-circle' : 'time';
-        const statusLabel = isApproved ? 'KYC Approved!' : isRejected ? 'Action Required' : 'Pending Admin Review';
-
-        const docChip5 = (label: string, status?: string, rejectionReason?: string) => {
-          const s = status ?? 'PENDING';
-          const ok = s === 'APPROVED';
-          const err = s === 'REJECTED' || s === 'REUPLOAD_REQUIRED';
-          return (
-            <View key={label} style={styles.docChip}>
-              <Ionicons name={ok ? 'checkmark-circle' : err ? 'close-circle' : 'ellipse-outline'} size={16}
-                color={ok ? colors.success : err ? colors.danger : '#94A3B8'} />
-              <Text style={styles.docChipLabel}>{label}</Text>
-              <Text style={[styles.docChipStatus, { color: ok ? colors.success : err ? colors.danger : '#94A3B8' }]}>
-                {ok ? 'Approved' : err ? 'Reupload Required' : 'Pending'}
-              </Text>
-              {err && rejectionReason ? (
-                <Text style={{ fontFamily: fontFamily.body, fontSize: 10, color: colors.danger, marginLeft: 4, flex: 1 }} numberOfLines={2}>
-                  — {rejectionReason}
-                </Text>
-              ) : null}
-            </View>
-          );
-        };
-
-        return (
-          <>
-            <View style={[styles.activationCard, { borderColor: statusColor + '44', backgroundColor: statusColor + '11' }]}>
-              <View style={[styles.activationBadge, { backgroundColor: statusColor }]}>
-                <Ionicons name={statusIcon} size={24} color={colors.surface} />
-              </View>
-              <Text style={styles.activationTitle}>{statusLabel}</Text>
-              <Text style={styles.activationText}>
-                {isApproved
-                  ? 'Your KYC is approved! Tap Continue to link your bank account.'
-                  : isRejected
-                  ? `Documents need attention. ${submission5?.rejectionReason ?? 'Please resubmit the highlighted documents.'}`
-                  : 'Our team is reviewing your documents. This usually takes a few minutes.'}
-              </Text>
-              {isRejected && submission5?.adminNotes ? (
-                <Text style={[styles.activationText, { marginTop: 4, fontStyle: 'italic' }]}>
-                  Admin note: {submission5.adminNotes}
-                </Text>
-              ) : null}
-              {isPollingKyc && !isApproved && !isRejected && (
-                <ActivityIndicator size="small" color={statusColor} style={{ marginTop: 4 }} />
-              )}
-            </View>
-
-            <View style={styles.summaryCard}>
-              {docChip5('PAN Card', submission5?.panCardStatus, submission5?.panCardRejectionReason)}
-              {docChip5('Aadhaar Front', submission5?.aadhaarFrontStatus, submission5?.aadhaarFrontRejectionReason)}
-              {docChip5('Aadhaar Back', submission5?.aadhaarBackStatus, submission5?.aadhaarBackRejectionReason)}
-              {docChip5('Selfie', submission5?.selfieStatus, submission5?.selfieRejectionReason)}
-              {docChip5('Bank Passbook', submission5?.bankProofStatus, submission5?.bankProofRejectionReason)}
-            </View>
-
-            {isRejected && (
-              <Pressable
-                onPress={() => {
-                  const backStep = 4;
-                  const backDraft = { ...draftRef.current!, currentStep: backStep };
-                  void persistDraftAndNavigate(backDraft, FLOW_STEPS[backStep].route);
-                }}
-                style={styles.retryBtn}
-              >
-                <Text style={styles.retryBtnText}>Re-upload Documents</Text>
-              </Pressable>
-            )}
-
-            {isApproved && (
-              <View style={styles.infoPanel}>
-                <Text style={styles.infoPanelText}>Your KYC is approved. Tap Continue to proceed to bank linking.</Text>
-              </View>
-            )}
-          </>
-        );
-      }
-      case 6:
-        // Bank Linking — account details and bank passbook/cancelled cheque photo
+      case 4:
+        // Bank Linking — account details
         return (
           <>
             <View style={styles.infoPanel}>
@@ -1826,47 +1686,9 @@ export const CompleteSignupScreen = () => {
               required
               icon={<Ionicons name="wallet-outline" size={18} color={colors.primary} />}
             />
-            <ImageUploadButton
-              label="🏦 Upload Bank Passbook / Cancelled Cheque"
-              uri={draft.bankPassbookPhoto}
-              onPress={() => pickImage('bankPassbookPhoto')}
-            />
           </>
         );
-      case 7:
-        // Account Activation
-        return (
-          <>
-            <View style={styles.activationCard}>
-              <View style={styles.activationBadge}>
-                <Ionicons name="flash" size={24} color={colors.surface} />
-              </View>
-              <Text style={styles.activationTitle}>Ready to Invest?</Text>
-              <Text style={styles.activationText}>
-                Your KYC is approved and your bank is linked. Activate your account to unlock full investment features.
-              </Text>
-              
-              <View style={{ marginTop: 24, gap: 12, backgroundColor: colors.surface, padding: 16, borderRadius: 12 }}>
-                <Text style={{ fontFamily: fontFamily.bodySemi, color: colors.text, fontSize: 14 }}>
-                  Benefits of Activating:
-                </Text>
-                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                  <Ionicons name="checkmark-circle" color={colors.success} size={16} />
-                  <Text style={{ fontFamily: fontFamily.body, color: colors.text }}>Invest in high-yield plans</Text>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                  <Ionicons name="checkmark-circle" color={colors.success} size={16} />
-                  <Text style={{ fontFamily: fontFamily.body, color: colors.text }}>Track real-time returns</Text>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-                  <Ionicons name="checkmark-circle" color={colors.success} size={16} />
-                  <Text style={{ fontFamily: fontFamily.body, color: colors.text }}>Easy wallet withdrawals</Text>
-                </View>
-              </View>
-            </View>
-          </>
-        );
-      case 8:
+      case 5:
         return (
           <>
             <PinEntryBoxes
@@ -1968,40 +1790,25 @@ export const CompleteSignupScreen = () => {
   // Determine button label and handler based on step
   const getButtonConfig = () => {
     switch (currentStep) {
-      case 3: // Terms → Register & go to KYC
+      case 2: // Terms → Register & go to KYC
         return {
-          label: isRegisteringAndActivating ? 'Registering...' : currentStepMeta.actionLabel,
+          label: isRegisteringAndActivating ? 'Creating Account...' : currentStepMeta.actionLabel,
           onPress: () => void registerAndGoToKyc(),
           disabled: isRegisteringAndActivating,
         };
-      case 4: // KYC → Submit all documents
+      case 3: // KYC → Submit all documents
         return {
           label: isSubmittingKyc ? 'Submitting Documents...' : currentStepMeta.actionLabel,
           onPress: () => void submitKycDocuments(),
           disabled: isSubmittingKyc,
         };
-      case 5: // Activation polling → Continue to bank (only when approved)
-        return {
-          label: currentStepMeta.actionLabel,
-          onPress: async () => {
-            await useAuthStore.getState().updateUser({ kycStatus: 'APPROVED' });
-            await goNext();
-          },
-          disabled: kycStatusData?.kycStatus !== 'APPROVED',
-        };
-      case 6: // Bank → Submit & go to Activation
+      case 4: // Bank → Submit & go to MPIN
         return {
           label: isSubmittingBank ? 'Linking Bank...' : currentStepMeta.actionLabel,
           onPress: () => void submitBank(),
           disabled: isSubmittingBank,
         };
-      case 7: // Activation → Activate account
-        return {
-          label: isActivating ? 'Activating Account...' : currentStepMeta.actionLabel,
-          onPress: () => void activateAccountStep(),
-          disabled: isActivating,
-        };
-      case 8: // MPIN → Finish signup
+      case 5: // MPIN → Finish signup
         return {
           label: isFinishingSignup ? 'Creating MPIN...' : currentStepMeta.actionLabel,
           onPress: () => void finishSignup(),
@@ -2022,7 +1829,7 @@ export const CompleteSignupScreen = () => {
     <AppScreen
       contentStyle={styles.page}
       fullBleed
-      contentBottomInset={currentStep === 8 ? Math.max(insets.bottom + 220, 240) : Math.max(insets.bottom + 72, 88)}
+      contentBottomInset={currentStep === 5 ? Math.max(insets.bottom + 220, 240) : Math.max(insets.bottom + 72, 88)}
       backgroundColor={colors.dark}
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
@@ -2034,7 +1841,7 @@ export const CompleteSignupScreen = () => {
             <Pressable onPress={goBack} style={({ pressed }) => [styles.heroBackButton, pressed && styles.heroBackButtonPressed]}>
               <Ionicons name="arrow-back" size={22} color={colors.surface} />
             </Pressable>
-            <Text style={styles.heroStepLabel}>{formatStepLabel(currentStep)}</Text>
+            <Text style={styles.heroStepLabel}>STEP {currentStep + 3} OF {TOTAL_SIGNUP_STEPS}</Text>
             <View style={styles.heroSpacer} />
           </View>
 

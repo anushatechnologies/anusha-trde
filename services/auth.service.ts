@@ -1307,17 +1307,12 @@ export const authService = {
       return '/signup/bank';
     }
 
-    // 5. KYC approved, bank verified, account not active → need activation
-    if (kyc === 'APPROVED' && bankVerified && !isAccountActive) {
-      return '/signup/activate';
-    }
-
-    // 6. Account active, MPIN not created
-    if (isAccountActive && !mpinCreated) {
+    // 5. Bank verified, MPIN not created → go to MPIN
+    if (bankVerified && !mpinCreated) {
       return '/signup/mpin';
     }
 
-    // 7. All complete — dashboard
+    // 6. All complete — dashboard
     return '/(tabs)';
   },
   validateReferralCode: async (code: string) => {

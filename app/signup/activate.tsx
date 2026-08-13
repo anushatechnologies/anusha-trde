@@ -1,3 +1,6 @@
-import { CompleteSignupScreen } from '../../components/screens/signup-flow-screens';
+import { Redirect } from 'expo-router';
 
-export default CompleteSignupScreen;
+// Account activation step removed — bank linking now marks account as active automatically
+export default function ActivateRedirect() {
+  return <Redirect href="/signup/mpin" />;
+}
