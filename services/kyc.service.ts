@@ -244,8 +244,14 @@ const getKycStatus = async (): Promise<KycStatusResponse> => {
   return response.data;
 };
 
+const verifyPan = async (panNumber: string): Promise<{ valid: boolean; panNumber: string; fullName?: string; dateOfBirth?: string; message?: string }> => {
+  const response = await apiClient.post('/api/kyc/pan/verify', { panNumber });
+  return response.data;
+};
+
 export const kycService = {
   submitKyc,
   getKycStatus,
   needsUpload,
+  verifyPan,
 };
