@@ -5,7 +5,7 @@ import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors, gradients, radius, shadows } from '../../constants/theme';
 
 type SurfaceCardProps = {
-  children: ReactNode;
+  children?: ReactNode;
   style?: StyleProp<ViewStyle>;
   gradient?: readonly [string, string] | readonly [string, string, string];
   glass?: boolean;

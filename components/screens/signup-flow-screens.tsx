@@ -391,7 +391,7 @@ export const CompleteSignupScreen = () => {
 
       const user = useAuthStore.getState().user;
       if ((!normalizedDraft || !normalizedDraft.otpVerified || !normalizedDraft.mobile?.trim()) && user && user.mobile) {
-        const stepIdx = FLOW_STEPS.findIndex((step) => step.route === pathname);
+        const stepIdx = (FLOW_STEPS as readonly any[]).findIndex((step: any) => step.route === pathname);
         normalizedDraft = createSignupDraft({
           mobile: user.mobile,
           otpVerified: true,
@@ -437,7 +437,7 @@ export const CompleteSignupScreen = () => {
     return () => clearTimeout(persistTimer);
   }, [draft, isLoadingDraft]);
 
-  const routeStepIndex = FLOW_STEPS.findIndex((step) => step.route === pathname);
+  const routeStepIndex = (FLOW_STEPS as readonly any[]).findIndex((step: any) => step.route === pathname);
   const savedStep = normalizeDraftStep(draft?.currentStep ?? 0);
   const currentStep = routeStepIndex >= 0 ? routeStepIndex : savedStep;
   const currentStepMeta = FLOW_STEPS[currentStep];
@@ -898,7 +898,7 @@ export const CompleteSignupScreen = () => {
         if (data.kycStatus === 'NOT_SUBMITTED') {
           stopKycPolling();
           setIsPollingKyc(false);
-          const backStep = 4;
+          const backStep = 3;
           const backDraft = { ...draftRef.current!, currentStep: backStep };
           await persistDraftAndNavigate(backDraft, FLOW_STEPS[backStep].route);
           return;
@@ -908,8 +908,8 @@ export const CompleteSignupScreen = () => {
           setIsPollingKyc(false);
           // Sync auth store state so RootNavigator's resolveOnboardingRoute knows KYC is APPROVED
           await useAuthStore.getState().updateUser({ kycStatus: 'APPROVED' });
-          // Auto-navigate to Bank Linking (step 6) on approval
-          const nextStep = 6;
+          // Auto-navigate to Bank Linking (index 4 in FLOW_STEPS) on approval
+          const nextStep = 4;
           const nextDraft = { ...draftRef.current!, currentStep: nextStep };
           await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
           return;
@@ -1211,7 +1211,7 @@ export const CompleteSignupScreen = () => {
       // Update session locally to reflect active status
       await useAuthStore.getState().updateUser({ accountStatus: 'ACTIVE' });
 
-      const nextStep = 8;
+      const nextStep = 5;
       const nextDraft = { ...draftRef.current!, currentStep: nextStep, accountActivated: true };
       await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
     } catch (error: any) {

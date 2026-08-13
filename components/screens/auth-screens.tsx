@@ -30,6 +30,7 @@ import { ScreenHeader } from '../ui/screen-header';
 import { SectionTitle } from '../ui/section-title';
 import { SkeletonBlock } from '../ui/skeleton-block';
 import { SurfaceCard } from '../ui/surface-card';
+import { PinBoxesInput } from '../ui/pin-boxes-input';
 
 const getParam = (value: string | string[] | undefined, fallback = '') =>
   Array.isArray(value) ? value[0] || fallback : value || fallback;
@@ -99,7 +100,7 @@ const RegistrationStepCard = ({
   shellStyle?: StyleProp<ViewStyle>;
   bodyStyle?: StyleProp<ViewStyle>;
   heroStyle?: StyleProp<ViewStyle>;
-  children: ReactNode;
+  children?: ReactNode;
 }) => (
   <View style={[styles.registrationShell, shellStyle]}>
     <LinearGradient colors={gradients.dark} style={[styles.registrationHero, heroStyle]}>
@@ -127,7 +128,7 @@ const RegistrationStepCard = ({
   </View>
 );
 
-const SessionCard = ({ item, showLocation = true }: { item: SessionItem; showLocation?: boolean }) => (
+const SessionCard = ({ item, showLocation = true }: { item: SessionItem; showLocation?: boolean; key?: string }) => (
   <SurfaceCard>
     <View style={styles.sessionHeader}>
       <View style={styles.sessionLead}>

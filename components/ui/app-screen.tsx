@@ -15,7 +15,7 @@ import { colors } from '../../constants/theme';
 import { useResponsive } from '../../utils/responsive';
 
 type AppScreenProps = {
-  children: ReactNode;
+  children?: ReactNode;
   scrollable?: boolean;
   refreshing?: boolean;
   onRefresh?: () => void;
