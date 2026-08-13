@@ -40,46 +40,39 @@ const formatDobInput = (value: string) => {
 
 const FLOW_STEPS = [
   {
+    route: '/signup/mpin',
+    title: 'Create MPIN',
+    subtitle: 'Set a 4-digit MPIN for secure access to your account.',
+    actionLabel: 'Continue to Personal Details',
+    icon: 'keypad-outline',
+  },
+  {
     route: '/signup/profile',
     title: 'Personal Details',
-    subtitle: 'Add your full name, email, date of birth and address.',
-    actionLabel: 'Continue to Password',
+    subtitle: 'Add your full name, email, date of birth, gender and address.',
+    actionLabel: 'Continue to PAN & KYC',
     icon: 'person-outline',
   },
   {
-    route: '/signup/password',
-    title: 'Create Password',
-    subtitle: 'Create a strong password. Add a referral code if you have one.',
-    actionLabel: 'Continue to Terms',
-    icon: 'key-outline',
-  },
-  {
-    route: '/signup/terms',
-    title: 'Terms & Consent',
-    subtitle: 'Accept the required policies to create your account.',
-    actionLabel: 'Accept & Create Account',
-    icon: 'document-text-outline',
-  },
-  {
     route: '/signup/kyc',
-    title: 'KYC Documents',
-    subtitle: 'Upload your PAN, Aadhaar (front & back), selfie, and bank passbook.',
-    actionLabel: 'Submit KYC Documents',
+    title: 'PAN & KYC Verification',
+    subtitle: 'Verify your PAN and upload your KYC identity documents.',
+    actionLabel: 'Continue to Bank Linkage',
     icon: 'id-card-outline',
   },
   {
     route: '/signup/bank',
     title: 'Link Bank Account',
     subtitle: 'Link your primary bank account for withdrawals and investments.',
-    actionLabel: 'Link Bank Account',
+    actionLabel: 'Continue to Terms & Consent',
     icon: 'business-outline',
   },
   {
-    route: '/signup/mpin',
-    title: 'Create MPIN',
-    subtitle: 'Set a 4-digit MPIN for secure access to your account.',
-    actionLabel: 'Create MPIN & Go to Dashboard',
-    icon: 'keypad-outline',
+    route: '/signup/terms',
+    title: 'Terms & Consent',
+    subtitle: 'Review and accept required policies to activate your account.',
+    actionLabel: 'Agree & Activate Account',
+    icon: 'document-text-outline',
   },
 ] as const;
 
@@ -511,8 +504,8 @@ export const CompleteSignupScreen = () => {
         setKycFormDisabled(!statusData.canUpload);
         setIsReuploadMode(false);
       } else if (kycStatus === 'PENDING') {
-        // KYC is pending review, redirect to status page
-        const nextStep = 5;
+        // KYC is pending review, redirect to Bank linkage (step index 3)
+        const nextStep = Math.min(3, FLOW_STEPS.length - 1);
         const nextDraft = { ...draftRef.current!, currentStep: nextStep };
         void persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
         return;
@@ -1175,8 +1168,8 @@ export const CompleteSignupScreen = () => {
       // Sync auth store state so RootNavigator's resolveOnboardingRoute knows bank is verified
       await useAuthStore.getState().updateUser({ bankVerified: true, accountStatus: 'ACTIVE' });
 
-      // Navigate directly to MPIN setup (step index 5)
-      const nextStep = 5;
+      // Navigate directly to Terms & Consent (step index 4)
+      const nextStep = 4;
       const nextDraft = { ...latestDraft, currentStep: nextStep };
       await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
     } catch (error: any) {
@@ -1199,7 +1192,7 @@ export const CompleteSignupScreen = () => {
 
   const [isActivating, setIsActivating] = useState(false);
 
-  // Called from Activation step (step 7) — Activate account on backend, go to MPIN
+  // Called from Activation step — Activate account on backend and proceed
   const activateAccountStep = async () => {
     setIsActivating(true);
     try {
@@ -1211,7 +1204,7 @@ export const CompleteSignupScreen = () => {
       // Update session locally to reflect active status
       await useAuthStore.getState().updateUser({ accountStatus: 'ACTIVE' });
 
-      const nextStep = 5;
+      const nextStep = 4;
       const nextDraft = { ...draftRef.current!, currentStep: nextStep, accountActivated: true };
       await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
     } catch (error: any) {

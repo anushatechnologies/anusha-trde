@@ -52,3 +52,38 @@ export function getInitials(name?: string | null): string {
   if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
+
+export function formatCurrency(amount?: number | string | null): string {
+  return formatINR(amount);
+}
+
+export function formatPercent(value?: number | string | null): string {
+  if (value === null || value === undefined || isNaN(Number(value))) return '0%';
+  return `${Number(value)}%`;
+}
+
+export function formatCompactCurrency(amount?: number | string | null): string {
+  if (amount === null || amount === undefined || isNaN(Number(amount))) return '₹0';
+  const num = Number(amount);
+  if (num >= 10000000) return `₹${(num / 10000000).toFixed(2)} Cr`;
+  if (num >= 100000) return `₹${(num / 100000).toFixed(2)} L`;
+  if (num >= 1000) return `₹${(num / 1000).toFixed(1)} K`;
+  return formatINR(num);
+}
+
+export function numberToWordsINR(amount: number): string {
+  return `${formatINR(amount)} Only`;
+}
+
+export function maskContact(contact?: string | null): string {
+  if (!contact) return '';
+  if (contact.includes('@')) {
+    const [user, domain] = contact.split('@');
+    return `${user.substring(0, 2)}***@${domain}`;
+  }
+  const digits = contact.replace(/\D/g, '');
+  if (digits.length >= 10) {
+    return `${digits.substring(0, 2)}******${digits.substring(digits.length - 2)}`;
+  }
+  return contact;
+}

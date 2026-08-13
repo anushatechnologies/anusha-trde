@@ -22,7 +22,7 @@ export const useBiometricAuth = () => {
       ? { success: true, error: null }
       : {
           success: false,
-          error: result.error || 'Biometric verification was cancelled.',
+          error: 'error' in result ? (result as any).error || 'Biometric verification failed' : 'Biometric verification was cancelled.',
         };
   };
 
