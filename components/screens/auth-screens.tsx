@@ -1166,6 +1166,170 @@ export const ResetPasswordScreen = () => {
   );
 };
 
+export const ForgotMpinScreen = () => {
+  const router = useRouter();
+  const { isTablet } = useResponsive();
+  const insets = useSafeAreaInsets();
+
+  const [step, setStep] = useState<'mobile' | 'otp' | 'mpin'>('mobile');
+  const [mobile, setMobile] = useState('');
+  const [otp, setOtp] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [newMpin, setNewMpin] = useState('');
+  const [confirmMpin, setConfirmMpin] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendOtp = async () => {
+    if (!mobile.trim() || mobile.trim().length !== 10) {
+      Alert.alert('Invalid Mobile', 'Please enter your registered 10-digit mobile number.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await authService.forgotMpin(mobile.trim());
+      setStep('otp');
+      Alert.alert('OTP Sent', `A 6-digit verification code has been sent to +91${mobile.trim()}`);
+    } catch (err: any) {
+      Alert.alert('Error', getAuthErrorMessage(err) || 'Failed to send OTP for MPIN reset.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp.trim() || otp.trim().length !== 6) {
+      Alert.alert('Invalid OTP', 'Please enter the 6-digit OTP code.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const res = await authService.verifyResetMpinOtp(mobile.trim(), otp.trim());
+      setResetToken(res.resetToken);
+      setStep('mpin');
+    } catch (err: any) {
+      Alert.alert('Verification Failed', getAuthErrorMessage(err) || 'Invalid or expired OTP code.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResetMpin = async () => {
+    if (!newMpin || newMpin.length !== 4) {
+      Alert.alert('Invalid MPIN', 'Please enter a 4-digit MPIN.');
+      return;
+    }
+    if (newMpin !== confirmMpin) {
+      Alert.alert('MPIN Mismatch', 'New MPIN and confirm MPIN must match.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await authService.resetMpin(mobile.trim(), resetToken, newMpin);
+      Alert.alert('MPIN Reset Successful', 'Your MPIN has been updated. You can now login with your new MPIN.', [
+        {
+          text: 'Login Now',
+          onPress: () => router.replace('/(auth)/login'),
+        },
+      ]);
+    } catch (err: any) {
+      Alert.alert('Reset Failed', getAuthErrorMessage(err) || 'Could not reset MPIN.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={colors.dark} safeAreaEdges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+      <RegistrationStepCard
+        stepLabel={step === 'mobile' ? 'STEP 1 OF 3' : step === 'otp' ? 'STEP 2 OF 3' : 'STEP 3 OF 3'}
+        title={step === 'mobile' ? 'Forgot MPIN' : step === 'otp' ? 'Verify Mobile OTP' : 'Set New MPIN'}
+        subtitle={
+          step === 'mobile'
+            ? 'Enter your registered mobile number to verify your identity.'
+            : step === 'otp'
+            ? `Enter the 6-digit OTP code sent to +91${mobile}.`
+            : 'Create and confirm your new 4-digit security MPIN.'
+        }
+        icon={step === 'mobile' ? 'keypad-outline' : step === 'otp' ? 'shield-checkmark-outline' : 'lock-closed-outline'}
+        progressWidth={step === 'mobile' ? '33.3%' : step === 'otp' ? '66.6%' : '100%'}
+        onBackPress={() => {
+          if (step === 'otp') setStep('mobile');
+          else if (step === 'mpin') setStep('otp');
+          else router.canGoBack() ? router.back() : router.replace('/(auth)/login');
+        }}
+        shellStyle={!isTablet ? styles.registrationShellMobile : undefined}
+        bodyStyle={!isTablet ? styles.registrationBodyMobile : undefined}
+        heroStyle={{ paddingTop: Math.max(insets.top + 12, 26) }}
+      >
+        {step === 'mobile' && (
+          <>
+            <InputField
+              labelStyle={styles.registrationInputLabel}
+              label="Registered Mobile Number"
+              value={mobile}
+              onChangeText={(val) => setMobile(val.replace(/\D/g, '').slice(0, 10))}
+              keyboardType="phone-pad"
+              maxLength={10}
+              icon={<Ionicons name="call-outline" size={18} color={colors.primary} />}
+              placeholder="10-digit mobile number"
+            />
+            <Text style={styles.registrationHint}>For security reasons, an OTP will be sent to your mobile number before you can create a new MPIN.</Text>
+            <GradientButton
+              label={isLoading ? 'Sending OTP...' : 'Send Verification OTP'}
+              onPress={() => void handleSendOtp()}
+              disabled={isLoading || mobile.length !== 10}
+              iconPosition="end"
+            />
+          </>
+        )}
+
+        {step === 'otp' && (
+          <>
+            <InputField
+              labelStyle={styles.registrationInputLabel}
+              label="6-Digit OTP Code"
+              value={otp}
+              onChangeText={(val) => setOtp(val.replace(/\D/g, '').slice(0, 6))}
+              keyboardType="number-pad"
+              maxLength={6}
+              icon={<Ionicons name="key-outline" size={18} color={colors.primary} />}
+              placeholder="Enter 6-digit code"
+            />
+            <Text style={styles.registrationHint}>OTP valid for 10 minutes. Check your messages.</Text>
+            <GradientButton
+              label={isLoading ? 'Verifying...' : 'Verify & Continue'}
+              onPress={() => void handleVerifyOtp()}
+              disabled={isLoading || otp.length !== 6}
+              iconPosition="end"
+            />
+          </>
+        )}
+
+        {step === 'mpin' && (
+          <>
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <Text style={styles.registrationInputLabel}>New 4-Digit MPIN</Text>
+              <PinBoxesInput value={newMpin} onChangeText={(val) => setNewMpin(val.replace(/\D/g, '').slice(0, 4))} length={4} secureTextEntry autoFocus />
+            </View>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <Text style={styles.registrationInputLabel}>Confirm New MPIN</Text>
+              <PinBoxesInput value={confirmMpin} onChangeText={(val) => setConfirmMpin(val.replace(/\D/g, '').slice(0, 4))} length={4} secureTextEntry />
+            </View>
+            <Text style={styles.supportingText}>Avoid simple patterns like 1234 or 1111.</Text>
+            <GradientButton
+              label={isLoading ? 'Saving...' : 'Reset MPIN'}
+              onPress={() => void handleResetMpin()}
+              disabled={isLoading || newMpin.length !== 4 || confirmMpin.length !== 4}
+              iconPosition="end"
+            />
+          </>
+        )}
+      </RegistrationStepCard>
+    </AppScreen>
+  );
+};
+
 export const BiometricScreen = () => {
   const router = useRouter();
   const hasBiometricSession = useAuthStore((state) => state.hasBiometricSession);

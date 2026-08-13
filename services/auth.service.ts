@@ -1249,6 +1249,46 @@ export const authService = {
       success: true,
     };
   },
+  forgotMpin: async (mobileNumber: string) => {
+    const trimmed = mobileNumber.trim();
+    if (!trimmed) {
+      throw new Error('Enter your registered mobile number.');
+    }
+    const response = await backendApiClient.post<{ status: string; message: string; mobileNumber: string; otp?: string }>(
+      '/api/auth/forgot-mpin',
+      { mobileNumber: trimmed }
+    );
+    return response.data;
+  },
+  verifyResetMpinOtp: async (mobileNumber: string, otp: string) => {
+    const response = await backendApiClient.post<{ status: string; verified: boolean; message: string; resetToken: string }>(
+      '/api/auth/verify-reset-mpin-otp',
+      { mobileNumber: mobileNumber.trim(), otp: otp.trim() }
+    );
+    return response.data;
+  },
+  resetMpin: async (mobileNumber: string, resetToken: string, newMpin: string) => {
+    const response = await backendApiClient.post<{ status: string; message: string; mpinReset: boolean }>(
+      '/api/auth/reset-mpin',
+      { mobileNumber: mobileNumber.trim(), resetToken: resetToken.trim(), newMpin: newMpin.trim() }
+    );
+    return response.data;
+  },
+  changeMpin: async (accessToken: string, currentMpin: string, newMpin: string) => {
+    const response = await backendApiClient.post<{ status: string; message: string; mpinChanged: boolean }>(
+      '/api/auth/change-mpin',
+      { currentMpin: currentMpin.trim(), newMpin: newMpin.trim() },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    return response.data;
+  },
+  verifyPan: async (panNumber: string) => {
+    const response = await backendApiClient.post<{ status: string; verified: boolean; panNumber: string; message: string }>(
+      '/api/kyc/pan/verify',
+      { panNumber: panNumber.trim().toUpperCase() }
+    );
+    return response.data;
+  },
   activateAccount: async (accessToken: string) => {
     if (!accessToken.trim()) {
       throw new Error('Sign in again to activate your account.');

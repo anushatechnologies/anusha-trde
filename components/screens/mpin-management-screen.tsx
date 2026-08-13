@@ -112,14 +112,18 @@ export const MpinManagementScreen = () => {
     setIsSaving(true);
 
     try {
-      const nextSession = await authService.setMpin(session, newMpin);
+      if (hasExistingMpin) {
+        await authService.changeMpin(accessToken, currentMpin, newMpin);
+      } else {
+        const nextSession = await authService.setMpin(session, newMpin);
+        await updateUser(nextSession.user);
+      }
       await mpinService.saveMpinForAccount({
         email: user.email,
         mobile: user.mobile,
         mpin: newMpin,
       });
-      await updateUser(nextSession.user);
-      Alert.alert(hasExistingMpin ? 'MPIN updated' : 'MPIN created', hasExistingMpin ? 'Your MPIN has been reset successfully.' : 'Your MPIN is now ready for dashboard security.');
+      Alert.alert(hasExistingMpin ? 'MPIN updated' : 'MPIN created', hasExistingMpin ? 'Your MPIN has been updated successfully.' : 'Your MPIN is now ready for dashboard security.');
       if (router.canGoBack()) {
         router.back();
       } else {

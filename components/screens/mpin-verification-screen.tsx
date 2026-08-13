@@ -197,6 +197,14 @@ export const MpinVerificationScreen = () => {
         {/* Footer Actions */}
         <View style={styles.footerRow}>
           <Pressable
+            onPress={() => router.push('/(auth)/forgot-mpin')}
+            style={({ pressed }) => [styles.logoutBtn, pressed && styles.logoutBtnPressed]}
+          >
+            <Ionicons name="key-outline" size={16} color={colors.primary} />
+            <Text style={[styles.logoutBtnText, { color: colors.primary }]}>Forgot MPIN?</Text>
+          </Pressable>
+
+          <Pressable
             onPress={() => void signOut()}
             style={({ pressed }) => [styles.logoutBtn, pressed && styles.logoutBtnPressed]}
           >
