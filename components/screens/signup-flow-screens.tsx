@@ -23,7 +23,7 @@ import { InputField } from '../ui/input-field';
 import { ScreenHeader } from '../ui/screen-header';
 import { SurfaceCard } from '../ui/surface-card';
 
-const TOTAL_SIGNUP_STEPS = 8;
+const TOTAL_SIGNUP_STEPS = 6;
 const MPIN_LENGTH = 4;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
@@ -86,7 +86,7 @@ const FLOW_STEPS = [
 const normalizeDigits = (value: string) => value.replace(/\D/g, '');
 const normalizeUpper = (value: string) => value.toUpperCase().replace(/[^A-Z0-9]/g, '');
 const normalizeDraftStep = (stepIndex: number) => Math.min(Math.max(stepIndex, 0), FLOW_STEPS.length - 1);
-const formatStepLabel = (stepIndex: number) => `STEP ${stepIndex + 3} OF ${TOTAL_SIGNUP_STEPS}`;
+const formatStepLabel = (stepIndex: number) => `STEP ${stepIndex + 1} OF ${TOTAL_SIGNUP_STEPS}`;
 const formatAadhaarDisplay = (value: string) =>
   normalizeDigits(value)
     .slice(0, 12)
