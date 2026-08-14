@@ -3,8 +3,12 @@ import { apiClient } from '../api/client';
 export type BankDetails = {
   accountHolderName: string;
   accountNumberMasked: string;
+  bankAccountNumber?: string;
   ifscCode: string;
+  bankIfscCode?: string;
   bankName: string;
+  bankVerified?: boolean;
+  bankVerifiedAt?: string;
 };
 
 export const bankService = {
@@ -41,7 +45,19 @@ export const bankService = {
   },
 
   getBankDetails: async (): Promise<BankDetails> => {
-    const response = await apiClient.get<BankDetails>('/api/bank/details');
-    return response.data;
+    const response = await apiClient.get<Record<string, any>>('/api/bank/details');
+    const data = response.data || {};
+    const rawAcc = String(data.bankAccountNumber || data.accountNumber || data.accountNumberMasked || '').trim();
+    const masked = rawAcc ? (rawAcc.startsWith('A/C') ? rawAcc : `A/C **** ${rawAcc.slice(-4)}`) : 'No bank account linked';
+    return {
+      accountHolderName: String(data.accountHolderName || data.name || ''),
+      accountNumberMasked: masked,
+      bankAccountNumber: rawAcc,
+      ifscCode: String(data.bankIfscCode || data.ifscCode || data.ifsc || ''),
+      bankIfscCode: String(data.bankIfscCode || data.ifscCode || data.ifsc || ''),
+      bankName: String(data.bankName || ''),
+      bankVerified: Boolean(data.bankVerified),
+      bankVerifiedAt: data.bankVerifiedAt ? String(data.bankVerifiedAt) : undefined,
+    };
   },
 };

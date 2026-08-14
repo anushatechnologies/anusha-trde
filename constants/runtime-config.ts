@@ -32,7 +32,7 @@ export const runtimeConfig = {
   useMockApi: process.env.EXPO_PUBLIC_USE_MOCK_API
     ? process.env.EXPO_PUBLIC_USE_MOCK_API === 'true'
     : Boolean(extra.useMockApi),
-  razorpayKeyId: String(process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_live_TO6q7NUVnPM6bA').trim(),
+  razorpayKeyId: String(process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || '').trim(),
 };
 
 export const isTestingOtpMode = runtimeConfig.useMockApi && runtimeConfig.enableTestingOtp;

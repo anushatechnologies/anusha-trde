@@ -484,16 +484,21 @@ export const ProfileScreen = () => {
       <SurfaceCard style={styles.profileCard}>
         <View style={[styles.profileHeaderRow, isCompactProfile && styles.profileHeaderRowCompact]}>
           <View style={styles.profileIdentityGroup}>
-            <ProfileAvatar name={displayName} photoUrl={user.profilePhoto} size={52} borderRadius={16} variant="gradient" />
+            <ProfileAvatar name={displayName} photoUrl={user.profilePhoto} size={56} borderRadius={18} variant="gradient" />
             <View style={styles.profileHeadCopy}>
-              <Text style={[styles.profileName, isCompactProfile && styles.profileNameCompact]} numberOfLines={1}>
-                {displayName}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.profileName, isCompactProfile && styles.profileNameCompact]} numberOfLines={1}>
+                  {displayName}
+                </Text>
+                {user.kycStatus === 'APPROVED' ? (
+                  <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                ) : null}
+              </View>
               <Text style={styles.profileId} numberOfLines={1}>
-                {emailLabel}
+                {user.mobile ? `+91 ${user.mobile.replace(/\D/g, '').slice(-10)}` : 'Mobile not linked'}
               </Text>
-              <Text style={styles.profileId} numberOfLines={1}>
-                {mobileLabel}
+              <Text style={[styles.profileId, { color: colors.primary, fontFamily: fontFamily.bodySemi }]} numberOfLines={1}>
+                {user.levelTitle || 'Verified Investor'}
               </Text>
             </View>
           </View>
@@ -513,7 +518,7 @@ export const ProfileScreen = () => {
           </View>
           <View style={styles.profileMetaChip}>
             <Text style={styles.profileMetaLabel}>KYC Status</Text>
-            <Text style={styles.profileMetaValue} numberOfLines={1}>
+            <Text style={[styles.profileMetaValue, { color: user.kycStatus === 'APPROVED' ? colors.success : colors.warning }]} numberOfLines={1}>
               {kycStatusTag}
             </Text>
           </View>

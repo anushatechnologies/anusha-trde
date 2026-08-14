@@ -7,7 +7,7 @@ import { ActivityIndicator, Alert, Animated, Image, Pressable, StatusBar, StyleS
 import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, fontFamily, gradients, shadows } from '../../constants/theme';
+import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
 import { authService } from '../../services/auth.service';
 import { mpinService } from '../../services/mpin.service';
 import { kycService, type KycStatusResponse, type KycDocumentStatus } from '../../services/kyc.service';
@@ -40,39 +40,46 @@ const formatDobInput = (value: string) => {
 
 const FLOW_STEPS = [
   {
-    route: '/signup/mpin',
-    title: 'Create MPIN',
-    subtitle: 'Set a 4-digit MPIN for secure access to your account.',
-    actionLabel: 'Continue to Personal Details',
-    icon: 'keypad-outline',
-  },
-  {
     route: '/signup/profile',
     title: 'Personal Details',
-    subtitle: 'Add your full name, email, date of birth, gender and address.',
-    actionLabel: 'Continue to PAN & KYC',
+    subtitle: 'Add your full name, date of birth, and address.',
+    actionLabel: 'Continue to Password Setup',
     icon: 'person-outline',
+  },
+  {
+    route: '/signup/password',
+    title: 'Create Password',
+    subtitle: 'Set a secure password and optional referral code.',
+    actionLabel: 'Continue to Terms & Consent',
+    icon: 'lock-closed-outline',
+  },
+  {
+    route: '/signup/terms',
+    title: 'Terms & Consent',
+    subtitle: 'Review and accept platform terms and risk disclosures.',
+    actionLabel: 'Agree & Register Account',
+    icon: 'document-text-outline',
   },
   {
     route: '/signup/kyc',
     title: 'PAN & KYC Verification',
     subtitle: 'Verify your PAN and upload your KYC identity documents.',
-    actionLabel: 'Continue to Bank Linkage',
+    actionLabel: 'Submit Documents & Continue',
     icon: 'id-card-outline',
   },
   {
     route: '/signup/bank',
     title: 'Link Bank Account',
     subtitle: 'Link your primary bank account for withdrawals and investments.',
-    actionLabel: 'Continue to Terms & Consent',
+    actionLabel: 'Link Bank & Continue',
     icon: 'business-outline',
   },
   {
-    route: '/signup/terms',
-    title: 'Terms & Consent',
-    subtitle: 'Review and accept required policies to activate your account.',
-    actionLabel: 'Agree & Activate Account',
-    icon: 'document-text-outline',
+    route: '/signup/mpin',
+    title: 'Create MPIN',
+    subtitle: 'Set a 4-digit MPIN for quick and secure dashboard access.',
+    actionLabel: 'Complete Registration',
+    icon: 'keypad-outline',
   },
 ] as const;
 
@@ -480,9 +487,9 @@ export const CompleteSignupScreen = () => {
     }
   }, [draft, isLoadingDraft, pathname, routeStepIndex, router, savedStep]);
 
-  // Fetch KYC status when landing on KYC step (step 4) to support reupload and prefill
+  // Fetch KYC status when landing on KYC step (step 3) to support reupload and prefill
   useEffect(() => {
-    if (currentStep !== 4 || isLoadingDraft || !draft) {
+    if (currentStep !== 3 || isLoadingDraft || !draft) {
       return;
     }
 
@@ -504,8 +511,8 @@ export const CompleteSignupScreen = () => {
         setKycFormDisabled(!statusData.canUpload);
         setIsReuploadMode(false);
       } else if (kycStatus === 'PENDING') {
-        // KYC is pending review, redirect to Bank linkage (step index 3)
-        const nextStep = Math.min(3, FLOW_STEPS.length - 1);
+        // KYC is pending review, redirect to Bank linkage (step index 4)
+        const nextStep = Math.min(4, FLOW_STEPS.length - 1);
         const nextDraft = { ...draftRef.current!, currentStep: nextStep };
         void persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
         return;
@@ -656,22 +663,11 @@ export const CompleteSignupScreen = () => {
     switch (currentStep) {
       case 0: {
         const fullName = draft.fullName.trim();
-        const normalizedEmail = draft.email.trim().toLowerCase();
         const dateOfBirth = draft.dateOfBirth.trim();
         const address = draft.address.trim();
 
         if (!fullName) {
           Alert.alert('Full name required', 'Enter your full name to continue.');
-          return false;
-        }
-
-        if (!normalizedEmail) {
-          Alert.alert('Email required', 'Enter your email address to continue.');
-          return false;
-        }
-
-        if (!emailPattern.test(normalizedEmail)) {
-          Alert.alert('Invalid email', 'Enter a valid email address to continue.');
           return false;
         }
 
@@ -706,9 +702,10 @@ export const CompleteSignupScreen = () => {
           return false;
         }
 
+        const fallbackEmail = `${draft.mobile.replace(/\D/g, '')}@anusha.trade`;
         patchDraft(getStatusPatch('PROFILE_COMPLETED', {
           fullName,
-          email: normalizedEmail,
+          email: draft.email?.trim() || fallbackEmail,
           dateOfBirth,
           address,
         }));
@@ -973,10 +970,6 @@ export const CompleteSignupScreen = () => {
       Alert.alert('Missing Information', 'Full name is missing. Go back to the Profile step and enter your name.');
       return;
     }
-    if (!latestDraft.email.trim()) {
-      Alert.alert('Missing Information', 'Email address is missing. Go back to the Profile step and enter your email.');
-      return;
-    }
     if (!latestDraft.mobile.trim()) {
       Alert.alert('Missing Information', 'Mobile number is missing. Please restart the signup from mobile verification.');
       return;
@@ -1005,11 +998,13 @@ export const CompleteSignupScreen = () => {
     setIsRegisteringAndActivating(true);
 
     try {
-      // Step 1: Register the investor account
+      const cleanMobile = latestDraft.mobile.replace(/\D/g, '');
+      const userEmail = latestDraft.email?.trim() || `${cleanMobile}@anusha.trade`;
+
       const registration = await authService.register({
         idToken: latestDraft.signupVerificationToken,
         fullName: latestDraft.fullName,
-        email: latestDraft.email,
+        email: userEmail,
         password: latestDraft.password,
         mpin: latestDraft.mpin || undefined,
         dateOfBirth: latestDraft.dateOfBirth || undefined,
@@ -1045,8 +1040,8 @@ export const CompleteSignupScreen = () => {
       // Step 2: Sign in to store the access token for subsequent API calls
       await signIn(registration.session);
 
-      // Step 3: Navigate to KYC document upload (step index 4)
-      const nextStep = 4;
+      // Step 3: Navigate to KYC document upload (step index 3)
+      const nextStep = 3;
       const nextDraft = { ...latestDraft, currentStep: nextStep,
         signupVerificationToken: registration.session.tokens.accessToken };
       await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
@@ -1076,7 +1071,7 @@ export const CompleteSignupScreen = () => {
     }
   };
 
-  // Called from KYC step (step 4) — Submit KYC documents (initial or reupload)
+  // Called from KYC step (step 3) — Submit KYC documents (initial or reupload)
   const submitKycDocuments = async () => {
     if (!draftRef.current || !validateStep()) {
       return;
@@ -1141,7 +1136,7 @@ export const CompleteSignupScreen = () => {
     }
   };
 
-  // Called from Bank step (step 6) — Link bank account, go to Activation
+  // Called from Bank step (step 4) — Link bank account, go to MPIN
   const submitBank = async () => {
     if (!draftRef.current || !validateStep()) {
       return;
@@ -1168,8 +1163,8 @@ export const CompleteSignupScreen = () => {
       // Sync auth store state so RootNavigator's resolveOnboardingRoute knows bank is verified
       await useAuthStore.getState().updateUser({ bankVerified: true, accountStatus: 'ACTIVE' });
 
-      // Navigate directly to Terms & Consent (step index 4)
-      const nextStep = 4;
+      // Navigate directly to MPIN Creation (step index 5)
+      const nextStep = 5;
       const nextDraft = { ...latestDraft, currentStep: nextStep };
       await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
     } catch (error: any) {
@@ -1339,15 +1334,6 @@ export const CompleteSignupScreen = () => {
               icon={<Ionicons name="person-outline" size={18} color={colors.primary} />}
             />
             <InputField labelStyle={styles.inputLabel}
-              label="Email Address"
-              value={draft.email}
-              onChangeText={(value) => patchDraft({ email: value })}
-              keyboardType="email-address"
-              required
-              placeholder="Enter email address"
-              icon={<Ionicons name="mail-outline" size={18} color={colors.primary} />}
-            />
-            <InputField labelStyle={styles.inputLabel}
               label="Date of Birth (YYYY-MM-DD)"
               value={draft.dateOfBirth}
               onChangeText={(value) => patchDraft({ dateOfBirth: formatDobInput(value) })}
@@ -1467,30 +1453,62 @@ export const CompleteSignupScreen = () => {
               By continuing, you acknowledge that these terms may be revised from time to time.
             </Text>
 
-            <Text style={[styles.termsText, { fontSize: 13, fontFamily: fontFamily.bodySemi, color: colors.primary, marginBottom: 4 }]}>
-              Mandatory Agreements
-            </Text>
-            <View style={{ gap: 8, marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', gap: 10, marginVertical: 12 }}>
+              <Pressable
+                onPress={openTerms}
+                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}
+              >
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.primary }}>📄 Read Terms</Text>
+              </Pressable>
+              <Pressable
+                onPress={openPrivacyPolicy}
+                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}
+              >
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.primary }}>🔒 Read Privacy Policy</Text>
+              </Pressable>
+            </View>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, marginTop: 4 }}>
+              <Text style={{ fontSize: 13, fontFamily: fontFamily.bodySemi, color: colors.primary }}>
+                Required Policies & Agreements
+              </Text>
+              <Pressable
+                onPress={() => {
+                  const allSelected = draft.investorAgreementAccepted && draft.riskDisclosureAccepted;
+                  patchDraft({
+                    investorAgreementAccepted: !allSelected,
+                    riskDisclosureAccepted: !allSelected,
+                    communicationConsent: !allSelected ? true : draft.communicationConsent,
+                  });
+                }}
+              >
+                <Text style={{ fontSize: 12, fontFamily: fontFamily.bodyBold, color: colors.primary }}>
+                  {draft.investorAgreementAccepted && draft.riskDisclosureAccepted ? 'Deselect All' : '✓ Accept All'}
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={{ gap: 10, marginBottom: 16 }}>
               <CheckboxRow
                 checked={draft.investorAgreementAccepted}
                 onPress={() => patchDraft({ investorAgreementAccepted: !draft.investorAgreementAccepted })}
-                label="I Accept the Investor Agreement *"
+                label="I Accept the Terms & Conditions and Investor Agreement *"
               />
               <CheckboxRow
                 checked={draft.riskDisclosureAccepted}
                 onPress={() => patchDraft({ riskDisclosureAccepted: !draft.riskDisclosureAccepted })}
-                label="I Accept the Risk Disclosure *"
+                label="I Accept the Privacy Policy and Risk Disclosure *"
               />
             </View>
 
-            <Text style={[styles.termsText, { fontSize: 13, fontFamily: fontFamily.bodySemi, color: colors.muted, marginBottom: 4 }]}>
-              Optional
+            <Text style={{ fontSize: 13, fontFamily: fontFamily.bodySemi, color: colors.muted, marginBottom: 6 }}>
+              Optional Communications
             </Text>
             <View style={{ gap: 8, marginBottom: 24 }}>
               <CheckboxRow
                 checked={draft.communicationConsent}
                 onPress={() => patchDraft({ communicationConsent: !draft.communicationConsent })}
-                label="I consent to receive promotional updates and communications"
+                label="I consent to receive investment updates and platform notifications"
               />
             </View>
           </>

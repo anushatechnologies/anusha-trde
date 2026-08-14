@@ -160,34 +160,21 @@ const SessionCard = ({ item, showLocation = true }: { item: SessionItem; showLoc
 
 export const LoginScreen = () => {
   const router = useRouter();
-  const params = useLocalSearchParams<{ target?: string; mode?: 'mobile' | 'email' }>();
+  const params = useLocalSearchParams<{ target?: string; mobile?: string }>();
   const { isTablet, width } = useResponsive();
   const insets = useSafeAreaInsets();
   const signIn = useAuthStore((state) => state.signIn);
-  const setPreferredMode = useAuthStore((state) => state.setPreferredLoginMode);
-  const preferredMode = useAuthStore((state) => state.preferredLoginMode);
-  const incomingMobile = getParam(params.target, '');
-  const incomingMode = (getParam(params.mode, '') as 'mobile' | 'email') || preferredMode;
+  const incomingMobile = getParam(params.target || params.mobile, '');
 
-  const [mode, setMode] = useState<'mobile' | 'email'>(incomingMode);
   const [mobile, setMobile] = useState('');
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const isCompact = width < 390;
-  const normalizedEmail = email.trim().toLowerCase();
 
   useEffect(() => {
-    if (incomingMode === 'mobile' || incomingMode === 'email') {
-      setMode(incomingMode);
-    }
     if (incomingMobile) {
-      if (incomingMode === 'email') {
-        setEmail(incomingMobile);
-      } else {
-        setMobile(normalizeMobileDigits(incomingMobile));
-      }
+      setMobile(normalizeMobileDigits(incomingMobile));
     }
-  }, [incomingMobile, incomingMode]);
+  }, [incomingMobile]);
 
   const handleMobileChange = (value: string) => {
     let digits = value.replace(/\D/g, '');
@@ -197,22 +184,12 @@ export const LoginScreen = () => {
     setMobile(digits.slice(0, 10));
   };
 
-  const handleEmailChange = (value: string) => {
-    setEmail(value.replace(/\s+/g, ''));
-  };
-
   const loginMutation = useMutation({
-    mutationFn: () => mode === 'mobile' 
-      ? authService.loginWithMobileMpin(mobile, password)
-      : authService.loginWithEmail(normalizedEmail, password),
+    mutationFn: () => authService.loginWithMobileMpin(mobile, password),
     onSuccess: async (data) => {
-      await setPreferredMode(mode);
       await signIn(data);
-      // Use the onboarding resolver to determine the correct route.
-      // Do not assume MPIN or accountStatus alone unlocks the dashboard.
       const nextRoute = authService.resolveOnboardingRoute(data.user);
       if (nextRoute !== '/(tabs)') {
-        // Onboarding incomplete — let RootNavigator handle the redirect
         return;
       }
       router.replace('/(tabs)');
@@ -226,19 +203,16 @@ export const LoginScreen = () => {
         msg.toLowerCase().includes('does not exist');
 
       if (isNotFound) {
-        const targetValue = mode === 'mobile' ? mobile : normalizedEmail;
         Alert.alert(
           'Account Not Found',
-          mode === 'mobile'
-            ? `No registered account found for mobile +91${mobile}. Would you like to create a new account?`
-            : `No registered account found for ${normalizedEmail}. Would you like to create a new account?`,
+          `No registered account found for mobile +91 ${mobile}. Would you like to create a new account?`,
           [
             {
               text: 'Register Now',
               onPress: () => {
                 router.push({
                   pathname: '/(auth)/register',
-                  params: { target: targetValue, mode },
+                  params: { mobile },
                 });
               },
             },
@@ -255,30 +229,17 @@ export const LoginScreen = () => {
   });
 
   const handleLogin = () => {
-    if (mode === 'mobile') {
-      const sanitizedMobile = normalizeMobileDigits(mobile);
-      if (!sanitizedMobile || sanitizedMobile.length !== 10) {
-        Alert.alert('Invalid mobile number', 'Enter a valid 10 digit mobile number.');
-        return;
-      }
-      if (!password.trim()) {
-        Alert.alert('MPIN required', 'Enter your 4-digit MPIN to continue.');
-        return;
-      }
-    } else {
-      if (!normalizedEmail || !password.trim()) {
-        Alert.alert('Email login', 'Enter both email and password to continue.');
-        return;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
-        Alert.alert('Invalid email address', 'Enter a valid email address to continue.');
-        return;
-      }
+    const sanitizedMobile = normalizeMobileDigits(mobile);
+    if (!sanitizedMobile || sanitizedMobile.length !== 10) {
+      Alert.alert('Invalid mobile number', 'Enter a valid 10 digit mobile number.');
+      return;
+    }
+    if (!password.trim()) {
+      Alert.alert('MPIN required', 'Enter your 4-digit MPIN to continue.');
+      return;
     }
     loginMutation.mutate();
   };
-
-
 
   return (
     <AppScreen
@@ -319,124 +280,57 @@ export const LoginScreen = () => {
         </LinearGradient>
 
         <View style={[styles.loginPanel, !isTablet && styles.loginPanelMobile, { paddingBottom: Math.max(insets.bottom + 18, 28) }]}>
-          <View style={styles.loginModeWrap}>
-            {(['mobile', 'email'] as const).map((item) => {
-              const active = item === mode;
-              const iconName = item === 'mobile' ? 'phone-portrait-outline' : 'mail-open-outline';
-              const modeLabel = item === 'mobile' ? 'Mobile Login' : 'Email Login';
-
-              return (
-                <Pressable
-                  key={item}
-                  onPress={() => {
-                    if (item !== mode) {
-                      setMode(item);
-                      setPassword('');
-                    }
-                  }}
-                  style={({ pressed }) => [
-                    styles.loginModeItem,
-                    active && styles.loginModeItemActive,
-                    pressed && styles.loginModeItemPressed,
-                  ]}
-                >
-                  <Ionicons name={iconName} size={16} color={active ? colors.primary : colors.muted} />
-                  <Text style={[styles.loginModeText, active && styles.loginModeTextActive]}>
-                    {modeLabel}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
           <View style={styles.loginModeHeader}>
             <View style={styles.loginModeHeaderIcon}>
-              <Ionicons name={mode === 'mobile' ? 'phone-portrait-outline' : 'mail-outline'} size={18} color={colors.primary} />
+              <Ionicons name="phone-portrait-outline" size={18} color={colors.primary} />
             </View>
             <View style={styles.loginModeHeaderCopy}>
-              <Text style={styles.loginModeHeaderTitle}>{mode === 'mobile' ? 'Mobile Login' : 'Email Login'}</Text>
-              <Text style={styles.loginModeHeaderSubtitle}>Use your registered {mode === 'mobile' ? 'mobile number and MPIN' : 'email and password'} to continue securely.</Text>
+              <Text style={styles.loginModeHeaderTitle}>Mobile Login</Text>
+              <Text style={styles.loginModeHeaderSubtitle}>Use your registered mobile number and MPIN to continue securely.</Text>
             </View>
           </View>
 
           <View style={[styles.loginFormBlock, isCompact && styles.loginFormBlockCompact]}>
             <View style={styles.loginFormFields}>
-              {mode === 'mobile' ? (
-                <>
-                  <InputField
-                    label="Mobile Number"
-                    value={mobile}
-                    onChangeText={handleMobileChange}
-                    keyboardType="phone-pad"
-                    maxLength={10}
-                    textContentType="telephoneNumber"
-                    autoComplete="tel"
-                    returnKeyType="next"
-                    prefixText="+91"
-                    placeholder="98765 43210"
-                    icon={<Ionicons name="call-outline" size={18} color={colors.primary} />}
-                    containerStyle={styles.loginInputGroup}
-                    labelStyle={styles.loginInputLabel}
-                    shellStyle={styles.loginInputShell}
-                    inputStyle={styles.loginInputText}
-                  />
-                  <InputField
-                    label="MPIN"
-                    value={password}
-                    onChangeText={setPassword}
-                    secure
-                    keyboardType="numeric"
-                    maxLength={4}
-                    textContentType="password"
-                    autoComplete="password"
-                    returnKeyType="done"
-                    placeholder="Enter your 4-digit MPIN"
-                    icon={<Ionicons name="keypad-outline" size={18} color={colors.primary} />}
-                    containerStyle={styles.loginInputGroup}
-                    labelStyle={styles.loginInputLabel}
-                    shellStyle={styles.loginInputShell}
-                    inputStyle={styles.loginInputText}
-                  />
-                </>
-              ) : (
-                <>
-                  <InputField
-                    label="Email Address"
-                    value={email}
-                    onChangeText={handleEmailChange}
-                    keyboardType="email-address"
-                    textContentType="emailAddress"
-                    autoComplete="email"
-                    returnKeyType="next"
-                    placeholder="Enter your email address"
-                    icon={<Ionicons name="mail-outline" size={18} color={colors.primary} />}
-                    containerStyle={styles.loginInputGroup}
-                    labelStyle={styles.loginInputLabel}
-                    shellStyle={styles.loginInputShell}
-                    inputStyle={styles.loginInputText}
-                  />
-                  <InputField
-                    label="Password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secure
-                    textContentType="password"
-                    autoComplete="password"
-                    returnKeyType="done"
-                    placeholder="Enter your password"
-                    icon={<Ionicons name="lock-closed-outline" size={18} color={colors.primary} />}
-                    containerStyle={styles.loginInputGroup}
-                    labelStyle={styles.loginInputLabel}
-                    shellStyle={styles.loginInputShell}
-                    inputStyle={styles.loginInputText}
-                  />
-                </>
-              )}
+              <InputField
+                label="Mobile Number"
+                value={mobile}
+                onChangeText={handleMobileChange}
+                keyboardType="phone-pad"
+                maxLength={10}
+                textContentType="telephoneNumber"
+                autoComplete="tel"
+                returnKeyType="next"
+                prefixText="+91"
+                placeholder="98765 43210"
+                icon={<Ionicons name="call-outline" size={18} color={colors.primary} />}
+                containerStyle={styles.loginInputGroup}
+                labelStyle={styles.loginInputLabel}
+                shellStyle={styles.loginInputShell}
+                inputStyle={styles.loginInputText}
+              />
+              <InputField
+                label="MPIN"
+                value={password}
+                onChangeText={setPassword}
+                secure
+                keyboardType="numeric"
+                maxLength={4}
+                textContentType="password"
+                autoComplete="password"
+                returnKeyType="done"
+                placeholder="Enter your 4-digit MPIN"
+                icon={<Ionicons name="keypad-outline" size={18} color={colors.primary} />}
+                containerStyle={styles.loginInputGroup}
+                labelStyle={styles.loginInputLabel}
+                shellStyle={styles.loginInputShell}
+                inputStyle={styles.loginInputText}
+              />
             </View>
 
             <View style={styles.loginFormActions}>
               <Text style={styles.loginHelperText}>
-                Use the {mode === 'mobile' ? 'mobile number and MPIN' : 'email address and password'} linked to your account.
+                Use your registered 10-digit mobile number and 4-digit MPIN.
               </Text>
 
               <GradientButton
@@ -448,12 +342,12 @@ export const LoginScreen = () => {
           </View>
 
           <View style={[styles.loginUtilityRow, isCompact && styles.loginUtilityColumn]}>
-            <Pressable onPress={() => router.push('/(auth)/forgot-password')} style={({ pressed }) => [styles.loginUtilityCard, pressed && styles.loginUtilityCardPressed]}>
+            <Pressable onPress={() => router.push('/(auth)/forgot-mpin')} style={({ pressed }) => [styles.loginUtilityCard, pressed && styles.loginUtilityCardPressed]}>
               <View style={styles.loginUtilityIcon}>
-                <Ionicons name="key-outline" size={18} color={colors.primary} />
+                <Ionicons name="keypad-outline" size={18} color={colors.primary} />
               </View>
               <View style={styles.loginUtilityCopy}>
-                <Text style={styles.loginUtilityTitle}>Forgot Password</Text>
+                <Text style={styles.loginUtilityTitle}>Forgot MPIN</Text>
                 <Text style={styles.loginUtilitySubtitle}>Reset with mobile OTP</Text>
               </View>
             </Pressable>
@@ -984,15 +878,15 @@ export const ForgotPasswordScreen = () => {
   const router = useRouter();
   const { isTablet } = useResponsive();
   const insets = useSafeAreaInsets();
-  const [identifier, setIdentifier] = useState('');
+  const [mobile, setMobile] = useState('');
   const requestResetOtp = useMutation({
-    mutationFn: () => authService.requestPasswordReset(identifier),
+    mutationFn: () => authService.requestPasswordReset(mobile.trim()),
     onSuccess: async (data) => {
       if (data.resetToken) {
         router.push({
           pathname: '/(auth)/reset-password',
           params: {
-            target: identifier.trim(),
+            target: mobile.trim(),
             token: data.resetToken,
           },
         });
@@ -1002,8 +896,8 @@ export const ForgotPasswordScreen = () => {
       router.replace({
         pathname: '/success',
         params: {
-          title: 'Reset Link Sent',
-          subtitle: data.message || 'Password reset instructions have been sent. Follow them to continue.',
+          title: 'Reset Code Sent',
+          subtitle: data.message || 'Password reset OTP has been sent to your registered mobile number.',
           cta: 'Back to Login',
           redirect: '/(auth)/login',
         },
@@ -1020,7 +914,7 @@ export const ForgotPasswordScreen = () => {
       <RegistrationStepCard
         stepLabel="PASSWORD RECOVERY"
         title="Forgot Password"
-        subtitle="Enter your registered email or mobile number to receive reset instructions."
+        subtitle="Enter your registered mobile number to receive reset instructions."
         icon="lock-open-outline"
         progressWidth="33.33%"
         onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(auth)/login'))}
@@ -1030,18 +924,22 @@ export const ForgotPasswordScreen = () => {
       >
         <InputField
           labelStyle={styles.registrationInputLabel}
-          label="Email or Mobile Number"
-          value={identifier}
-          onChangeText={setIdentifier}
-          keyboardType="email-address"
-          icon={<Ionicons name="mail-open-outline" size={18} color={colors.primary} />}
+          label="Mobile Number"
+          value={mobile}
+          onChangeText={(val) => setMobile(normalizeMobileDigits(val))}
+          keyboardType="phone-pad"
+          maxLength={10}
+          prefixText="+91"
+          placeholder="98765 43210"
+          icon={<Ionicons name="call-outline" size={18} color={colors.primary} />}
         />
-        <Text style={styles.registrationHint}>Use your registered email address or mobile number. If the backend is in development mode, a reset token may be returned directly.</Text>
+        <Text style={styles.registrationHint}>Enter your 10-digit registered mobile number to receive the password reset OTP.</Text>
         <GradientButton
-          label={requestResetOtp.isPending ? 'Sending...' : 'Send Reset Link'}
+          label={requestResetOtp.isPending ? 'Sending...' : 'Send Reset Code'}
           onPress={() => {
-            if (!identifier.trim()) {
-              Alert.alert('Details required', 'Enter your registered email address or mobile number.');
+            const digits = normalizeMobileDigits(mobile);
+            if (!digits || digits.length !== 10) {
+              Alert.alert('Mobile number required', 'Enter a valid 10-digit registered mobile number.');
               return;
             }
 

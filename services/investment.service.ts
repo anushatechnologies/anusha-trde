@@ -342,6 +342,8 @@ export const investmentService = {
       investmentPlanId,
       investmentAmount,
       couponCode,
+      code: couponCode,
+      amount: investmentAmount,
     });
     return response.data;
   },

@@ -134,34 +134,30 @@ export const PersonalInformationScreen = () => {
     );
   }
 
-  const displayName = formatProfileValue(user.name, user.email || user.mobile || 'Your account');
-  const email = formatProfileValue(user.email, 'Email not added');
+  const displayName = formatProfileValue(user.name, user.mobile || 'Your account');
+  const mobile = user.mobile ? `+91 ${user.mobile.replace(/\D/g, '').slice(-10)}` : 'Mobile number not added';
   const dateOfBirth = formatProfileValue(user.dateOfBirth, 'Not added yet');
-  const mobile = formatProfileValue(user.mobile, 'Mobile number not added');
   const profilePhotoStatus = user.profilePhoto?.trim() ? 'Added to account' : 'Not added yet';
   const referralCode = formatProfileValue(user.referralCode, 'Not generated yet');
   const memberSince = formatProfileValue(user.memberSince, 'Not available yet');
-  const accountLevel = formatProfileValue(user.levelTitle, 'Not assigned yet');
+  const accountLevel = formatProfileValue(user.levelTitle, 'Verified Investor');
   const panNumber = formatProfileValue(user.panNumber, 'Not added yet');
   const aadhaarMasked = formatProfileValue(user.aadhaarMasked, 'Not added yet');
-  const passwordStatus = formatStatusValue(user.passwordConfigured, 'Created during registration', 'Not configured');
-  const mpinStatus = formatStatusValue(user.mpinConfigured, 'Configured for dashboard security', 'Not configured');
+  const mpinStatus = formatStatusValue(user.mpinConfigured, 'Active (4-digit MPIN)', 'Not configured');
   const biometricStatus = formatStatusValue(user.biometricEnabled, 'Enabled on this device', 'Not enabled');
 
   const fields = [
     { label: 'Full Name', value: displayName },
-    { label: 'Email Address', value: email },
+    { label: 'Registered Mobile', value: mobile },
     { label: 'Date of Birth', value: dateOfBirth },
-    { label: 'Mobile Number', value: mobile },
     { label: 'PAN Number', value: panNumber },
-    { label: 'Aadhaar (Masked)', value: aadhaarMasked },
+    { label: 'Aadhaar (Last 4)', value: aadhaarMasked },
     { label: 'Profile Photo', value: profilePhotoStatus },
     { label: 'Referral Code', value: referralCode },
     { label: 'Member Since', value: memberSince },
-    { label: 'Account Level', value: accountLevel },
-    { label: 'Password Login', value: passwordStatus },
-    { label: 'MPIN', value: mpinStatus },
-    { label: 'Biometric Login', value: biometricStatus },
+    { label: 'Account Tier', value: accountLevel },
+    { label: 'MPIN Security', value: mpinStatus },
+    { label: 'Biometric Access', value: biometricStatus },
   ];
 
   return (
@@ -173,7 +169,7 @@ export const PersonalInformationScreen = () => {
           <ProfileAvatar name={displayName} photoUrl={user.profilePhoto} size={68} borderRadius={22} />
           <View style={styles.profileHeroCopy}>
             <Text style={styles.heroTitle}>{displayName}</Text>
-            <Text style={styles.heroSubtitle}>{joinProfileDetails(user.email, user.mobile)}</Text>
+            <Text style={styles.heroSubtitle}>{mobile}</Text>
           </View>
         </View>
       </SurfaceCard>

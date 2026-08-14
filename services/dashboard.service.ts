@@ -695,16 +695,41 @@ export const dashboardService = {
   },
   getTeam: async () => {
     const [treeResponse, commissionResponse] = await Promise.all([
-      apiClient.get('/api/referrals/tree'),
-      apiClient.get('/api/referrals/commissions'),
+      apiClient.get('/api/referrals/tree').catch(() => ({ data: {} })),
+      apiClient.get('/api/referrals/commissions').catch(() => ({ data: [] })),
     ]);
 
     const treeSource = asRecord(treeResponse.data);
     
-    // Parse /api/referrals/tree which returns { levels: [...] }
-    const levels = pickArray(treeSource, ['levels']).map(mapTeamLevel);
+    // Parse /api/referrals/tree which can return { levels: [...] } or { tree: { 1: [...], 2: [...] } }
+    let levels = pickArray(treeSource, ['levels']).map(mapTeamLevel);
     
-    // Map levels to tree format since the API doesn't return a direct visual tree array
+    if (levels.length === 0 && treeSource.tree && typeof treeSource.tree === 'object') {
+      const treeObj = treeSource.tree as Record<string, any[]>;
+      levels = Object.keys(treeObj).map((lvlKey) => {
+        const membersList = Array.isArray(treeObj[lvlKey]) ? treeObj[lvlKey] : [];
+        const lvlNum = Number(lvlKey) || 1;
+        return {
+          level: lvlNum,
+          members: membersList.length,
+          earnings: 0,
+          commission: 6 - lvlNum, // 5%, 4%, 3%, 2%, 1%
+          growth: 0,
+        };
+      });
+    }
+
+    if (levels.length === 0) {
+      levels = [1, 2, 3, 4, 5].map((lvl) => ({
+        level: lvl,
+        members: 0,
+        earnings: 0,
+        commission: 6 - lvl,
+        growth: 0,
+      }));
+    }
+    
+    // Map levels to tree format
     const tree = levels.map((lvl) => ({
       id: `level-${lvl.level}`,
       title: `Level ${lvl.level}`,
@@ -740,21 +765,53 @@ export const dashboardService = {
     } satisfies NotificationPayload;
   },
   getNotificationPreferences: async () => {
-    const response = await apiClient.get<{
-      emailUpdates: boolean;
-      pushNotifications: boolean;
-      smsUpdates: boolean;
-      marketing: boolean;
-    }>('/api/notifications/preferences');
-    return response.data;
+    try {
+      const response = await apiClient.get<Record<string, any>>('/api/notifications/preferences');
+      const d = response.data || {};
+      return {
+        emailUpdates: Boolean(d.emailUpdates ?? d.email ?? true),
+        pushNotifications: Boolean(d.pushNotifications ?? d.push ?? true),
+        smsUpdates: Boolean(d.smsUpdates ?? d.sms ?? true),
+        marketing: Boolean(d.marketing ?? d.whatsapp ?? false),
+        email: Boolean(d.email ?? d.emailUpdates ?? true),
+        push: Boolean(d.push ?? d.pushNotifications ?? true),
+        sms: Boolean(d.sms ?? d.smsUpdates ?? true),
+        whatsapp: Boolean(d.whatsapp ?? d.marketing ?? false),
+      };
+    } catch {
+      return {
+        emailUpdates: true,
+        pushNotifications: true,
+        smsUpdates: true,
+        marketing: false,
+        email: true,
+        push: true,
+        sms: true,
+        whatsapp: false,
+      };
+    }
   },
   updateNotificationPreferences: async (preferences: {
-    emailUpdates: boolean;
-    pushNotifications: boolean;
-    smsUpdates: boolean;
-    marketing: boolean;
+    emailUpdates?: boolean;
+    pushNotifications?: boolean;
+    smsUpdates?: boolean;
+    marketing?: boolean;
+    email?: boolean;
+    push?: boolean;
+    sms?: boolean;
+    whatsapp?: boolean;
   }) => {
-    const response = await apiClient.put('/api/notifications/preferences', preferences);
+    const payload = {
+      email: Boolean(preferences.email ?? preferences.emailUpdates ?? true),
+      emailUpdates: Boolean(preferences.emailUpdates ?? preferences.email ?? true),
+      push: Boolean(preferences.push ?? preferences.pushNotifications ?? true),
+      pushNotifications: Boolean(preferences.pushNotifications ?? preferences.push ?? true),
+      sms: Boolean(preferences.sms ?? preferences.smsUpdates ?? true),
+      smsUpdates: Boolean(preferences.smsUpdates ?? preferences.sms ?? true),
+      whatsapp: Boolean(preferences.whatsapp ?? preferences.marketing ?? false),
+      marketing: Boolean(preferences.marketing ?? preferences.whatsapp ?? false),
+    };
+    const response = await apiClient.put('/api/notifications/preferences', payload);
     return response.data;
   },
   getSessions: async () => {
@@ -784,13 +841,23 @@ export const dashboardService = {
     await apiClient.post(`/api/notifications/${notificationId}/read`);
   },
   getWithdrawalSettings: async () => {
-    const response = await apiClient.get<{
-      minimumWithdrawalAmount: number;
-      maximumWithdrawalAmount: number;
-      withdrawalEnabled: boolean;
-      feePercentage: number;
-    }>('/api/withdrawals/settings');
-    return response.data;
+    try {
+      const response = await apiClient.get<Record<string, any>>('/api/withdrawals/settings');
+      const data = response.data || {};
+      return {
+        minimumWithdrawalAmount: toNumber(data.minimumWithdrawalAmount, 1000),
+        maximumWithdrawalAmount: toNumber(data.maximumWithdrawalAmount, 500000),
+        withdrawalEnabled: data.withdrawalEnabled !== false,
+        feePercentage: toNumber(data.feePercentage, 0),
+      };
+    } catch {
+      return {
+        minimumWithdrawalAmount: 1000,
+        maximumWithdrawalAmount: 500000,
+        withdrawalEnabled: true,
+        feePercentage: 0,
+      };
+    }
   },
   requestWithdrawal: async (requestedAmount: number) => {
     if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
