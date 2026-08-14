@@ -13,6 +13,7 @@ import { isTestingOtpMode, runtimeConfig } from '../../constants/runtime-config'
 import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
 import { useSessionsQuery } from '../../hooks/use-app-queries';
 import { authService } from '../../services/auth.service';
+import { mpinService } from '../../services/mpin.service';
 import { getAuthErrorMessage } from '../../services/firebase-auth.service';
 import { createSignupDraft, getSignupRouteForStep, signupFlowService, type SignupDraft } from '../../services/signup-flow.service';
 import { useAuthStore } from '../../store/use-auth-store';
@@ -709,19 +710,13 @@ export const OtpScreen = () => {
     purpose: (getParam(rawPurpose, 'login') as OtpPurpose) ?? 'login',
     mode: getParam(rawMode, 'mobile'),
     provider: getParam(rawProvider, ''),
-    previewCode: getParam(rawPreview, ''),
-  }), [rawTarget, rawPurpose, rawMode, rawProvider, rawPreview]);
+  }), [rawTarget, rawPurpose, rawMode, rawProvider]);
   const target = stableParams.target;
   const purpose = stableParams.purpose;
   const mode = stableParams.mode;
   const [otpProvider, setOtpProvider] = useState(stableParams.provider);
-  const [previewOtpCode, setPreviewOtpCode] = useState(stableParams.previewCode);
   const otpInputRef = useRef<TextInput | null>(null);
-  // Only auto-fill preview code when backend (MOBILE_OTP) is the provider.
-  // When Firebase is the provider, it sends a DIFFERENT code via SMS,
-  // so auto-filling the backend preview code causes "invalid OTP" errors.
-  const initialIsFirebase = mode === 'mobile' && stableParams.provider === 'FIREBASE_PHONE_AUTH';
-  const [otp, setOtp] = useState(initialIsFirebase ? '' : (stableParams.previewCode || ''));
+  const [otp, setOtp] = useState('');
   const [seconds, setSeconds] = useState(60);
   const [isOtpFocused, setIsOtpFocused] = useState(false);
   const [successState, setSuccessState] = useState<OtpSuccessState | null>(null);
@@ -752,15 +747,12 @@ export const OtpScreen = () => {
     mutationFn: () => authService.verifyOtp(target, purpose, otp, { provider: otpProvider }),
     onSuccess: async (result) => {
       if (result.outcome === 'session') {
-        // If the user is in the register flow, we MUST direct them to complete the 
-        // 10 signup steps. We cannot rely on userExists or accountStatus from this 
-        // temporary session response, as the live backend may return true or default to ACTIVE.
         if (purpose === 'register') {
           await signupFlowService.mergeDraft({
             mobile: result.session.user.mobile || target,
             otpVerified: true,
             otpVerifiedAt: new Date().toISOString(),
-            signupVerificationToken: result.session.tokens.accessToken, // use token for next steps
+            signupVerificationToken: result.session.tokens.accessToken,
             verificationProvider: otpProvider,
             currentStep: 0,
           });
@@ -780,7 +772,6 @@ export const OtpScreen = () => {
         await signIn(result.session);
 
         if (purpose === 'login' && authService.resolveOnboardingRoute(result.session.user) !== '/(tabs)') {
-          // Onboarding incomplete — let RootNavigator handle the redirect
           return;
         }
 
@@ -848,11 +839,10 @@ export const OtpScreen = () => {
         'Account Not Found',
         'This number is not registered yet. Please create an account to continue.',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Register', 
-            onPress: () => router.replace('/(auth)/register')
-          }
+          {
+            text: 'Register',
+            onPress: () => router.replace('/signup/profile'),
+          },
         ]
       );
     },
@@ -877,21 +867,11 @@ export const OtpScreen = () => {
       setSeconds(60);
       const updatedProvider = data.provider || otpProvider;
       setOtpProvider(updatedProvider);
-      setPreviewOtpCode(data.previewCode ?? '');
+      setOtp('');
       lastSubmittedOtp.current = '';
-      // Only auto-fill when backend (MOBILE_OTP) is the provider.
-      // Firebase sends its own SMS code — auto-filling backend preview code would mismatch.
-      const isResendFirebase = mode === 'mobile' && updatedProvider === 'FIREBASE_PHONE_AUTH';
-      if (data.previewCode && !isResendFirebase) {
-        setOtp(data.previewCode);
-      } else {
-        setOtp('');
-      }
       Alert.alert(
         'OTP sent',
-        data.previewCode
-          ? `Use preview OTP ${data.previewCode} to continue.`
-          : data.message || 'A fresh OTP has been sent. Please check your device and continue.'
+        data.message || 'A fresh 6-digit OTP has been sent. Please check your SMS and enter it below.'
       );
       focusOtpInput();
     },
@@ -944,18 +924,6 @@ export const OtpScreen = () => {
         bodyStyle={!isTablet ? styles.registrationBodyMobile : undefined}
         heroStyle={{ paddingTop: Math.max(insets.top + 12, 26) }}
       >
-        {previewOtpCode ? (
-          <View style={styles.previewOtpBanner}>
-            <Text style={styles.previewOtpLabel}>Preview OTP</Text>
-            <Text style={styles.previewOtpValue}>{previewOtpCode}</Text>
-            <Text style={styles.previewOtpHint}>
-              {isTestingOtpMode ? 'Testing mode is enabled for this build.' : 'This code is available only in development environments.'}
-            </Text>
-          </View>
-        ) : null}
-
-
-
         <View style={styles.otpInputWrap}>
           <Pressable onPress={focusOtpInput} style={styles.otpInputPressable}>
             <OtpBoxes code={otp} isFocused={isOtpFocused} />
@@ -1226,6 +1194,7 @@ export const ForgotMpinScreen = () => {
     setIsLoading(true);
     try {
       await authService.resetMpin(mobile.trim(), resetToken, newMpin);
+      await mpinService.saveMpinForAccount({ mobile: mobile.trim(), mpin: newMpin.trim() });
       Alert.alert('MPIN Reset Successful', 'Your MPIN has been updated. You can now login with your new MPIN.', [
         {
           text: 'Login Now',
