@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.25)',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     ...shadows.glass,
   },
@@ -140,3 +140,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 });
+

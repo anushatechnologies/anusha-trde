@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.heading,
     fontSize: 28,
     lineHeight: 34,
-    color: colors.surface,
+    color: '#FFFFFF',
   },
   heroSubtitle: {
     fontFamily: fontFamily.body,
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
   metricStripValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 18,
-    color: colors.surface,
+    color: '#FFFFFF',
   },
   breakdownRow: {
     flexDirection: 'row',
@@ -690,7 +690,7 @@ const styles = StyleSheet.create({
   receiptMetaCell: {
     flex: 1,
     borderRadius: radius.md,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     padding: 12,
@@ -727,12 +727,12 @@ const styles = StyleSheet.create({
   statusHeroPlan: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 22,
-    color: colors.surface,
+    color: '#FFFFFF',
   },
   statusHeroAmount: {
     fontFamily: fontFamily.heading,
     fontSize: 28,
-    color: colors.surface,
+    color: '#FFFFFF',
   },
   statusHeroMeta: {
     fontFamily: fontFamily.body,
@@ -777,10 +777,11 @@ const styles = StyleSheet.create({
   investmentStatusCell: {
     width: '47%',
     borderRadius: radius.md,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     padding: 12,
     gap: 4,
   },
 });
+

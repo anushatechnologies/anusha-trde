@@ -42,7 +42,7 @@ export const AnnouncementCarousel = ({ items }: AnnouncementCarouselProps) => {
           <View style={styles.cardWrapper}>
             <View style={styles.card}>
               <LinearGradient
-                colors={['#1E293B', '#0F172A']}
+                colors={['#EFF6FF', '#DBEAFE']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -141,3 +141,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cyan,
   },
 });
+

@@ -432,7 +432,7 @@ export const DatePickerInput: React.FC<DatePickerInputProps> = ({
                 style={[styles.confirmButton, !isEligible && styles.confirmButtonDisabled]}
               >
                 <LinearGradient
-                  colors={isEligible ? gradients.primary : ['#334155', '#1E293B']}
+                  colors={isEligible ? gradients.primary : ['#334155', '#F8FAFC']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.confirmGradient}
@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: '#334155',
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: radius.pill,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#334155',
   },
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: radius.md,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#334155',
   },
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.md,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderRadius: radius.md,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#334155',
   },
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: 'center',
     borderRadius: radius.md,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#334155',
   },
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: radius.md,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#334155',
     alignItems: 'center',
@@ -746,3 +746,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
+
+

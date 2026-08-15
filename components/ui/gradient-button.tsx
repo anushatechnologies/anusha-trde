@@ -33,17 +33,21 @@ export const GradientButton = ({
 
   if (loading) {
     const spinnerColor =
-      variant === 'secondary' || variant === 'ghost' || variant === 'outline' ? colors.cyan : colors.surface;
+      variant === 'secondary' || variant === 'ghost' || variant === 'outline' ? colors.primary : '#FFFFFF';
 
     return (
       <View style={[styles.wrap, style]}>
-        <LinearGradient
-          colors={variant === 'secondary' || variant === 'ghost' ? ['#131F37', '#0F172A'] : gradients.primary}
-          style={[styles.primary, sizeStyles, styles.loadingState]}
+        <View
+          style={[
+            styles.primary,
+            variant === 'secondary' || variant === 'outline' ? styles.secondary : null,
+            sizeStyles,
+            styles.loadingState,
+          ]}
         >
           <ActivityIndicator size="small" color={spinnerColor} />
-          <Text style={styles.loadingLabel}>{label}</Text>
-        </LinearGradient>
+          <Text style={[styles.loadingLabel, { color: spinnerColor }]}>{label}</Text>
+        </View>
       </View>
     );
   }
@@ -65,7 +69,7 @@ export const GradientButton = ({
         onPress={isInteractive ? onPress : undefined}
         style={({ pressed }) => [styles.wrap, pressed && isInteractive && styles.pressed, disabled && styles.disabledWrap, style]}
       >
-        <View style={[styles.secondary, sizeStyles]}>{renderContent(colors.cyan)}</View>
+        <View style={[styles.secondary, sizeStyles]}>{renderContent('#374151')}</View>
       </Pressable>
     );
   }
@@ -76,23 +80,7 @@ export const GradientButton = ({
         onPress={isInteractive ? onPress : undefined}
         style={({ pressed }) => [styles.wrap, pressed && isInteractive && styles.pressed, disabled && styles.disabledWrap, style]}
       >
-        <View style={[styles.outline, sizeStyles]}>{renderContent('#FFFFFF')}</View>
-      </Pressable>
-    );
-  }
-
-  if (variant === 'glass') {
-    return (
-      <Pressable
-        onPress={isInteractive ? onPress : undefined}
-        style={({ pressed }) => [styles.wrap, pressed && isInteractive && styles.pressed, disabled && styles.disabledWrap, style]}
-      >
-        <LinearGradient
-          colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.03)']}
-          style={[styles.glassBtn, sizeStyles]}
-        >
-          {renderContent('#FFFFFF')}
-        </LinearGradient>
+        <View style={[styles.outline, sizeStyles]}>{renderContent('#374151')}</View>
       </Pressable>
     );
   }
@@ -103,9 +91,9 @@ export const GradientButton = ({
         onPress={isInteractive ? onPress : undefined}
         style={({ pressed }) => [styles.wrap, pressed && isInteractive && styles.pressed, disabled && styles.disabledWrap, style]}
       >
-        <LinearGradient colors={gradients.emeraldProfit} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.primary, sizeStyles]}>
+        <View style={[styles.profitBtn, sizeStyles]}>
           {renderContent('#FFFFFF')}
-        </LinearGradient>
+        </View>
       </Pressable>
     );
   }
@@ -116,9 +104,9 @@ export const GradientButton = ({
         onPress={isInteractive ? onPress : undefined}
         style={({ pressed }) => [styles.wrap, pressed && isInteractive && styles.pressed, disabled && styles.disabledWrap, style]}
       >
-        <LinearGradient colors={['#EF4444', '#DC2626']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.primary, sizeStyles]}>
+        <View style={[styles.dangerBtn, sizeStyles]}>
           {renderContent('#FFFFFF')}
-        </LinearGradient>
+        </View>
       </Pressable>
     );
   }
@@ -128,9 +116,9 @@ export const GradientButton = ({
       onPress={isInteractive ? onPress : undefined}
       style={({ pressed }) => [styles.wrap, pressed && isInteractive && styles.pressed, disabled && styles.disabledWrap, style]}
     >
-      <LinearGradient colors={gradients.primary} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.primary, sizeStyles]}>
+      <View style={[styles.primary, sizeStyles]}>
         {renderContent('#FFFFFF')}
-      </LinearGradient>
+      </View>
     </Pressable>
   );
 };
@@ -147,50 +135,58 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primary: {
-    minHeight: 54,
+    minHeight: 52,
     paddingHorizontal: 20,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.glow,
+    backgroundColor: '#2563EB',
+    ...shadows.soft,
   },
   secondary: {
-    minHeight: 54,
+    minHeight: 52,
     paddingHorizontal: 20,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderColor: '#D1D5DB',
   },
   outline: {
-    minHeight: 54,
+    minHeight: 52,
     paddingHorizontal: 20,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.18)',
+    borderColor: '#D1D5DB',
   },
-  glassBtn: {
-    minHeight: 54,
+  profitBtn: {
+    minHeight: 52,
     paddingHorizontal: 20,
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: '#16A34A',
+  },
+  dangerBtn: {
+    minHeight: 52,
+    paddingHorizontal: 20,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#DC2626',
   },
   compact: {
-    minHeight: 46,
+    minHeight: 44,
     paddingHorizontal: 14,
   },
   label: {
-    fontFamily: fontFamily.bodyBold,
+    fontFamily: fontFamily.bodySemi,
     fontSize: 15,
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   loadingState: {
     flexDirection: 'row',
@@ -198,12 +194,12 @@ const styles = StyleSheet.create({
     opacity: 0.88,
   },
   loadingLabel: {
-    fontFamily: fontFamily.bodyBold,
+    fontFamily: fontFamily.bodySemi,
     fontSize: 14,
-    color: colors.surface,
+    color: '#FFFFFF',
   },
   pressed: {
-    transform: [{ scale: 0.975 }],
+    transform: [{ scale: 0.98 }],
     opacity: 0.92,
   },
   disabledWrap: {

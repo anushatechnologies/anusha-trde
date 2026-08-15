@@ -28,27 +28,32 @@ export const StatusBadge = ({
 }: StatusBadgeProps) => {
   const normalized = (status || '').toLowerCase().trim();
 
-  let badgeColor = colors.muted;
-  let badgeBg = 'rgba(100, 116, 139, 0.15)';
-  let badgeBorder = 'rgba(100, 116, 139, 0.3)';
+  let badgeColor = '#475569';
+  let badgeBg = '#F1F5F9';
+  let badgeBorder = '#E2E8F0';
   let displayLabel = label || status;
   let iconName: keyof typeof Ionicons.glyphMap = 'ellipse';
 
   if (normalized === 'active' || normalized === 'approved' || normalized === 'verified' || normalized === 'completed' || normalized === 'success') {
-    badgeColor = colors.successLight;
-    badgeBg = 'rgba(16, 185, 129, 0.16)';
-    badgeBorder = 'rgba(52, 211, 153, 0.35)';
+    badgeColor = '#166534';
+    badgeBg = '#DCFCE7';
+    badgeBorder = '#BBF7D0';
     iconName = 'checkmark-circle';
-  } else if (normalized === 'pending' || normalized === 'processing' || normalized === 'in_progress' || normalized === 'submitted') {
-    badgeColor = colors.warningLight;
-    badgeBg = 'rgba(245, 158, 11, 0.16)';
-    badgeBorder = 'rgba(251, 191, 36, 0.35)';
+  } else if (normalized === 'pending' || normalized === 'processing' || normalized === 'in_progress' || normalized === 'submitted' || normalized === 'pending_approval' || normalized === 'under_review') {
+    badgeColor = '#92400E';
+    badgeBg = '#FEF3C7';
+    badgeBorder = '#FDE68A';
     iconName = 'time-outline';
-  } else if (normalized === 'rejected' || normalized === 'failed' || normalized === 'locked' || normalized === 'error') {
-    badgeColor = colors.dangerLight;
-    badgeBg = 'rgba(239, 68, 68, 0.16)';
-    badgeBorder = 'rgba(248, 113, 113, 0.35)';
+  } else if (normalized === 'rejected' || normalized === 'failed' || normalized === 'locked' || normalized === 'error' || normalized === 'cancelled' || normalized === 'suspended') {
+    badgeColor = '#991B1B';
+    badgeBg = '#FEE2E2';
+    badgeBorder = '#FECACA';
     iconName = 'close-circle';
+  } else if (normalized === 'info' || normalized === 'initiated') {
+    badgeColor = '#1E40AF';
+    badgeBg = '#DBEAFE';
+    badgeBorder = '#BFDBFE';
+    iconName = 'information-circle';
   }
 
   const isSmall = size === 'sm';

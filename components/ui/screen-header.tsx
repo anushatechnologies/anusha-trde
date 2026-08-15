@@ -34,7 +34,7 @@ export const ScreenHeader = ({
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
-              <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+              <Ionicons name="chevron-back" size={20} color="#374151" />
             </Pressable>
           ) : null}
 
@@ -57,7 +57,7 @@ export const ScreenHeader = ({
             accessibilityRole="button"
             accessibilityLabel="Open header action"
           >
-            <Ionicons name={rightIcon} size={18} color={colors.cyan} />
+            <Ionicons name={rightIcon} size={18} color="#374151" />
             {rightBadge ? <View style={styles.badgeDot} /> : null}
           </Pressable>
         ) : null}
@@ -85,12 +85,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconButton: {
-    width: 42,
-    height: 42,
+    width: 40,
+    height: 40,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#0F172A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.soft,
@@ -98,16 +98,16 @@ const styles = StyleSheet.create({
   iconButtonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.96 }],
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
   },
   badgeDot: {
     position: 'absolute',
-    top: 9,
-    right: 9,
+    top: 8,
+    right: 8,
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: colors.danger,
+    backgroundColor: '#DC2626',
   },
   copyWrap: {
     flex: 1,
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.headingSemi,
     fontSize: 22,
     lineHeight: 28,
-    color: '#FFFFFF',
+    color: '#111827',
     letterSpacing: -0.3,
   },
   titleCompact: {
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 18,
-    color: colors.textSecondary,
+    color: '#6B7280',
   },
   subtitleCompact: {
     fontSize: 12,

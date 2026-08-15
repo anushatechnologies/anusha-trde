@@ -25,20 +25,20 @@ export const StatCard = ({
   actionLabel = 'View details',
 }: StatCardProps) => {
   const cardContent = (
-    <SurfaceCard glass="dark" style={styles.card}>
+    <SurfaceCard style={styles.card}>
       <View style={styles.headerRow}>
-        <View style={[styles.iconWrap, { backgroundColor: `${accent}22`, borderColor: `${accent}40` }]}>
+        <View style={[styles.iconWrap, { backgroundColor: `${accent}14`, borderColor: `${accent}28` }]}>
           {icon}
         </View>
 
         {change ? (
           <View style={styles.changeBadge}>
-            <Ionicons name="trending-up" size={11} color={colors.successLight} />
+            <Ionicons name="trending-up" size={11} color={colors.success} />
             <Text style={styles.changeText}>{change}</Text>
           </View>
         ) : onPress ? (
-          <View style={[styles.chevronWrap, { backgroundColor: 'rgba(255, 255, 255, 0.08)' }]}>
-            <Ionicons name="arrow-forward" size={13} color={colors.cyan} />
+          <View style={styles.chevronWrap}>
+            <Ionicons name="arrow-forward" size={13} color={colors.primary} />
           </View>
         ) : null}
       </View>
@@ -62,7 +62,7 @@ export const StatCard = ({
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.pressable, pressed && styles.pressablePressed]}
-      android_ripple={{ color: `${accent}16` }}
+      android_ripple={{ color: `${accent}12` }}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={actionLabel}
@@ -96,8 +96,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
-    ...shadows.glass,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    ...shadows.card,
   },
   headerRow: {
     flexDirection: 'row',
@@ -108,7 +109,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 13,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -124,8 +126,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-    backgroundColor: 'rgba(16, 185, 129, 0.16)',
-    borderColor: 'rgba(52, 211, 153, 0.35)',
+    backgroundColor: '#DCFCE7',
+    borderColor: '#BBF7D0',
     borderWidth: 1,
     borderRadius: radius.pill,
     paddingHorizontal: 8,
@@ -134,7 +136,7 @@ const styles = StyleSheet.create({
   changeText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: colors.successLight,
+    color: '#166534',
   },
   copyBlock: {
     gap: 4,
@@ -149,7 +151,7 @@ const styles = StyleSheet.create({
   value: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 21,
-    color: '#FFFFFF',
+    color: '#111827',
     letterSpacing: -0.3,
   },
 });

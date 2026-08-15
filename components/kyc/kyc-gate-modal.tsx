@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderRadius: radius.xxl,
     borderWidth: 1,
     borderColor: '#334155',
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   featureBox: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderRadius: radius.md,
     padding: 14,
     gap: 10,
@@ -327,3 +327,5 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 });
+
+

@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     padding: 14,
     gap: 6,
     marginVertical: 12,
@@ -254,3 +254,4 @@ const styles = StyleSheet.create({
     color: colors.cyan,
   },
 });
+

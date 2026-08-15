@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   screen: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#080D1A',
+    backgroundColor: '#F7F8FA',
   },
   container: {
     width: '100%',
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 24,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)',
     alignItems: 'center',
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#0F172A',
+    borderColor: '#E5E7EB',
   },
   brandName: {
     fontFamily: fontFamily.heading,
@@ -364,3 +364,4 @@ const styles = StyleSheet.create({
     color: colors.dangerLight,
   },
 });
+

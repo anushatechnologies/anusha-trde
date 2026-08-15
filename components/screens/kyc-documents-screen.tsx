@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
   },
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 120,
     borderRadius: radius.md,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
@@ -202,3 +202,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
 });
+

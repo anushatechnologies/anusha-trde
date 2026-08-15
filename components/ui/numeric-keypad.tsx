@@ -89,9 +89,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.soft,
@@ -101,12 +101,12 @@ const styles = StyleSheet.create({
     height: 60,
   },
   specialKey: {
-    backgroundColor: '#1E293B',
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E5E7EB',
   },
   keyPressed: {
-    backgroundColor: 'rgba(56, 189, 248, 0.18)',
-    borderColor: colors.cyan,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#2563EB',
     transform: [{ scale: 0.94 }],
   },
   keyText: {
@@ -115,3 +115,6 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
 });
+
+
+

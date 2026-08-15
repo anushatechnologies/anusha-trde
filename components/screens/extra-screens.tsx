@@ -688,7 +688,7 @@ export const WithdrawScreen = () => {
       {/* Destination Bank Account Card */}
       <SurfaceCard glass="dark">
         <SectionTitle title="Destination Bank Account" actionLabel="Change" onActionPress={() => router.push('/bank-details')} />
-        <View style={{ backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.25)', padding: 14, gap: 6 }}>
+        <View style={{ backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: '#DBEAFE', padding: 14, gap: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ fontFamily: fontFamily.headingSemi, fontSize: 16, color: '#FFFFFF' }}>{bankName}</Text>
             <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: 'rgba(52, 211, 153, 0.35)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill }}>
@@ -718,7 +718,7 @@ export const WithdrawScreen = () => {
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: radius.pill,
-                  backgroundColor: amount === String(amt) ? 'rgba(56, 189, 248, 0.2)' : '#0F172A',
+                  backgroundColor: amount === String(amt) ? 'rgba(56, 189, 248, 0.2)' : '#F8FAFC',
                   borderWidth: 1,
                   borderColor: amount === String(amt) ? colors.cyan : 'rgba(255, 255, 255, 0.12)',
                 },
@@ -738,7 +738,7 @@ export const WithdrawScreen = () => {
                   paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: radius.pill,
-                  backgroundColor: amount === String(availableBalance) ? 'rgba(56, 189, 248, 0.2)' : '#0F172A',
+                  backgroundColor: amount === String(availableBalance) ? 'rgba(56, 189, 248, 0.2)' : '#F8FAFC',
                   borderWidth: 1,
                   borderColor: amount === String(availableBalance) ? colors.cyan : 'rgba(255, 255, 255, 0.12)',
                 },
@@ -967,7 +967,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
   },
   filterChipActive: {
     backgroundColor: 'rgba(37, 99, 235, 0.25)',
@@ -993,7 +993,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.35)',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     fontFamily: fontFamily.headingSemi,
     fontSize: 20,
@@ -1010,4 +1010,5 @@ const styles = StyleSheet.create({
     color: colors.cyan,
   },
 });
+
 

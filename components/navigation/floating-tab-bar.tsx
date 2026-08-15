@@ -51,11 +51,7 @@ export const FloatingTabBar = ({ state, descriptors, navigation }: BottomTabBarP
 
   return (
     <View pointerEvents="box-none" style={styles.outerContainer}>
-      <View style={[styles.glassWrapper, { width: containerWidth, marginBottom: bottomPadding }]}>
-        {Platform.OS === 'ios' || Platform.OS === 'android' ? (
-          <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFillObject} />
-        ) : null}
-
+      <View style={[styles.barWrapper, { width: containerWidth, marginBottom: bottomPadding }]}>
         <View style={styles.tabBarContent}>
           {state.routes.map((route, index) => {
             const descriptor = descriptors[route.key];
@@ -97,32 +93,20 @@ export const FloatingTabBar = ({ state, descriptors, navigation }: BottomTabBarP
                 {/* Active Indicator Bar at Top */}
                 {isFocused ? (
                   <View style={styles.activeDotContainer}>
-                    <LinearGradient
-                      colors={[colors.cyan, colors.primary]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={styles.activeDot}
-                    />
+                    <View style={styles.activeDot} />
                   </View>
                 ) : (
                   <View style={styles.activeDotPlaceholder} />
                 )}
 
                 {/* Icon Tile */}
-                {isFocused ? (
-                  <LinearGradient
-                    colors={gradients.primary}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={[styles.iconTileActive, isCompact && styles.iconTileCompact]}
-                  >
-                    <IconComp name={meta.activeIcon as any} size={isCompact ? 18 : 20} color="#FFFFFF" />
-                  </LinearGradient>
-                ) : (
-                  <View style={[styles.iconTileInactive, isCompact && styles.iconTileCompact]}>
-                    <IconComp name={meta.inactiveIcon as any} size={isCompact ? 18 : 20} color="#94A3B8" />
-                  </View>
-                )}
+                <View style={[styles.iconTile, isFocused && styles.iconTileActive, isCompact && styles.iconTileCompact]}>
+                  <IconComp
+                    name={(isFocused ? meta.activeIcon : meta.inactiveIcon) as any}
+                    size={isCompact ? 20 : 22}
+                    color={isFocused ? '#2563EB' : '#6B7280'}
+                  />
+                </View>
 
                 {/* Tab Label */}
                 <Text
@@ -153,17 +137,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  glassWrapper: {
-    borderRadius: 28,
+  barWrapper: {
+    borderRadius: 24,
     overflow: 'hidden',
-    backgroundColor: 'rgba(15, 23, 42, 0.92)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    ...shadows.card,
   },
   tabBarContent: {
     flexDirection: 'row',
@@ -177,52 +157,47 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 4,
+    paddingVertical: 4,
+    borderRadius: 16,
+    gap: 3,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    backgroundColor: '#EFF6FF',
   },
   tabItemPressed: {
     opacity: 0.85,
-    transform: [{ scale: 0.94 }],
+    transform: [{ scale: 0.95 }],
   },
   activeDotContainer: {
-    height: 4,
+    height: 3,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
   },
   activeDotPlaceholder: {
-    height: 4,
+    height: 3,
     marginBottom: 2,
   },
   activeDot: {
     width: 14,
-    height: 3.5,
-    borderRadius: 2,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#2563EB',
   },
-  iconTileActive: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.glow,
-  },
-  iconTileInactive: {
-    width: 38,
-    height: 38,
-    borderRadius: 14,
+  iconTile: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
+  iconTileActive: {
+    backgroundColor: 'transparent',
+  },
   iconTileCompact: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
   },
   label: {
     fontFamily: fontFamily.bodySemi,
@@ -234,10 +209,10 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     fontFamily: fontFamily.bodyBold,
-    color: colors.cyan,
-    letterSpacing: 0.2,
+    color: '#2563EB',
+    letterSpacing: 0.1,
   },
   labelInactive: {
-    color: '#94A3B8',
+    color: '#6B7280',
   },
 });

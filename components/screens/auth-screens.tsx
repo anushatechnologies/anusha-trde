@@ -112,10 +112,10 @@ const RegistrationStepCard = ({
   children?: ReactNode;
 }) => (
   <View style={[styles.registrationShell, shellStyle]}>
-    <LinearGradient colors={gradients.dark} style={[styles.registrationHero, heroStyle]}>
+    <View style={[styles.registrationHero, heroStyle]}>
       <View style={styles.registrationTopRow}>
         <Pressable onPress={onBackPress} style={({ pressed }) => [styles.registrationBackButton, pressed && styles.registrationBackButtonPressed]}>
-          <Ionicons name="arrow-back" size={22} color={colors.surface} />
+          <Ionicons name="arrow-back" size={22} color="#374151" />
         </Pressable>
         <Text style={styles.registrationStepLabel}>{stepLabel}</Text>
         <View style={styles.registrationSpacer} />
@@ -127,7 +127,7 @@ const RegistrationStepCard = ({
 
       <Text style={styles.registrationTitle}>{title}</Text>
       <Text style={styles.registrationSubtitle}>{subtitle}</Text>
-    </LinearGradient>
+    </View>
 
     <View style={[styles.registrationBody, bodyStyle]}>{children}</View>
   </View>
@@ -279,11 +279,11 @@ export const LoginScreen = () => {
     <AppScreen
       contentStyle={styles.loginScreen}
       fullBleed
-      backgroundColor={colors.dark}
+      backgroundColor={'#F7F8FA'}
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
 
       <View style={[styles.loginShell, !isTablet && styles.loginShellMobile]}>
         <LinearGradient colors={gradients.dark} style={[styles.loginHero, { paddingTop: Math.max(insets.top + 20, 36) }]}>
@@ -304,7 +304,7 @@ export const LoginScreen = () => {
         <View style={[styles.loginPanel, !isTablet && styles.loginPanelMobile, { paddingBottom: Math.max(insets.bottom + 24, 32) }]}>
           <View style={[styles.loginFormBlock, isCompact && styles.loginFormBlockCompact]}>
             {/* Mode Switcher Tabs */}
-            <View style={{ flexDirection: 'row', backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', padding: 4, marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: radius.md, borderWidth: 1, borderColor: '#E5E7EB', padding: 4, marginBottom: 16 }}>
               <Pressable
                 onPress={() => setLoginMode('password')}
                 style={{
@@ -574,8 +574,8 @@ export const RegisterScreen = () => {
   };
 
   return (
-    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={colors.dark} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
       <RegistrationStepCard
         stepLabel="CREATE ACCOUNT"
         title="Create Account"
@@ -835,11 +835,11 @@ export const OtpScreen = () => {
     <AppScreen
       contentStyle={styles.registrationFlowScreen}
       fullBleed
-      backgroundColor={colors.dark}
+      backgroundColor={'#F7F8FA'}
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'always' }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
       <Modal visible={Boolean(successState)} transparent animationType="fade" onRequestClose={() => successState?.onContinue()}>
         <View style={styles.successModalOverlay}>
           <Pressable style={styles.successModalBackdrop} onPress={() => successState?.onContinue()} />
@@ -1047,8 +1047,8 @@ export const ForgotPasswordScreen = () => {
   };
 
   return (
-    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={colors.dark} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
       <RegistrationStepCard
         stepLabel={step === 'mobile' ? 'STEP 1 OF 3' : step === 'otp' ? 'STEP 2 OF 3' : 'STEP 3 OF 3'}
         title={step === 'mobile' ? 'Forgot Password' : step === 'otp' ? 'Verify Mobile OTP' : 'Set New Password'}
@@ -1196,8 +1196,8 @@ export const ResetPasswordScreen = () => {
   });
 
   return (
-    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={colors.dark} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
       <RegistrationStepCard
         stepLabel="STEP 3 OF 3"
         title="Create New Password"
@@ -1339,8 +1339,8 @@ export const ForgotMpinScreen = () => {
   };
 
   return (
-    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={colors.dark} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
       <RegistrationStepCard
         stepLabel={step === 'mobile' ? 'STEP 1 OF 3' : step === 'otp' ? 'STEP 2 OF 3' : 'STEP 3 OF 3'}
         title={step === 'mobile' ? 'Forgot MPIN' : step === 'otp' ? 'Verify Mobile OTP' : 'Set New MPIN'}
@@ -1722,14 +1722,14 @@ const styles = StyleSheet.create({
   },
   loginScreen: {
     flexGrow: 1,
-    backgroundColor: colors.dark,
+    backgroundColor: '#F7F8FA',
   },
   loginShell: {
     alignSelf: 'center',
     width: '100%',
     maxWidth: 540,
     minHeight: '100%',
-    backgroundColor: colors.dark,
+    backgroundColor: '#F7F8FA',
   },
   loginShellMobile: {
     alignSelf: 'stretch',
@@ -1741,7 +1741,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingBottom: 108,
     gap: 24,
-    backgroundColor: colors.dark,
+    backgroundColor: '#1E40AF',
   },
   loginGlowOrbPrimary: {
     position: 'absolute',
@@ -1750,7 +1750,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: 'rgba(96,165,250,0.14)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   loginGlowOrbSecondary: {
     position: 'absolute',
@@ -1759,7 +1759,7 @@ const styles = StyleSheet.create({
     width: 170,
     height: 170,
     borderRadius: 85,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   loginHeroHeader: {
     alignItems: 'center',
@@ -1770,9 +1770,9 @@ const styles = StyleSheet.create({
     width: 112,
     height: 112,
     borderRadius: 34,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
+    borderColor: 'rgba(255,255,255,0.25)',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.soft,
@@ -1784,15 +1784,15 @@ const styles = StyleSheet.create({
   loginEyebrow: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    letterSpacing: 1.6,
-    color: '#93C5FD',
+    letterSpacing: 1.4,
+    color: 'rgba(255,255,255,0.85)',
     textTransform: 'uppercase',
   },
   loginHeroTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 34,
-    lineHeight: 40,
-    color: colors.surface,
+    fontSize: 32,
+    lineHeight: 38,
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   loginHeroSubtitle: {
@@ -1800,7 +1800,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 14,
     lineHeight: 22,
-    color: 'rgba(255,255,255,0.78)',
+    color: 'rgba(255,255,255,0.80)',
     textAlign: 'center',
   },
   loginPillRow: {
@@ -1830,14 +1830,14 @@ const styles = StyleSheet.create({
     marginTop: -32,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    backgroundColor: '#080D1A',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 28,
     gap: 18,
     minHeight: 440,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.10)',
+    borderColor: '#E5E7EB',
   },
   loginPanelMobile: {
     flexGrow: 1,
@@ -1941,23 +1941,23 @@ const styles = StyleSheet.create({
   loginInputLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: '#E2E8F0',
+    color: '#374151',
   },
   registrationInputLabel: {
-    color: '#E2E8F0',
+    color: '#374151',
   },
   loginInputShell: {
     minHeight: 52,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#0F172A',
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
   },
   loginInputText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 14.5,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   loginUtilityRow: {
     flexDirection: 'row',
@@ -1973,21 +1973,22 @@ const styles = StyleSheet.create({
     minHeight: 68,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#0F172A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 10,
+    ...shadows.card,
   },
   loginUtilityCardPressed: {
     opacity: 0.9,
-    backgroundColor: '#131F37',
+    backgroundColor: '#F8FAFC',
   },
   loginUtilityIcon: {
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1998,7 +1999,7 @@ const styles = StyleSheet.create({
   loginUtilityTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   loginUtilitySubtitle: {
     fontFamily: fontFamily.body,
@@ -2010,9 +2011,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderRadius: 16,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
+    borderColor: '#DBEAFE',
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -2020,7 +2021,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2031,7 +2032,7 @@ const styles = StyleSheet.create({
   loginSecurityTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   loginSecurityText: {
     fontFamily: fontFamily.body,
@@ -2054,19 +2055,21 @@ const styles = StyleSheet.create({
   loginFooterLink: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 13,
-    color: colors.cyan,
+    color: '#2563EB',
   },
   registrationFlowScreen: {
     flexGrow: 1,
-    backgroundColor: '#080D1A',
+    backgroundColor: '#F7F8FA',
   },
   registrationShell: {
     alignSelf: 'center',
     width: '100%',
     maxWidth: 540,
-    borderRadius: 34,
-    backgroundColor: '#080D1A',
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     ...shadows.card,
   },
   registrationShellMobile: {
@@ -2082,9 +2085,12 @@ const styles = StyleSheet.create({
   registrationHero: {
     paddingHorizontal: 22,
     paddingTop: 18,
-    paddingBottom: 34,
+    paddingBottom: 28,
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
   registrationTopRow: {
     width: '100%',
@@ -2098,9 +2104,9 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: '#E5E7EB',
   },
   registrationBackButtonPressed: {
     opacity: 0.85,
@@ -2111,28 +2117,27 @@ const styles = StyleSheet.create({
   registrationStepLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    letterSpacing: 1.5,
-    color: colors.cyan,
+    letterSpacing: 1,
+    color: '#6B7280',
     textTransform: 'uppercase',
   },
   registrationIconTile: {
-    width: 62,
-    height: 62,
-    borderRadius: 20,
-    backgroundColor: '#0F172A',
-    borderWidth: 1.5,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
+    borderColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
-    ...shadows.glow,
   },
   registrationTitle: {
     marginTop: 4,
     fontFamily: fontFamily.heading,
-    fontSize: 24,
-    lineHeight: 30,
-    color: '#FFFFFF',
+    fontSize: 22,
+    lineHeight: 28,
+    color: '#111827',
     textAlign: 'center',
     letterSpacing: -0.3,
   },
@@ -2140,7 +2145,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 13.5,
     lineHeight: 21,
-    color: 'rgba(255,255,255,0.72)',
+    color: '#6B7280',
     textAlign: 'center',
     maxWidth: 320,
   },
@@ -2149,7 +2154,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 26,
     gap: 16,
-    backgroundColor: '#080D1A',
+    backgroundColor: '#F7F8FA',
   },
   registrationBodyMobile: {
     flexGrow: 1,
@@ -2159,7 +2164,7 @@ const styles = StyleSheet.create({
   registrationProgressRail: {
     height: 4,
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#E5E7EB',
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -2167,11 +2172,11 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 22,
     paddingBottom: 10,
-    backgroundColor: colors.surface,
+    backgroundColor: '#FFFFFF',
   },
   registrationProgressFill: {
     height: '100%',
-    backgroundColor: colors.cyan,
+    backgroundColor: '#2563EB',
   },
   registrationHint: {
     textAlign: 'center',
@@ -2278,7 +2283,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
     lineHeight: 20,
-    color: colors.surface,
+    color: '#374151',
   },
   bottomLink: {
     textAlign: 'center',
@@ -2383,29 +2388,31 @@ const styles = StyleSheet.create({
   },
   otpBox: {
     flex: 1,
-    minHeight: 60,
-    borderRadius: 18,
+    minHeight: 58,
+    borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    backgroundColor: '#0F172A',
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    ...shadows.soft,
   },
   otpBoxFocused: {
-    borderColor: colors.cyan,
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderColor: '#2563EB',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 2,
   },
   otpBoxFilled: {
-    borderColor: 'rgba(56, 189, 248, 0.4)',
-    backgroundColor: '#1E293B',
+    borderColor: '#2563EB',
+    backgroundColor: '#EFF6FF',
   },
   otpDigit: {
     fontFamily: fontFamily.heading,
     fontSize: 24,
-    color: '#94A3B8',
+    color: '#9CA3AF',
   },
   otpDigitFilled: {
-    color: '#FFFFFF',
+    color: '#111827',
   },
   otpOverlayInput: {
     position: 'absolute',
@@ -2455,11 +2462,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   glassHero: {
-    minHeight: 420,
+    minHeight: 380,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 18,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: '#EFF6FF',
+    borderRadius: 24,
   },
   biometricGraphic: {
     marginTop: 18,
@@ -2473,15 +2481,15 @@ const styles = StyleSheet.create({
   },
   glassTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 28,
-    color: colors.surface,
+    fontSize: 26,
+    color: '#111827',
     textAlign: 'center',
   },
   glassSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 14,
     lineHeight: 22,
-    color: 'rgba(255,255,255,0.74)',
+    color: '#6B7280',
     textAlign: 'center',
   },
   biometricStatusRow: {
@@ -2497,17 +2505,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   biometricStatusBadgeActive: {
-    borderColor: 'rgba(255,255,255,0.32)',
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderColor: '#DBEAFE',
+    backgroundColor: '#EFF6FF',
   },
   biometricStatusBadgeMuted: {
-    borderColor: 'rgba(255,255,255,0.18)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F8FAFC',
   },
   biometricStatusText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: colors.surface,
+    color: '#374151',
   },
   sessionHeader: {
     flexDirection: 'row',
@@ -2599,7 +2607,7 @@ const styles = StyleSheet.create({
   },
   successModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(3, 7, 18, 0.85)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 22,
@@ -2610,16 +2618,16 @@ const styles = StyleSheet.create({
   successModalCard: {
     width: '100%',
     maxWidth: 400,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderRadius: 28,
-    borderWidth: 1.5,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     paddingHorizontal: 24,
     paddingTop: 28,
     paddingBottom: 24,
     alignItems: 'center',
     gap: 12,
-    ...shadows.glow,
+    ...shadows.card,
   },
   successModalBadge: {
     width: 72,
@@ -2629,21 +2637,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderColor: '#DBEAFE',
     ...shadows.card,
   },
   successModalTitle: {
     fontFamily: fontFamily.heading,
     fontSize: 22,
     lineHeight: 28,
-    color: '#FFFFFF',
+    color: '#111827',
     textAlign: 'center',
   },
   successModalSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 14,
     lineHeight: 21,
-    color: 'rgba(226, 232, 240, 0.85)',
+    color: '#6B7280',
     textAlign: 'center',
     paddingHorizontal: 6,
   },
@@ -2651,31 +2659,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderColor: '#DBEAFE',
     marginTop: 2,
     marginBottom: 4,
   },
   successModalPhoneText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: '#374151',
   },
   successModalVerifiedDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    backgroundColor: '#D1D5DB',
   },
   successModalVerifiedTag: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: colors.cyan,
+    color: '#2563EB',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
 });
+
+

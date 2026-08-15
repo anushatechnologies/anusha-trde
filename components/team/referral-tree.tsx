@@ -65,9 +65,10 @@ export const ReferralTree = ({ levels }: ReferralTreeProps) => {
 const styles = StyleSheet.create({
   container: {
     borderRadius: radius.md,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     paddingVertical: 12,
   },
 });
+

@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   softBase: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)',
   },
@@ -86,3 +86,4 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
+

@@ -80,7 +80,7 @@ export const InputField = ({
 
         <TextInput
           ref={inputRef}
-          placeholderTextColor="rgba(148, 163, 184, 0.65)"
+          placeholderTextColor="#9CA3AF"
           autoCapitalize="none"
           style={[styles.input, inputStyle]}
           secureTextEntry={hidden}
@@ -97,7 +97,7 @@ export const InputField = ({
 
         {secure ? (
           <Pressable onPress={() => setHidden((value) => !value)} style={styles.icon} hitSlop={10}>
-            <Ionicons name={hidden ? 'eye-outline' : 'eye-off-outline'} size={19} color={colors.textSecondary} />
+            <Ionicons name={hidden ? 'eye-outline' : 'eye-off-outline'} size={19} color="#6B7280" />
           </Pressable>
         ) : trailing ? (
           <View style={styles.icon}>{trailing}</View>
@@ -126,30 +126,29 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: '#E2E8F0',
+    color: '#374151',
   },
   requiredMark: {
-    color: colors.cyan,
+    color: colors.primary,
   },
   shell: {
-    minHeight: 54,
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#0F172A',
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
   },
   shellFocused: {
-    borderColor: colors.cyan,
-    backgroundColor: '#131F37',
-    ...shadows.glow,
+    borderColor: '#2563EB',
+    backgroundColor: '#FFFFFF',
   },
   shellError: {
-    borderColor: colors.danger,
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    borderColor: '#DC2626',
+    backgroundColor: '#FEF2F2',
   },
   icon: {
     alignItems: 'center',
@@ -163,19 +162,19 @@ const styles = StyleSheet.create({
   prefixText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   prefixDivider: {
     width: 1,
     height: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: '#E5E7EB',
   },
   input: {
     flex: 1,
     fontFamily: fontFamily.body,
     fontSize: 15,
-    color: '#FFFFFF',
-    minHeight: 54,
+    color: '#111827',
+    minHeight: 52,
     paddingVertical: 0,
   },
   errorRow: {
@@ -187,6 +186,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.dangerLight,
+    color: '#DC2626',
   },
 });

@@ -19,9 +19,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: '#0F172A',
+    backgroundcolor: '#374151',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    bordercolor: '#6B7280',
   },
   active: {
     backgroundColor: 'rgba(56, 189, 248, 0.15)',
@@ -36,3 +36,5 @@ const styles = StyleSheet.create({
     color: colors.cyan,
   },
 });
+
+

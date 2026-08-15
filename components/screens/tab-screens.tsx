@@ -117,7 +117,7 @@ export const HomeScreen = () => {
           onPress={() => router.push('/notifications')}
           style={({ pressed }) => [styles.notificationBtn, pressed && styles.notificationBtnPressed]}
         >
-          <Ionicons name="notifications-outline" size={20} color="#FFFFFF" />
+          <Ionicons name="notifications-outline" size={20} color="#374151" />
           <View style={styles.notificationDot} />
         </Pressable>
       </View>
@@ -136,17 +136,9 @@ export const HomeScreen = () => {
         </>
       ) : (
         <>
-          {/* Glassmorphic Portfolio Hero Card */}
+          {/* Light Fintech Portfolio Hero Card */}
           <FadeInView>
-            <SurfaceCard glass="dark" style={styles.portfolioHeroCard}>
-              <LinearGradient
-                colors={['#1E293B', '#0F172A']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <View style={styles.portfolioGlowOrb} />
-
+            <SurfaceCard style={styles.portfolioHeroCard}>
               <View style={styles.portfolioTopRow}>
                 <View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -155,7 +147,7 @@ export const HomeScreen = () => {
                       <Ionicons
                         name={showBalance ? 'eye-outline' : 'eye-off-outline'}
                         size={15}
-                        color={colors.cyan}
+                        color={colors.primary}
                       />
                     </Pressable>
                   </View>
@@ -164,7 +156,7 @@ export const HomeScreen = () => {
                   </Text>
                 </View>
                 <View style={styles.growthBadge}>
-                  <Ionicons name="trending-up" size={13} color={colors.successLight} />
+                  <Ionicons name="trending-up" size={13} color="#166534" />
                   <Text style={styles.growthBadgeText}>+{formatPercent(data.metrics.monthlyGrowth || 12.5)}</Text>
                 </View>
               </View>
@@ -174,29 +166,29 @@ export const HomeScreen = () => {
               {/* 4 Fast Action Pills */}
               <View style={styles.quickActionPillRow}>
                 <Pressable onPress={handleInvestPress} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: 'rgba(56, 189, 248, 0.18)', borderColor: 'rgba(56, 189, 248, 0.35)' }]}>
-                    <Ionicons name="rocket-outline" size={20} color={colors.cyan} />
+                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' }]}>
+                    <Ionicons name="rocket-outline" size={20} color="#2563EB" />
                   </View>
                   <Text style={styles.actionPillText}>Invest</Text>
                 </Pressable>
 
                 <Pressable onPress={handleInvestPress} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: 'rgba(16, 185, 129, 0.18)', borderColor: 'rgba(52, 211, 153, 0.35)' }]}>
-                    <Ionicons name="wallet-outline" size={20} color={colors.successLight} />
+                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#DCFCE7', borderColor: '#BBF7D0' }]}>
+                    <Ionicons name="wallet-outline" size={20} color="#16A34A" />
                   </View>
                   <Text style={styles.actionPillText}>Add Cash</Text>
                 </Pressable>
 
                 <Pressable onPress={() => router.push('/withdraw')} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: 'rgba(245, 158, 11, 0.18)', borderColor: 'rgba(251, 191, 36, 0.35)' }]}>
-                    <Ionicons name="arrow-up-outline" size={20} color={colors.warningLight} />
+                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+                    <Ionicons name="arrow-up-outline" size={20} color="#D97706" />
                   </View>
                   <Text style={styles.actionPillText}>Withdraw</Text>
                 </Pressable>
 
                 <Pressable onPress={() => router.push('/referrals')} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: 'rgba(168, 85, 247, 0.18)', borderColor: 'rgba(192, 132, 252, 0.35)' }]}>
-                    <Ionicons name="people-outline" size={20} color="#C084FC" />
+                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#F3E8FF', borderColor: '#E9D5FF' }]}>
+                    <Ionicons name="people-outline" size={20} color="#7C3AED" />
                   </View>
                   <Text style={styles.actionPillText}>Refer</Text>
                 </Pressable>
@@ -337,20 +329,14 @@ export const InvestScreen = () => {
       <ScreenHeader title="Invest" subtitle="Choose premium plans and project your daily earnings." onRightPress={() => router.push('/notifications')} />
 
       {/* Hero Banner */}
-      <SurfaceCard glass="dark" style={styles.investHeroCard}>
-        <LinearGradient
-          colors={['#1E293B', '#0F172A']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
+      <SurfaceCard style={styles.investHeroCard}>
         <View style={styles.heroRow}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>Premium Yield Plans</Text>
             <Text style={styles.heroSubtitle}>Grow your wealth with curated daily ROI plans, automated wallet payouts, and 100% capital security.</Text>
           </View>
           <View style={styles.heroIconBubble}>
-            <Ionicons name="trending-up-outline" size={40} color={colors.cyan} />
+            <Ionicons name="trending-up-outline" size={36} color={colors.primary} />
           </View>
         </View>
       </SurfaceCard>
@@ -392,7 +378,7 @@ export const InvestScreen = () => {
                     paddingHorizontal: 12,
                     paddingVertical: 7,
                     borderRadius: radius.pill,
-                    backgroundColor: isSelected ? 'rgba(56, 189, 248, 0.2)' : '#0F172A',
+                    backgroundColor: isSelected ? '#EFF6FF' : '#F8FAFC',
                     borderWidth: 1,
                     borderColor: isSelected ? colors.cyan : 'rgba(255, 255, 255, 0.12)',
                   },
@@ -425,22 +411,22 @@ export const InvestScreen = () => {
 
         {/* 4-Metric Projection Matrix */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginVertical: 10 }}>
-          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', padding: 12 }}>
+          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: '#E5E7EB', padding: 12 }}>
             <Text style={styles.calcLabel}>Daily Profit ({planRoi}%)</Text>
             <Text style={[styles.calcValue, { color: colors.successLight }]}>+{formatCurrency(projectedDaily)}</Text>
           </View>
 
-          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', padding: 12 }}>
+          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: '#E5E7EB', padding: 12 }}>
             <Text style={styles.calcLabel}>Weekly Profit</Text>
             <Text style={[styles.calcValue, { color: colors.cyan }]}>+{formatCurrency(projectedWeekly)}</Text>
           </View>
 
-          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', padding: 12 }}>
+          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: '#E5E7EB', padding: 12 }}>
             <Text style={styles.calcLabel}>Monthly Profit</Text>
             <Text style={[styles.calcValue, { color: colors.warningLight }]}>+{formatCurrency(projectedMonthly)}</Text>
           </View>
 
-          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)', padding: 12 }}>
+          <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: '#DBEAFE', padding: 12 }}>
             <Text style={styles.calcLabel}>Total at Maturity</Text>
             <Text style={[styles.calcValue, { color: '#FFFFFF' }]}>{formatCurrency(totalMaturityPayout)}</Text>
           </View>
@@ -539,20 +525,14 @@ export const TeamScreen = () => {
       <ScreenHeader title="Team Network" subtitle="Track your 6-level team hierarchy, commissions, and network growth." onRightPress={() => router.push('/notifications')} />
 
       {/* Hero Card */}
-      <SurfaceCard glass="dark" style={styles.teamHeroCard}>
-        <LinearGradient
-          colors={['#1E293B', '#0F172A']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
+      <SurfaceCard style={styles.teamHeroCard}>
         <View style={styles.heroRow}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroTitle}>6-Level Referral Network</Text>
             <Text style={styles.heroSubtitle}>Multi-tier commission tracking up to 10% direct sponsor bonus and daily team volume overrides.</Text>
           </View>
           <View style={styles.heroIconBubble}>
-            <Ionicons name="git-network-outline" size={40} color="#C084FC" />
+            <Ionicons name="git-network-outline" size={36} color="#7C3AED" />
           </View>
         </View>
       </SurfaceCard>
@@ -626,7 +606,7 @@ export const TeamScreen = () => {
                 </View>
               </View>
               {isExpanded ? (
-                <View style={{ marginTop: 8, padding: 10, borderRadius: radius.sm, backgroundColor: '#0F172A', borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.06)' }}>
+                <View style={{ marginTop: 8, padding: 10, borderRadius: radius.sm, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E5E7EB' }}>
                   <Text style={styles.levelDetail}>
                     Level {level.level} generates a recurring {formatPercent(level.commission)} commission payout on every investment created by team members in this tier.
                   </Text>
@@ -662,39 +642,33 @@ export const WalletScreen = () => {
     <AppScreen>
       <ScreenHeader title="Wallet" subtitle="Balance, payment methods, and recent transaction activity." onRightPress={() => router.push('/notifications')} />
 
-      <SurfaceCard glass="dark" style={styles.walletHeroCard}>
-        <LinearGradient
-          colors={['#1E293B', '#0F172A']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
+      <SurfaceCard style={styles.walletHeroCard}>
         <View style={styles.walletHeroRow}>
           <View style={styles.heroCopy}>
             <Text style={styles.heroEyebrow}>WALLET BALANCE</Text>
             <Text style={styles.walletAmount}>{formatCurrency(data?.balance || 0)}</Text>
             <Text style={styles.heroSubtitle}>Available to withdraw: {formatCurrency(data?.availableBalance || 0)}</Text>
           </View>
-          <MaterialCommunityIcons name="wallet-outline" size={56} color={colors.cyan} />
+          <MaterialCommunityIcons name="wallet-outline" size={48} color={colors.primary} />
         </View>
       </SurfaceCard>
 
       <View style={styles.actionGrid}>
         <Pressable style={styles.walletAction} onPress={() => router.push('/invest-apply')}>
-          <View style={[styles.walletActionIcon, { backgroundColor: 'rgba(56, 189, 248, 0.18)' }]}>
-            <Ionicons name="add" size={22} color={colors.cyan} />
+          <View style={[styles.walletActionIcon, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="add" size={22} color="#2563EB" />
           </View>
           <Text style={styles.walletActionLabel}>Add Money</Text>
         </Pressable>
         <Pressable style={styles.walletAction} onPress={() => router.push('/withdraw')}>
-          <View style={[styles.walletActionIcon, { backgroundColor: 'rgba(245, 158, 11, 0.18)' }]}>
-            <Ionicons name="arrow-up" size={22} color={colors.warningLight} />
+          <View style={[styles.walletActionIcon, { backgroundColor: '#FEF3C7' }]}>
+            <Ionicons name="arrow-up" size={22} color="#D97706" />
           </View>
           <Text style={styles.walletActionLabel}>Withdraw</Text>
         </Pressable>
         <Pressable style={styles.walletAction} onPress={() => router.push('/transactions')}>
-          <View style={[styles.walletActionIcon, { backgroundColor: 'rgba(168, 85, 247, 0.18)' }]}>
-            <Ionicons name="list" size={22} color="#C084FC" />
+          <View style={[styles.walletActionIcon, { backgroundColor: '#DCFCE7' }]}>
+            <Ionicons name="list" size={22} color="#16A34A" />
           </View>
           <Text style={styles.walletActionLabel}>Passbook</Text>
         </Pressable>
@@ -943,81 +917,72 @@ const styles = StyleSheet.create({
   dashboardGreeting: {
     fontFamily: fontFamily.body,
     fontSize: 12.5,
-    color: colors.cyan,
+    color: colors.textSecondary,
   },
   dashboardUserName: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 18,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   notificationBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: '#0F172A',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.glass,
+    ...shadows.soft,
   },
   notificationBtnPressed: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F8FAFC',
     transform: [{ scale: 0.96 }],
   },
   notificationDot: {
     position: 'absolute',
-    top: 10,
-    right: 11,
+    top: 8,
+    right: 9,
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: colors.cyan,
+    backgroundColor: '#DC2626',
   },
   portfolioHeroCard: {
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    backgroundColor: '#0F172A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     ...shadows.card,
   },
   investHeroCard: {
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    backgroundColor: '#0F172A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     ...shadows.card,
   },
   teamHeroCard: {
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    backgroundColor: '#0F172A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     ...shadows.card,
   },
   walletHeroCard: {
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    backgroundColor: '#0F172A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     ...shadows.card,
-  },
-  portfolioGlowOrb: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: 'rgba(56, 189, 248, 0.18)',
   },
   portfolioTopRow: {
     flexDirection: 'row',
@@ -1028,37 +993,37 @@ const styles = StyleSheet.create({
   portfolioLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    letterSpacing: 1.2,
-    color: colors.cyan,
+    letterSpacing: 0.8,
+    color: '#6B7280',
     textTransform: 'uppercase',
   },
   portfolioBalance: {
     marginTop: 4,
     fontFamily: fontFamily.heading,
-    fontSize: 32,
-    lineHeight: 38,
-    color: '#FFFFFF',
+    fontSize: 30,
+    lineHeight: 36,
+    color: '#111827',
   },
   growthBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: '#DCFCE7',
     borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
+    borderColor: '#BBF7D0',
     borderRadius: radius.pill,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4,
   },
   growthBadgeText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: colors.successLight,
+    color: '#166534',
   },
   portfolioMetricsDivider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    marginVertical: 18,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 16,
   },
   quickActionPillRow: {
     flexDirection: 'row',
@@ -1072,18 +1037,17 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   actionPillIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 46,
+    height: 46,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    ...shadows.glass,
   },
   actionPillText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: '#E2E8F0',
+    color: '#374151',
   },
   heroRow: {
     flexDirection: 'row',
@@ -1098,32 +1062,31 @@ const styles = StyleSheet.create({
   heroEyebrow: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: colors.cyan,
+    color: '#6B7280',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 1,
   },
   heroTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 24,
-    lineHeight: 30,
-    color: '#FFFFFF',
+    fontSize: 22,
+    lineHeight: 28,
+    color: '#111827',
   },
   heroSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    lineHeight: 20,
-    color: colors.textSecondary,
+    lineHeight: 19,
+    color: '#6B7280',
   },
   heroIconBubble: {
-    width: 76,
-    height: 76,
-    borderRadius: 24,
-    backgroundColor: 'rgba(15, 23, 42, 0.8)',
+    width: 68,
+    height: 68,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.glow,
   },
   overviewRow: {
     flexDirection: 'row',
@@ -1149,86 +1112,87 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   overviewMetricInteractive: {
-    minHeight: 94,
+    minHeight: 90,
     justifyContent: 'center',
     borderRadius: radius.md,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: '#E5E7EB',
     paddingHorizontal: 10,
     paddingVertical: 12,
-    ...shadows.glass,
+    ...shadows.card,
   },
   overviewValue: {
     fontFamily: fontFamily.headingSemi,
-    fontSize: 20,
-    color: '#FFFFFF',
+    fontSize: 19,
+    color: '#111827',
   },
   overviewLabel: {
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#6B7280',
   },
   overviewAction: {
     marginTop: 4,
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
+    color: '#2563EB',
   },
   supportingText: {
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#6B7280',
     marginTop: 6,
   },
   calcHelper: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#6B7280',
     marginBottom: 4,
   },
   amountInput: {
-    minHeight: 56,
+    minHeight: 52,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    backgroundColor: '#0F172A',
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     fontFamily: fontFamily.headingSemi,
     fontSize: 20,
-    color: '#FFFFFF',
+    color: '#111827',
     marginBottom: 12,
   },
   calcMetric: {
     flex: 1,
     gap: 4,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: '#E5E7EB',
     padding: 12,
     marginBottom: 12,
   },
   calcLabel: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 11,
-    color: colors.textSecondary,
+    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   calcValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 17,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   activeInvestmentCard: {
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    backgroundColor: '#0F172A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     padding: 16,
     gap: 10,
     marginBottom: 10,
-    ...shadows.glass,
+    ...shadows.card,
   },
   activeInvestmentHeader: {
     flexDirection: 'row',
@@ -1237,30 +1201,30 @@ const styles = StyleSheet.create({
   },
   activeInvestmentTitle: {
     fontFamily: fontFamily.headingSemi,
-    fontSize: 17,
-    color: '#FFFFFF',
+    fontSize: 16,
+    color: '#111827',
   },
   activeInvestmentSubtitle: {
     marginTop: 4,
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#6B7280',
   },
   activeInvestmentAmount: {
     fontFamily: fontFamily.headingSemi,
-    fontSize: 18,
-    color: colors.cyan,
+    fontSize: 17,
+    color: '#2563EB',
   },
   progressTrack: {
     height: 8,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#F1F5F9',
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: colors.cyan,
+    backgroundColor: '#2563EB',
   },
   progressMetaRow: {
     flexDirection: 'row',
@@ -1269,7 +1233,7 @@ const styles = StyleSheet.create({
   progressMetaText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#6B7280',
   },
   levelRow: {
     flexDirection: 'row',
@@ -1278,18 +1242,18 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    borderBottomColor: '#E5E7EB',
   },
   levelTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   levelMeta: {
     marginTop: 3,
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#6B7280',
   },
   levelRight: {
     alignItems: 'flex-end',
@@ -1298,19 +1262,19 @@ const styles = StyleSheet.create({
   levelAmount: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   levelCommission: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: colors.cyan,
+    color: '#2563EB',
   },
   levelDetail: {
     paddingVertical: 8,
     fontFamily: fontFamily.body,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.textSecondary,
+    color: '#4B5563',
   },
   walletHeroRow: {
     flexDirection: 'row',
@@ -1319,8 +1283,8 @@ const styles = StyleSheet.create({
   },
   walletAmount: {
     fontFamily: fontFamily.heading,
-    fontSize: 32,
-    color: '#FFFFFF',
+    fontSize: 30,
+    color: '#111827',
     marginTop: 4,
   },
   actionGrid: {
@@ -1331,12 +1295,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: radius.md,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     gap: 10,
-    ...shadows.glass,
+    ...shadows.card,
   },
   walletActionIcon: {
     width: 42,
@@ -1344,13 +1308,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   walletActionLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   filterRow: {
     flexDirection: 'row',
@@ -1360,23 +1322,23 @@ const styles = StyleSheet.create({
   filterChip: {
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#0F172A',
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
   filterChipActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.25)',
-    borderColor: colors.cyan,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#2563EB',
   },
   filterChipText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#6B7280',
     textTransform: 'capitalize',
   },
   filterChipTextActive: {
-    color: colors.cyan,
+    color: '#2563EB',
   },
   profileCard: {
     padding: 16,
@@ -1406,7 +1368,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.headingSemi,
     fontSize: 18,
     lineHeight: 22,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   profileNameCompact: {
     fontSize: 16,
@@ -1416,15 +1378,15 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 11.5,
     lineHeight: 16,
-    color: colors.textSecondary,
+    color: '#6B7280',
   },
   profileManageChip: {
-    minHeight: 36,
-    paddingHorizontal: 16,
+    minHeight: 34,
+    paddingHorizontal: 14,
     borderRadius: radius.pill,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
-    backgroundColor: '#0F172A',
+    borderColor: '#DBEAFE',
+    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1435,7 +1397,7 @@ const styles = StyleSheet.create({
   profileManageChipLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: colors.cyan,
+    color: '#2563EB',
   },
   profileMetaRow: {
     flexDirection: 'row',
@@ -1449,8 +1411,8 @@ const styles = StyleSheet.create({
     minWidth: 0,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    backgroundColor: '#080D1A',
+    borderColor: '#E5E7EB',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 2,
@@ -1458,14 +1420,14 @@ const styles = StyleSheet.create({
   profileMetaLabel: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 10.5,
-    color: colors.textSecondary,
+    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   profileMetaValue: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 13,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   profileMiniPressable: {
     borderRadius: radius.md,
@@ -1479,7 +1441,7 @@ const styles = StyleSheet.create({
   },
   profileMiniCard: {
     flex: 1,
-    minHeight: 102,
+    minHeight: 100,
     padding: 14,
     gap: 6,
     justifyContent: 'space-between',
@@ -1493,7 +1455,7 @@ const styles = StyleSheet.create({
   profileMiniLabel: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 11,
-    color: colors.textSecondary,
+    color: '#6B7280',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -1501,7 +1463,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.headingSemi,
     fontSize: 15,
     lineHeight: 20,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   profileMiniFooter: {
     paddingTop: 2,
@@ -1509,6 +1471,8 @@ const styles = StyleSheet.create({
   profileMiniHint: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 11,
-    color: colors.cyan,
+    color: '#2563EB',
   },
 });
+
+

@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    backgroundColor: '#0F172A',
+    borderColor: '#D1D5DB',
+    backgroundcolor: '#111827',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.glass,
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#131F37',
   },
   boxActive: {
-    borderColor: colors.cyan,
-    backgroundColor: '#1E293B',
+    borderColor: '#2563EB',
+    backgroundColor: '#F8FAFC',
     borderWidth: 2,
     shadowColor: colors.cyan,
     shadowOffset: { width: 0, height: 4 },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   digitText: {
     fontFamily: fontFamily.heading,
     fontSize: 26,
-    color: '#FFFFFF',
+    color: '#111827',
   },
   digitTextSix: {
     fontSize: 22,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(56, 189, 248, 0.10)',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.22)',
   },
@@ -207,3 +207,6 @@ const styles = StyleSheet.create({
     color: colors.cyan,
   },
 });
+
+
+

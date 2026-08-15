@@ -1265,7 +1265,7 @@ export const CompleteSignupScreen = () => {
             </View>
 
             {/* Application Overview Summary Card */}
-            <View style={[styles.termsTable, { backgroundColor: '#0F172A', borderColor: 'rgba(56, 189, 248, 0.3)', marginBottom: 16 }]}>
+            <View style={[styles.termsTable, { backgroundColor: '#FFFFFF', borderColor: '#E5E7EB', marginBottom: 16 }]}>
               <View style={[styles.termsRow, styles.termsRowHeader, { backgroundColor: 'rgba(56, 189, 248, 0.12)' }]}>
                 <Text style={[styles.termsCellFeatureHeader, { color: colors.cyan }]}>Application Summary</Text>
                 <Text style={[styles.termsCellDetailsHeader, { color: colors.cyan }]}>Status</Text>
@@ -1329,13 +1329,13 @@ export const CompleteSignupScreen = () => {
             <View style={{ flexDirection: 'row', gap: 10, marginVertical: 12 }}>
               <Pressable
                 onPress={openTerms}
-                style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.25)', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 12, backgroundColor: '#F8FAFC', borderRadius: radius.md, borderWidth: 1, borderColor: '#DBEAFE', alignItems: 'center' }}
               >
                 <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>📄 Read Terms</Text>
               </Pressable>
               <Pressable
                 onPress={openPrivacyPolicy}
-                style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.25)', alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 12, backgroundColor: '#F8FAFC', borderRadius: radius.md, borderWidth: 1, borderColor: '#DBEAFE', alignItems: 'center' }}
               >
                 <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>🔒 Read Privacy Policy</Text>
               </Pressable>
@@ -1415,16 +1415,16 @@ export const CompleteSignupScreen = () => {
       contentStyle={styles.page}
       fullBleed
       contentBottomInset={currentStep === 3 ? Math.max(insets.bottom + 220, 240) : Math.max(insets.bottom + 72, 88)}
-      backgroundColor={colors.dark}
+      backgroundColor={'#F7F8FA'}
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
+      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
       <View style={[styles.stepShell, !isTablet && styles.stepShellMobile]}>
         <LinearGradient colors={gradients.dark} style={[styles.heroPanel, { paddingTop: Math.max(insets.top + 12, 26) }]}>
           <View style={styles.heroTopRow}>
             <Pressable onPress={goBack} style={({ pressed }) => [styles.heroBackButton, pressed && styles.heroBackButtonPressed]}>
-              <Ionicons name="arrow-back" size={22} color={colors.surface} />
+              <Ionicons name="arrow-back" size={22} color="#374151" />
             </Pressable>
             <Text style={styles.heroStepLabel}>STEP {currentStep + 1} OF {TOTAL_SIGNUP_STEPS}</Text>
             <View style={styles.heroSpacer} />
@@ -1453,3 +1453,5 @@ export const CompleteSignupScreen = () => {
     </AppScreen>
   );
 };
+
+
