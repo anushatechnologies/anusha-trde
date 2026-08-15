@@ -19,20 +19,20 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundColor: colors.surface,
+    backgroundColor: '#0F172A',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   active: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#DBEAFE',
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderColor: colors.cyan,
   },
   label: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   activeLabel: {
-    color: colors.primary,
+    color: colors.cyan,
   },
 });

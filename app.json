@@ -6,12 +6,12 @@
     "version": "1.0.13",
     "orientation": "portrait",
     "icon": "./assets/brand-logo.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/brand-logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#080D1A"
     },
     "ios": {
       "supportsTablet": true
@@ -23,7 +23,11 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand-logo.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#080D1A"
+      },
+      "navigationBar": {
+        "backgroundColor": "#080D1A",
+        "barStyle": "light-content"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,

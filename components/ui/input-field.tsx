@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import {
   Pressable,
   StyleProp,
@@ -48,6 +48,7 @@ export const InputField = ({
 }: InputFieldProps) => {
   const [hidden, setHidden] = useState(secure);
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   return (
     <View style={[styles.group, containerStyle]}>
@@ -58,7 +59,8 @@ export const InputField = ({
         </Text>
       </View>
 
-      <View
+      <Pressable
+        onPress={() => inputRef.current?.focus()}
         style={[
           styles.shell,
           isFocused && styles.shellFocused,
@@ -77,6 +79,7 @@ export const InputField = ({
         ) : null}
 
         <TextInput
+          ref={inputRef}
           placeholderTextColor="rgba(148, 163, 184, 0.65)"
           autoCapitalize="none"
           style={[styles.input, inputStyle]}
@@ -99,7 +102,7 @@ export const InputField = ({
         ) : trailing ? (
           <View style={styles.icon}>{trailing}</View>
         ) : null}
-      </View>
+      </Pressable>
 
       {error ? (
         <View style={styles.errorRow}>

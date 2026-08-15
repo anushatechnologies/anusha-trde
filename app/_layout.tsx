@@ -115,7 +115,15 @@ function RootNavigator() {
     return null;
   }
 
-  return <Stack screenOptions={{ headerShown: false, animation: 'fade' }} />;
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        animation: 'fade',
+        contentStyle: { backgroundColor: '#080D1A' },
+      }}
+    />
+  );
 }
 
 export default function RootLayout() {
@@ -131,7 +139,7 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
+  flex: { flex: 1, backgroundColor: '#080D1A' },
   webWrapper: {
     flex: 1,
     alignItems: 'center',
@@ -142,7 +150,7 @@ const styles = StyleSheet.create({
     maxWidth: 440,
     height: '100%',
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: '#080D1A',
     boxShadow: '0px 0px 40px rgba(0,0,0,0.5)',
   },
 });

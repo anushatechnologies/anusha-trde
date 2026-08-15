@@ -1453,15 +1453,15 @@ export const CompleteSignupScreen = () => {
             <View style={{ flexDirection: 'row', gap: 10, marginVertical: 12 }}>
               <Pressable
                 onPress={openTerms}
-                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.12)', alignItems: 'center' }}
               >
-                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.primary }}>📄 Read Terms</Text>
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>📄 Read Terms</Text>
               </Pressable>
               <Pressable
                 onPress={openPrivacyPolicy}
-                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center' }}
+                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.12)', alignItems: 'center' }}
               >
-                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.primary }}>🔒 Read Privacy Policy</Text>
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>🔒 Read Privacy Policy</Text>
               </Pressable>
             </View>
 
@@ -1871,10 +1871,6 @@ export const CompleteSignupScreen = () => {
             style={[styles.primaryAction, buttonConfig.disabled && styles.primaryActionDisabled]}
             disabled={buttonConfig.disabled}
           />
-        </View>
-
-        <View style={styles.progressRail}>
-          <View style={[styles.progressFill, { width: stepProgressWidth }]} />
         </View>
       </View>
     </AppScreen>

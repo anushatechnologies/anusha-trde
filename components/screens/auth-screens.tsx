@@ -66,17 +66,24 @@ const getRegistrationProgressWidth = (stepNumber: number) =>
 
 const OtpBoxes = ({ code, isFocused }: { code: string; isFocused: boolean }) => (
   <View style={styles.otpRow}>
-    {new Array(6).fill(null).map((_, index) => (
-      <View
-        key={`otp-${index}`}
-        style={[
-          styles.otpBox,
-          index === Math.min(code.length, 5) && isFocused && styles.otpBoxFocused,
-        ]}
-      >
-        <Text style={styles.otpDigit}>{code[index] || ''}</Text>
-      </View>
-    ))}
+    {new Array(6).fill(null).map((_, index) => {
+      const isBoxActive = isFocused && index === Math.min(code.length, 5);
+      const isFilled = index < code.length;
+      return (
+        <View
+          key={`otp-${index}`}
+          style={[
+            styles.otpBox,
+            isFilled && styles.otpBoxFilled,
+            isBoxActive && styles.otpBoxFocused,
+          ]}
+        >
+          <Text style={[styles.otpDigit, isFilled && styles.otpDigitFilled]}>
+            {code[index] || ''}
+          </Text>
+        </View>
+      );
+    })}
   </View>
 );
 
@@ -85,7 +92,6 @@ const RegistrationStepCard = ({
   title,
   subtitle,
   icon,
-  progressWidth,
   onBackPress,
   shellStyle,
   bodyStyle,
@@ -96,7 +102,7 @@ const RegistrationStepCard = ({
   title: string;
   subtitle: string;
   icon: keyof typeof Ionicons.glyphMap;
-  progressWidth: `${number}%`;
+  progressWidth?: `${number}%`;
   onBackPress: () => void;
   shellStyle?: StyleProp<ViewStyle>;
   bodyStyle?: StyleProp<ViewStyle>;
@@ -122,12 +128,6 @@ const RegistrationStepCard = ({
     </LinearGradient>
 
     <View style={[styles.registrationBody, bodyStyle]}>{children}</View>
-
-    <View style={styles.registrationProgressRailWrap}>
-      <View style={styles.registrationProgressRail}>
-        <View style={[styles.registrationProgressFill, { width: progressWidth }]} />
-      </View>
-    </View>
   </View>
 );
 
@@ -1843,14 +1843,14 @@ const styles = StyleSheet.create({
   },
   registrationFlowScreen: {
     flexGrow: 1,
-    backgroundColor: colors.surface,
+    backgroundColor: '#080D1A',
   },
   registrationShell: {
     alignSelf: 'center',
     width: '100%',
     maxWidth: 540,
     borderRadius: 34,
-    backgroundColor: colors.surface,
+    backgroundColor: '#080D1A',
     overflow: 'hidden',
     ...shadows.card,
   },
@@ -2170,20 +2170,27 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 60,
     borderRadius: 18,
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
   },
   otpBoxFocused: {
-    borderColor: colors.primary,
-    backgroundColor: '#EFF6FF',
+    borderColor: colors.cyan,
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+  },
+  otpBoxFilled: {
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+    backgroundColor: '#1E293B',
   },
   otpDigit: {
     fontFamily: fontFamily.heading,
     fontSize: 24,
-    color: colors.primary,
+    color: '#94A3B8',
+  },
+  otpDigitFilled: {
+    color: '#FFFFFF',
   },
   otpOverlayInput: {
     position: 'absolute',
