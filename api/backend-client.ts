@@ -23,6 +23,21 @@ export const backendApiClient = axios.create({
   timeout: 15000,
 });
 
+backendApiClient.interceptors.request.use(async (config) => {
+  if (!config.headers.Authorization) {
+    try {
+      const { useAuthStore } = require('../store/use-auth-store');
+      const token = useAuthStore.getState().accessToken;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch {
+      // Ignore fallback when store is initializing
+    }
+  }
+  return config;
+});
+
 backendApiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
