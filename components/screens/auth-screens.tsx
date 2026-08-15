@@ -57,6 +57,8 @@ type OtpSuccessState = {
   title: string;
   subtitle: string;
   ctaLabel: string;
+  badgeType?: 'success' | 'new_account' | 'login';
+  phoneBadge?: string;
   onContinue: () => void;
 };
 
@@ -705,23 +707,18 @@ export const OtpScreen = () => {
           return;
         }
 
-        const title = 'OTP Verified';
-        const subtitle = 'Your OTP was verified successfully.';
+        const title = 'Identity Verified';
+        const subtitle = 'Your secure OTP verification is complete. Entering your dashboard.';
 
         setSuccessState({
           title,
           subtitle,
-          ctaLabel: 'Continue',
+          ctaLabel: 'Continue to Dashboard',
+          badgeType: 'login',
+          phoneBadge: target,
           onContinue: () => {
             setSuccessState(null);
-            router.replace({
-              pathname: '/success',
-              params: {
-                title: 'Login Verified',
-                subtitle: 'Your secure OTP verification is complete. Continue to the main dashboard.',
-                cta: 'Continue to Dashboard',
-              },
-            });
+            router.replace('/(tabs)');
           },
         });
         return;
@@ -754,9 +751,11 @@ export const OtpScreen = () => {
           currentStep: 0,
         });
         setSuccessState({
-          title: 'Mobile Number Verified',
-          subtitle: 'Your OTP was verified successfully. Continue to complete your account setup.',
-          ctaLabel: 'Continue Signup',
+          title: 'Mobile Verified',
+          subtitle: 'Your mobile number is verified. Continue to complete your investor registration.',
+          ctaLabel: 'Continue Setup',
+          badgeType: 'success',
+          phoneBadge: verifiedMobile,
           onContinue: () => {
             setSuccessState(null);
             router.replace('/signup/profile');
@@ -778,8 +777,10 @@ export const OtpScreen = () => {
       );
       setSuccessState({
         title: 'New Account',
-        subtitle: 'Mobile number verified successfully! Let\'s complete your account setup.',
+        subtitle: `Mobile number ${verifiedMobile} verified! Let\'s setup your investor profile.`,
         ctaLabel: 'Complete Registration',
+        badgeType: 'new_account',
+        phoneBadge: verifiedMobile,
         onContinue: () => {
           setSuccessState(null);
           router.replace('/signup/profile');
@@ -839,17 +840,53 @@ export const OtpScreen = () => {
       scrollViewProps={{ keyboardShouldPersistTaps: 'always' }}
     >
       <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
-      <Modal visible={Boolean(successState)} transparent animationType="fade" onRequestClose={() => setSuccessState(null)}>
+      <Modal visible={Boolean(successState)} transparent animationType="fade" onRequestClose={() => successState?.onContinue()}>
         <View style={styles.successModalOverlay}>
-          <View style={styles.successModalBackdrop} />
-          <SurfaceCard style={styles.successModalCard}>
-            <LinearGradient colors={gradients.success} style={styles.successModalBadge}>
-              <Ionicons name="checkmark" size={28} color={colors.surface} />
+          <Pressable style={styles.successModalBackdrop} onPress={() => successState?.onContinue()} />
+          <View style={styles.successModalCard}>
+            <LinearGradient
+              colors={
+                successState?.badgeType === 'new_account'
+                  ? ['#0284C7', '#0369A1']
+                  : successState?.badgeType === 'login'
+                  ? ['#38BDF8', '#2563EB']
+                  : ['#10B981', '#059669']
+              }
+              style={styles.successModalBadge}
+            >
+              <Ionicons
+                name={
+                  successState?.badgeType === 'new_account'
+                    ? 'person-add'
+                    : successState?.badgeType === 'login'
+                    ? 'shield-checkmark'
+                    : 'checkmark'
+                }
+                size={34}
+                color="#FFFFFF"
+              />
             </LinearGradient>
+
             <Text style={styles.successModalTitle}>{successState?.title}</Text>
             <Text style={styles.successModalSubtitle}>{successState?.subtitle}</Text>
-            <GradientButton label={successState?.ctaLabel || 'Continue'} onPress={() => successState?.onContinue()} />
-          </SurfaceCard>
+
+            {successState?.phoneBadge ? (
+              <View style={styles.successModalPhoneCapsule}>
+                <Ionicons name="checkmark-circle" size={16} color={colors.cyan} />
+                <Text style={styles.successModalPhoneText}>{successState.phoneBadge}</Text>
+                <View style={styles.successModalVerifiedDot} />
+                <Text style={styles.successModalVerifiedTag}>Verified</Text>
+              </View>
+            ) : null}
+
+            <GradientButton
+              label={successState?.ctaLabel || 'Continue'}
+              onPress={() => successState?.onContinue()}
+              icon={<Ionicons name="arrow-forward" size={18} color="#FFFFFF" />}
+              iconPosition="end"
+              style={{ width: '100%', marginTop: 8 }}
+            />
+          </View>
         </View>
       </Modal>
 
@@ -2562,37 +2599,83 @@ const styles = StyleSheet.create({
   },
   successModalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(3, 7, 18, 0.85)',
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 22,
   },
   successModalBackdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.58)',
   },
   successModalCard: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: '#0F172A',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 24,
     alignItems: 'center',
-    gap: 16,
-    paddingVertical: 24,
+    gap: 12,
+    ...shadows.glow,
   },
   successModalBadge: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 4,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    ...shadows.card,
   },
   successModalTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 28,
+    color: '#FFFFFF',
     textAlign: 'center',
-    color: colors.text,
   },
   successModalSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 14,
-    lineHeight: 22,
+    lineHeight: 21,
+    color: 'rgba(226, 232, 240, 0.85)',
     textAlign: 'center',
-    color: colors.muted,
+    paddingHorizontal: 6,
+  },
+  successModalPhoneCapsule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  successModalPhoneText: {
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 13,
+    color: '#FFFFFF',
+  },
+  successModalVerifiedDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+  },
+  successModalVerifiedTag: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 11,
+    color: colors.cyan,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
