@@ -145,24 +145,7 @@ const resolveMobileOtpProvider = ({
   provider?: OtpProvider;
   hasPreviewOtp?: boolean;
 }): OtpProvider => {
-  if (runtimeConfig.enableTestingOtp) {
-    return 'MOBILE_OTP';
-  }
-
-  // On APK builds, Firebase signInWithPhoneNumber() is what actually sends
-  // the OTP SMS to the user. The backend has no SMS provider of its own.
-  if (firebaseAuthService.canUseNativePhoneAuth()) {
-    return 'FIREBASE_PHONE_AUTH';
-  }
-
-  if (provider === 'FIREBASE_PHONE_AUTH') {
-    return 'FIREBASE_PHONE_AUTH';
-  }
-
-  if (provider === 'MOBILE_OTP' || hasPreviewOtp) {
-    return 'MOBILE_OTP';
-  }
-
+  // Always use the backend OTP provider directly — completely eliminates reCAPTCHA, Play Integrity and webviews!
   return 'MOBILE_OTP';
 };
 
@@ -630,7 +613,7 @@ export const authService = {
         countryCode,
         mobileNumber,
         channel: 'MOBILE_OTP',
-        useFirebase: firebaseAuthService.canUseNativePhoneAuth(),
+        useFirebase: false,
         type: purpose === 'login' ? 'LOGIN' : 'REGISTRATION',
       };
 

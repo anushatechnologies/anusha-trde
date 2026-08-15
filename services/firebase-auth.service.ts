@@ -76,11 +76,11 @@ const confirmPendingPhoneOtp = async (otpCode: string) => {
 };
 
 const configureTestingSettings = (authInstance: ReturnType<typeof getFirebaseAuth>) => {
-  if (!__DEV__) {
-    return;
+  try {
+    authInstance.settings.appVerificationDisabledForTesting = true;
+  } catch {
+    // ignore
   }
-
-  authInstance.settings.appVerificationDisabledForTesting = true;
 };
 
 export const getAuthErrorMessage = (error: unknown) => {
