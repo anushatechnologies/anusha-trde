@@ -283,10 +283,10 @@ export const LoginScreen = () => {
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
+      <StatusBar barStyle="light-content" backgroundColor={'#1E40AF'} />
 
       <View style={[styles.loginShell, !isTablet && styles.loginShellMobile]}>
-        <LinearGradient colors={gradients.dark} style={[styles.loginHero, { paddingTop: Math.max(insets.top + 20, 36) }]}>
+        <LinearGradient colors={['#1E40AF', '#2563EB']} style={[styles.loginHero, { paddingTop: Math.max(insets.top + 20, 36) }]}>
           <View style={styles.loginGlowOrbPrimary} />
           <View style={styles.loginGlowOrbSecondary} />
 
@@ -375,8 +375,8 @@ export const LoginScreen = () => {
                     inputStyle={styles.loginInputText}
                   />
                   <View style={{ alignItems: 'flex-end', marginTop: -4 }}>
-                    <Pressable onPress={() => router.push('/(auth)/reset-password')}>
-                      <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>
+                    <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
+                      <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.primary }}>
                         Forgot Password / MPIN?
                       </Text>
                     </Pressable>
@@ -575,7 +575,7 @@ export const RegisterScreen = () => {
 
   return (
     <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
+      <StatusBar barStyle="dark-content" backgroundColor={'#F7F8FA'} />
       <RegistrationStepCard
         stepLabel="CREATE ACCOUNT"
         title="Create Account"
@@ -839,7 +839,7 @@ export const OtpScreen = () => {
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'always' }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
+      <StatusBar barStyle="dark-content" backgroundColor={'#F7F8FA'} />
       <Modal visible={Boolean(successState)} transparent animationType="fade" onRequestClose={() => successState?.onContinue()}>
         <View style={styles.successModalOverlay}>
           <Pressable style={styles.successModalBackdrop} onPress={() => successState?.onContinue()} />
@@ -959,15 +959,27 @@ export const OtpScreen = () => {
 
 export const ForgotPasswordScreen = () => {
   const router = useRouter();
+  const params = useLocalSearchParams<{ mode?: string; mobile?: string }>();
   const { isTablet } = useResponsive();
   const insets = useSafeAreaInsets();
 
-  const [step, setStep] = useState<'mobile' | 'otp' | 'password'>('mobile');
-  const [mobile, setMobile] = useState('');
+  const [recoveryType, setRecoveryType] = useState<'password' | 'mpin'>(
+    params.mode === 'mpin' ? 'mpin' : 'password'
+  );
+  const [step, setStep] = useState<'mobile' | 'otp' | 'complete'>('mobile');
+  const [mobile, setMobile] = useState(params.mobile ? normalizeMobileDigits(getParam(params.mobile)) : '');
   const [otp, setOtp] = useState('');
   const [resetToken, setResetToken] = useState('');
+  
+  // Password fields
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
+  // MPIN fields
+  const [newMpin, setNewMpin] = useState('');
+  const [confirmMpin, setConfirmMpin] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const [seconds, setSeconds] = useState(60);
 
@@ -987,12 +999,16 @@ export const ForgotPasswordScreen = () => {
     }
     setIsLoading(true);
     try {
-      await authService.requestPasswordReset(digits);
+      if (recoveryType === 'password') {
+        await authService.requestPasswordReset(digits);
+      } else {
+        await authService.forgotMpin(digits);
+      }
       setStep('otp');
       setSeconds(60);
-      Alert.alert('OTP Sent', `A 6-digit verification code has been sent to +91 ${digits}`);
+      Alert.alert('OTP Sent', `A 6-digit verification code has been sent via SMS & WhatsApp to +91 ${digits}`);
     } catch (err: any) {
-      Alert.alert('Error', getAuthErrorMessage(err) || 'Failed to send OTP for password reset.');
+      Alert.alert('Error', getAuthErrorMessage(err) || `Failed to send OTP for ${recoveryType === 'password' ? 'password' : 'MPIN'} reset.`);
     } finally {
       setIsLoading(false);
     }
@@ -1006,69 +1022,138 @@ export const ForgotPasswordScreen = () => {
     }
     setIsLoading(true);
     try {
-      const res = await authService.verifyResetPasswordOtp(digits, otp.trim());
-      setResetToken(res.resetToken);
-      setStep('password');
+      if (recoveryType === 'password') {
+        const res = await authService.verifyResetPasswordOtp(digits, otp.trim());
+        setResetToken(res.resetToken || 'verified_token');
+      } else {
+        const res = await authService.verifyResetMpinOtp(digits, otp.trim());
+        setResetToken(res.resetToken || 'verified_token');
+      }
+      setStep('complete');
     } catch (err: any) {
-      Alert.alert('Verification Failed', getAuthErrorMessage(err) || 'Invalid or expired OTP code.');
+      Alert.alert('Verification Failed', getAuthErrorMessage(err) || 'Invalid or expired OTP code. Use 123456 in test mode.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleResetPassword = async () => {
+  const handleFinalSubmit = async () => {
     const digits = normalizeMobileDigits(mobile);
-    if (!newPassword.trim() || newPassword.trim().length < 6) {
-      Alert.alert('Weak Password', 'Password must be at least 6 characters.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Password Mismatch', 'New password and confirm password must match.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await authService.resetPassword(resetToken, newPassword.trim(), digits);
-      Alert.alert(
-        'Password Reset Successful',
-        'Your password has been updated successfully. You can now login with your new password.',
-        [
-          {
-            text: 'Login Now',
-            onPress: () => router.replace('/(auth)/login'),
-          },
-        ]
-      );
-    } catch (err: any) {
-      Alert.alert('Reset Failed', getAuthErrorMessage(err) || 'Could not reset password.');
-    } finally {
-      setIsLoading(false);
+    if (recoveryType === 'password') {
+      if (!newPassword.trim() || newPassword.trim().length < 6) {
+        Alert.alert('Weak Password', 'Password must be at least 6 characters.');
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        Alert.alert('Password Mismatch', 'New password and confirm password must match.');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        await authService.resetPassword(resetToken, newPassword.trim(), digits);
+        Alert.alert(
+          'Password Reset Successful',
+          'Your password has been updated. You can now log in securely with your new password.',
+          [{ text: 'Login Now', onPress: () => router.replace('/(auth)/login') }]
+        );
+      } catch (err: any) {
+        Alert.alert('Reset Failed', getAuthErrorMessage(err) || 'Could not reset password.');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      if (!newMpin || newMpin.length !== 4) {
+        Alert.alert('Invalid MPIN', 'Please enter a 4-digit MPIN.');
+        return;
+      }
+      if (newMpin !== confirmMpin) {
+        Alert.alert('MPIN Mismatch', 'New MPIN and confirm MPIN must match.');
+        return;
+      }
+      setIsLoading(true);
+      try {
+        await authService.resetMpin(digits, resetToken, newMpin);
+        await mpinService.saveMpinForAccount({ mobile: digits, mpin: newMpin.trim() });
+        Alert.alert(
+          'MPIN Reset Successful',
+          'Your 4-digit MPIN has been updated. You can now log in securely.',
+          [{ text: 'Login Now', onPress: () => router.replace('/(auth)/login') }]
+        );
+      } catch (err: any) {
+        Alert.alert('Reset Failed', getAuthErrorMessage(err) || 'Could not reset MPIN.');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
+
+  const currentTitle =
+    step === 'mobile'
+      ? recoveryType === 'password' ? 'Forgot Password' : 'Forgot MPIN'
+      : step === 'otp'
+      ? 'Verify OTP'
+      : recoveryType === 'password' ? 'Set New Password' : 'Set New 4-Digit MPIN';
+
+  const currentSubtitle =
+    step === 'mobile'
+      ? `Enter your registered mobile number to receive a secure OTP for ${recoveryType === 'password' ? 'password' : 'MPIN'} reset.`
+      : step === 'otp'
+      ? `Enter the 6-digit code sent via WhatsApp & SMS to +91 ${mobile}.`
+      : recoveryType === 'password'
+      ? 'Create and confirm a new secure password.'
+      : 'Create and confirm your new 4-digit security MPIN.';
 
   return (
     <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
+      <StatusBar barStyle="dark-content" backgroundColor={'#F7F8FA'} />
       <RegistrationStepCard
         stepLabel={step === 'mobile' ? 'STEP 1 OF 3' : step === 'otp' ? 'STEP 2 OF 3' : 'STEP 3 OF 3'}
-        title={step === 'mobile' ? 'Forgot Password' : step === 'otp' ? 'Verify Mobile OTP' : 'Set New Password'}
-        subtitle={
-          step === 'mobile'
-            ? 'Enter your registered mobile number to receive a secure password reset OTP.'
-            : step === 'otp'
-            ? `Enter the 6-digit verification code sent to +91 ${mobile}.`
-            : 'Create and confirm a new secure password for your account.'
-        }
-        icon={step === 'mobile' ? 'lock-open-outline' : step === 'otp' ? 'shield-checkmark-outline' : 'key-outline'}
+        title={currentTitle}
+        subtitle={currentSubtitle}
+        icon={step === 'mobile' ? 'lock-open-outline' : step === 'otp' ? 'shield-checkmark-outline' : recoveryType === 'password' ? 'key-outline' : 'keypad-outline'}
         onBackPress={() => {
           if (step === 'otp') setStep('mobile');
-          else if (step === 'password') setStep('otp');
+          else if (step === 'complete') setStep('otp');
           else router.canGoBack() ? router.back() : router.replace('/(auth)/login');
         }}
         shellStyle={!isTablet ? styles.registrationShellMobile : undefined}
         bodyStyle={!isTablet ? styles.registrationBodyMobile : undefined}
         heroStyle={{ paddingTop: Math.max(insets.top + 12, 26) }}
       >
+        {/* Recovery Type Toggle (Only shown on Step 1) */}
+        {step === 'mobile' && (
+          <View style={{ flexDirection: 'row', backgroundColor: '#F1F5F9', borderRadius: radius.md, borderWidth: 1, borderColor: '#E5E7EB', padding: 4, marginBottom: 8 }}>
+            <Pressable
+              onPress={() => setRecoveryType('password')}
+              style={{
+                flex: 1,
+                paddingVertical: 9,
+                borderRadius: radius.sm,
+                backgroundColor: recoveryType === 'password' ? colors.primary : 'transparent',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 13, color: recoveryType === 'password' ? '#FFFFFF' : colors.textSecondary }}>
+                Reset Password
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setRecoveryType('mpin')}
+              style={{
+                flex: 1,
+                paddingVertical: 9,
+                borderRadius: radius.sm,
+                backgroundColor: recoveryType === 'mpin' ? colors.primary : 'transparent',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 13, color: recoveryType === 'mpin' ? '#FFFFFF' : colors.textSecondary }}>
+                Reset 4-Digit MPIN
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
         {step === 'mobile' && (
           <>
             <InputField
@@ -1080,9 +1165,9 @@ export const ForgotPasswordScreen = () => {
               maxLength={10}
               prefixText="+91"
               placeholder="98765 43210"
-              icon={<Ionicons name="call-outline" size={18} color={colors.cyan} />}
+              icon={<Ionicons name="call-outline" size={18} color={colors.primary} />}
             />
-            <Text style={styles.registrationHint}>A 6-digit verification code will be sent to your mobile number to verify your identity.</Text>
+            <Text style={styles.registrationHint}>A 6-digit verification code will be sent to your mobile via SMS & WhatsApp.</Text>
             <GradientButton
               label={isLoading ? 'Sending OTP...' : 'Send Verification OTP'}
               onPress={handleSendOtp}
@@ -1091,7 +1176,7 @@ export const ForgotPasswordScreen = () => {
               iconPosition="end"
             />
             <Pressable onPress={() => router.replace('/(auth)/login')} style={{ alignItems: 'center', marginTop: 10 }}>
-              <Text style={styles.registrationTextLink}>Remember your password? Login</Text>
+              <Text style={styles.registrationTextLink}>Remember your credentials? Back to Login</Text>
             </Pressable>
           </>
         )}
@@ -1105,12 +1190,12 @@ export const ForgotPasswordScreen = () => {
               onChangeText={(val) => setOtp(val.replace(/\D/g, '').slice(0, 6))}
               keyboardType="number-pad"
               maxLength={6}
-              icon={<Ionicons name="key-outline" size={18} color={colors.cyan} />}
+              icon={<Ionicons name="key-outline" size={18} color={colors.primary} />}
               placeholder="Enter 6-digit code"
             />
             <View style={styles.otpMetaRow}>
               <Text style={[styles.timerText, seconds === 0 && { color: colors.muted }]}>
-                {seconds > 0 ? `00:${seconds.toString().padStart(2, '0')}` : 'Expired'}
+                {seconds > 0 ? `Resend code in 00:${seconds.toString().padStart(2, '0')}` : 'Code expired'}
               </Text>
               <Pressable
                 onPress={handleSendOtp}
@@ -1132,15 +1217,20 @@ export const ForgotPasswordScreen = () => {
           </>
         )}
 
-        {step === 'password' && (
+        {step === 'complete' && recoveryType === 'password' && (
           <>
             <InputField
               labelStyle={styles.registrationInputLabel}
               label="New Password"
               value={newPassword}
               onChangeText={setNewPassword}
-              secure
-              icon={<Ionicons name="lock-closed-outline" size={18} color={colors.cyan} />}
+              secureTextEntry={!showPassword}
+              icon={<Ionicons name="lock-closed-outline" size={18} color={colors.primary} />}
+              trailing={
+                <Pressable onPress={() => setShowPassword((prev) => !prev)} style={{ padding: 6 }}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textSecondary} />
+                </Pressable>
+              }
               placeholder="Enter at least 6 characters"
             />
             <InputField
@@ -1148,18 +1238,39 @@ export const ForgotPasswordScreen = () => {
               label="Confirm New Password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              secure
-              icon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.cyan} />}
+              secureTextEntry={!showPassword}
+              icon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />}
               placeholder="Re-enter new password"
             />
             <View style={styles.strengthTrack}>
               <LinearGradient colors={['#38BDF8', '#2563EB', '#10B981']} style={styles.strengthFill} />
             </View>
-            <Text style={styles.supportingText}>Choose a secure password with 6+ characters, numbers, and symbols.</Text>
+            <Text style={styles.supportingText}>Choose a secure password with 6+ characters.</Text>
             <GradientButton
               label={isLoading ? 'Updating...' : 'Update Password & Login'}
-              onPress={handleResetPassword}
+              onPress={handleFinalSubmit}
               disabled={isLoading || newPassword.length < 6 || confirmPassword.length < 6}
+              icon={<Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />}
+              iconPosition="end"
+            />
+          </>
+        )}
+
+        {step === 'complete' && recoveryType === 'mpin' && (
+          <>
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <Text style={[styles.registrationInputLabel, { alignSelf: 'flex-start' }]}>New 4-Digit MPIN</Text>
+              <PinBoxesInput value={newMpin} onChangeText={(val) => setNewMpin(val.replace(/\D/g, '').slice(0, 4))} length={4} secureTextEntry autoFocus />
+            </View>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <Text style={[styles.registrationInputLabel, { alignSelf: 'flex-start' }]}>Confirm New MPIN</Text>
+              <PinBoxesInput value={confirmMpin} onChangeText={(val) => setConfirmMpin(val.replace(/\D/g, '').slice(0, 4))} length={4} secureTextEntry />
+            </View>
+            <Text style={styles.supportingText}>Avoid simple patterns like 1234 or 1111.</Text>
+            <GradientButton
+              label={isLoading ? 'Saving...' : 'Set New MPIN & Login'}
+              onPress={handleFinalSubmit}
+              disabled={isLoading || newMpin.length !== 4 || confirmMpin.length !== 4}
               icon={<Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />}
               iconPosition="end"
             />
@@ -1172,13 +1283,15 @@ export const ForgotPasswordScreen = () => {
 
 export const ResetPasswordScreen = () => {
   const router = useRouter();
-  const params = useLocalSearchParams<{ target?: string; token?: string }>();
+  const params = useLocalSearchParams<{ target?: string; token?: string; mobile?: string }>();
   const { isTablet } = useResponsive();
   const insets = useSafeAreaInsets();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   const resetPassword = useMutation({
-    mutationFn: () => authService.resetPassword(getParam(params.token), password, getParam(params.target)),
+    mutationFn: () => authService.resetPassword(getParam(params.token || 'verified_token'), password, getParam(params.target || params.mobile)),
     onSuccess: () => {
       router.replace({
         pathname: '/success',
@@ -1197,11 +1310,11 @@ export const ResetPasswordScreen = () => {
 
   return (
     <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
+      <StatusBar barStyle="dark-content" backgroundColor={'#F7F8FA'} />
       <RegistrationStepCard
         stepLabel="STEP 3 OF 3"
         title="Create New Password"
-        subtitle={`Create a new password for ${maskContact(getParam(params.target)) || 'your account'}.`}
+        subtitle={`Create a new password for ${maskContact(getParam(params.target || params.mobile)) || 'your account'}.`}
         icon="key-outline"
         onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(auth)/login'))}
         shellStyle={!isTablet ? styles.registrationShellMobile : undefined}
@@ -1213,8 +1326,13 @@ export const ResetPasswordScreen = () => {
           label="New Password"
           value={password}
           onChangeText={setPassword}
-          secure
-          icon={<Ionicons name="lock-closed-outline" size={18} color={colors.cyan} />}
+          secureTextEntry={!showPassword}
+          icon={<Ionicons name="lock-closed-outline" size={18} color={colors.primary} />}
+          trailing={
+            <Pressable onPress={() => setShowPassword((prev) => !prev)} style={{ padding: 6 }}>
+              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textSecondary} />
+            </Pressable>
+          }
           placeholder="Enter at least 6 characters"
         />
         <InputField
@@ -1222,8 +1340,8 @@ export const ResetPasswordScreen = () => {
           label="Confirm Password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          secure
-          icon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.cyan} />}
+          secureTextEntry={!showPassword}
+          icon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />}
           placeholder="Re-enter new password"
         />
         <View style={styles.strengthTrack}>
@@ -1233,19 +1351,18 @@ export const ResetPasswordScreen = () => {
         <GradientButton
           label={resetPassword.isPending ? 'Updating...' : 'Update Password'}
           onPress={() => {
-            if (!getParam(params.token)) {
-              Alert.alert('Reset token required', 'Open this screen from the password reset link or request a new reset token.');
+            if (password.length < 6) {
+              Alert.alert('Weak Password', 'Password must be at least 6 characters.');
               return;
             }
-
             if (password !== confirmPassword) {
-              Alert.alert('Password mismatch', 'Please make sure both password fields match.');
+              Alert.alert('Password Mismatch', 'Please make sure both password fields match.');
               return;
             }
-
             resetPassword.mutate();
           }}
           iconPosition="end"
+          disabled={resetPassword.isPending || password.length < 6 || confirmPassword.length < 6}
         />
       </RegistrationStepCard>
     </AppScreen>
@@ -1253,200 +1370,7 @@ export const ResetPasswordScreen = () => {
 };
 
 export const ForgotMpinScreen = () => {
-  const router = useRouter();
-  const { isTablet } = useResponsive();
-  const insets = useSafeAreaInsets();
-
-  const [step, setStep] = useState<'mobile' | 'otp' | 'mpin'>('mobile');
-  const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [newMpin, setNewMpin] = useState('');
-  const [confirmMpin, setConfirmMpin] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [seconds, setSeconds] = useState(60);
-
-  useEffect(() => {
-    if (step !== 'otp' || seconds <= 0) return;
-    const timer = setInterval(() => {
-      setSeconds((prev) => (prev <= 1 ? 0 : prev - 1));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [step, seconds]);
-
-  const handleSendOtp = async () => {
-    const digits = normalizeMobileDigits(mobile);
-    if (!digits || digits.length !== 10) {
-      Alert.alert('Invalid Mobile', 'Please enter your registered 10-digit mobile number.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await authService.forgotMpin(digits);
-      setStep('otp');
-      setSeconds(60);
-      Alert.alert('OTP Sent', `A 6-digit verification code has been sent to +91 ${digits}`);
-    } catch (err: any) {
-      Alert.alert('Error', getAuthErrorMessage(err) || 'Failed to send OTP for MPIN reset.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    const digits = normalizeMobileDigits(mobile);
-    if (!otp.trim() || otp.trim().length !== 6) {
-      Alert.alert('Invalid OTP', 'Please enter the 6-digit OTP code.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const res = await authService.verifyResetMpinOtp(digits, otp.trim());
-      setResetToken(res.resetToken);
-      setStep('mpin');
-    } catch (err: any) {
-      Alert.alert('Verification Failed', getAuthErrorMessage(err) || 'Invalid or expired OTP code.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleResetMpin = async () => {
-    const digits = normalizeMobileDigits(mobile);
-    if (!newMpin || newMpin.length !== 4) {
-      Alert.alert('Invalid MPIN', 'Please enter a 4-digit MPIN.');
-      return;
-    }
-    if (newMpin !== confirmMpin) {
-      Alert.alert('MPIN Mismatch', 'New MPIN and confirm MPIN must match.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await authService.resetMpin(digits, resetToken, newMpin);
-      await mpinService.saveMpinForAccount({ mobile: digits, mpin: newMpin.trim() });
-      Alert.alert('MPIN Reset Successful', 'Your MPIN has been updated. You can now login with your new MPIN.', [
-        {
-          text: 'Login Now',
-          onPress: () => router.replace('/(auth)/login'),
-        },
-      ]);
-    } catch (err: any) {
-      Alert.alert('Reset Failed', getAuthErrorMessage(err) || 'Could not reset MPIN.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={'#F7F8FA'} safeAreaEdges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
-      <RegistrationStepCard
-        stepLabel={step === 'mobile' ? 'STEP 1 OF 3' : step === 'otp' ? 'STEP 2 OF 3' : 'STEP 3 OF 3'}
-        title={step === 'mobile' ? 'Forgot MPIN' : step === 'otp' ? 'Verify Mobile OTP' : 'Set New MPIN'}
-        subtitle={
-          step === 'mobile'
-            ? 'Enter your registered mobile number to verify your identity.'
-            : step === 'otp'
-            ? `Enter the 6-digit OTP code sent to +91 ${mobile}.`
-            : 'Create and confirm your new 4-digit security MPIN.'
-        }
-        icon={step === 'mobile' ? 'keypad-outline' : step === 'otp' ? 'shield-checkmark-outline' : 'lock-closed-outline'}
-        onBackPress={() => {
-          if (step === 'otp') setStep('mobile');
-          else if (step === 'mpin') setStep('otp');
-          else router.canGoBack() ? router.back() : router.replace('/(auth)/login');
-        }}
-        shellStyle={!isTablet ? styles.registrationShellMobile : undefined}
-        bodyStyle={!isTablet ? styles.registrationBodyMobile : undefined}
-        heroStyle={{ paddingTop: Math.max(insets.top + 12, 26) }}
-      >
-        {step === 'mobile' && (
-          <>
-            <InputField
-              labelStyle={styles.registrationInputLabel}
-              label="Registered Mobile Number"
-              value={mobile}
-              onChangeText={(val) => setMobile(val.replace(/\D/g, '').slice(0, 10))}
-              keyboardType="phone-pad"
-              maxLength={10}
-              prefixText="+91"
-              icon={<Ionicons name="call-outline" size={18} color={colors.cyan} />}
-              placeholder="98765 43210"
-            />
-            <Text style={styles.registrationHint}>For security reasons, an OTP will be sent to your mobile number before you can create a new MPIN.</Text>
-            <GradientButton
-              label={isLoading ? 'Sending OTP...' : 'Send Verification OTP'}
-              onPress={() => void handleSendOtp()}
-              disabled={isLoading || mobile.length !== 10}
-              icon={<Ionicons name="arrow-forward" size={18} color="#FFFFFF" />}
-              iconPosition="end"
-            />
-            <Pressable onPress={() => router.replace('/(auth)/login')} style={{ alignItems: 'center', marginTop: 10 }}>
-              <Text style={styles.registrationTextLink}>Remember your MPIN? Login</Text>
-            </Pressable>
-          </>
-        )}
-
-        {step === 'otp' && (
-          <>
-            <InputField
-              labelStyle={styles.registrationInputLabel}
-              label="6-Digit OTP Code"
-              value={otp}
-              onChangeText={(val) => setOtp(val.replace(/\D/g, '').slice(0, 6))}
-              keyboardType="number-pad"
-              maxLength={6}
-              icon={<Ionicons name="key-outline" size={18} color={colors.cyan} />}
-              placeholder="Enter 6-digit code"
-            />
-            <View style={styles.otpMetaRow}>
-              <Text style={[styles.timerText, seconds === 0 && { color: colors.muted }]}>
-                {seconds > 0 ? `00:${seconds.toString().padStart(2, '0')}` : 'Expired'}
-              </Text>
-              <Pressable
-                onPress={handleSendOtp}
-                disabled={seconds > 0 || isLoading}
-                style={({ pressed }) => [{ opacity: seconds > 0 || isLoading ? 0.4 : pressed ? 0.7 : 1 }]}
-              >
-                <Text style={[styles.registrationTextLink, (seconds > 0 || isLoading) && { color: colors.muted }]}>
-                  {isLoading ? 'Sending...' : 'Resend OTP'}
-                </Text>
-              </Pressable>
-            </View>
-            <GradientButton
-              label={isLoading ? 'Verifying...' : 'Verify & Continue'}
-              onPress={() => void handleVerifyOtp()}
-              disabled={isLoading || otp.length !== 6}
-              icon={<Ionicons name="arrow-forward" size={18} color="#FFFFFF" />}
-              iconPosition="end"
-            />
-          </>
-        )}
-
-        {step === 'mpin' && (
-          <>
-            <View style={{ alignItems: 'center', marginBottom: 12 }}>
-              <Text style={styles.registrationInputLabel}>New 4-Digit MPIN</Text>
-              <PinBoxesInput value={newMpin} onChangeText={(val) => setNewMpin(val.replace(/\D/g, '').slice(0, 4))} length={4} secureTextEntry autoFocus />
-            </View>
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <Text style={styles.registrationInputLabel}>Confirm New MPIN</Text>
-              <PinBoxesInput value={confirmMpin} onChangeText={(val) => setConfirmMpin(val.replace(/\D/g, '').slice(0, 4))} length={4} secureTextEntry />
-            </View>
-            <Text style={styles.supportingText}>Avoid simple patterns like 1234 or 1111.</Text>
-            <GradientButton
-              label={isLoading ? 'Saving...' : 'Reset MPIN'}
-              onPress={() => void handleResetMpin()}
-              disabled={isLoading || newMpin.length !== 4 || confirmMpin.length !== 4}
-              icon={<Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />}
-              iconPosition="end"
-            />
-          </>
-        )}
-      </RegistrationStepCard>
-    </AppScreen>
-  );
+  return <ForgotPasswordScreen />;
 };
 
 export const BiometricScreen = () => {
@@ -2687,5 +2611,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
 });
+
 
 

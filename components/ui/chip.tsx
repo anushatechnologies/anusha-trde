@@ -19,21 +19,22 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    backgroundcolor: '#374151',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    bordercolor: '#6B7280',
+    borderColor: '#E5E7EB',
   },
   active: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
-    borderColor: colors.cyan,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#2563EB',
   },
   label: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: colors.textSecondary,
+    color: '#4B5563',
   },
   activeLabel: {
-    color: colors.cyan,
+    color: '#2563EB',
+    fontFamily: fontFamily.bodyBold,
   },
 });
 

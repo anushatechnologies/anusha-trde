@@ -1419,7 +1419,7 @@ export const CompleteSignupScreen = () => {
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
     >
-      <StatusBar barStyle="light-content" backgroundColor={'#F7F8FA'} />
+      <StatusBar barStyle="dark-content" backgroundColor={'#F7F8FA'} />
       <View style={[styles.stepShell, !isTablet && styles.stepShellMobile]}>
         <LinearGradient colors={gradients.dark} style={[styles.heroPanel, { paddingTop: Math.max(insets.top + 12, 26) }]}>
           <View style={styles.heroTopRow}>
@@ -1453,5 +1453,6 @@ export const CompleteSignupScreen = () => {
     </AppScreen>
   );
 };
+
 
 
