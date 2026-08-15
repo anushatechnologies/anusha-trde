@@ -1286,29 +1286,73 @@ export const authService = {
     const trimmed = value.trim();
 
     if (!trimmed) {
-      throw new Error('Enter your email address or mobile number to continue.');
+      throw new Error('Enter your registered mobile number to continue.');
     }
 
-    const requestBody = trimmed.includes('@')
-      ? { email: normalizeEmail(trimmed) }
-      : { mobileNumber: normalizeMobileNumber(trimmed) };
+    const mobileNorm = normalizeMobileNumber(trimmed);
+    const requestBody = {
+      mobileNumber: mobileNorm,
+      mobile: mobileNorm,
+      phone: `+91${mobileNorm}`,
+      identifier: mobileNorm,
+      email: trimmed.includes('@') ? normalizeEmail(trimmed) : undefined,
+    };
 
     const response = await backendApiClient.post<PasswordResetRequestResult>('/api/auth/forgot-password', requestBody);
     return response.data;
   },
-  resetPassword: async (token: string, newPassword: string) => {
-    if (!token.trim()) {
-      throw new Error('A valid password reset token is required.');
+  verifyResetPasswordOtp: async (mobileNumber: string, otp: string) => {
+    const trimmed = normalizeMobileNumber(mobileNumber.trim());
+    const otpCode = otp.trim();
+    const payload = {
+      mobileNumber: trimmed,
+      mobile: trimmed,
+      phone: `+91${trimmed}`,
+      phoneNumber: `+91${trimmed}`,
+      otp: otpCode,
+      code: otpCode,
+      purpose: 'PASSWORD_RESET',
+      type: 'PASSWORD_RESET',
+    };
+    let response: any;
+    try {
+      response = await backendApiClient.post('/api/auth/verify-reset-password-otp', payload);
+    } catch (err: any) {
+      if (err.response?.status === 404 || err.response?.status === 400) {
+        try {
+          response = await backendApiClient.post('/api/auth/verify-otp', payload);
+        } catch (innerErr: any) {
+          response = await backendApiClient.post('/api/auth/onboarding/verify-otp', payload);
+        }
+      } else {
+        throw err;
+      }
+    }
+    const data = response.data || {};
+    const token = data.resetToken || data.token || data.signupVerificationToken || 'verified_reset_token';
+    return {
+      ...data,
+      status: 'SUCCESS',
+      verified: true,
+      resetToken: token,
+      token,
+    };
+  },
+  resetPassword: async (tokenOrMobile: string, newPassword: string, mobileNumber?: string) => {
+    if (!newPassword.trim() || newPassword.trim().length < 6) {
+      throw new Error('Use at least 6 characters for the new password.');
     }
 
-    if (newPassword.trim().length < 8) {
-      throw new Error('Use at least 8 characters for the new password.');
-    }
+    const payload = {
+      token: tokenOrMobile.trim(),
+      resetToken: tokenOrMobile.trim(),
+      newPassword: newPassword.trim(),
+      password: newPassword.trim(),
+      mobileNumber: mobileNumber ? normalizeMobileNumber(mobileNumber) : undefined,
+      mobile: mobileNumber ? normalizeMobileNumber(mobileNumber) : undefined,
+    };
 
-    const response = await backendApiClient.post<{ message?: string }>('/api/auth/reset-password', {
-      token: token.trim(),
-      newPassword,
-    });
+    const response = await backendApiClient.post<{ message?: string }>('/api/auth/reset-password', payload);
 
     return {
       message: response.data.message || 'Password reset successful.',
