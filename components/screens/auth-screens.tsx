@@ -776,16 +776,15 @@ export const OtpScreen = () => {
           currentStep: 0,
         })
       );
-      Alert.alert(
-        'Account Not Found',
-        'This number is not registered yet. Please create an account to continue.',
-        [
-          {
-            text: 'Register',
-            onPress: () => router.replace('/signup/profile'),
-          },
-        ]
-      );
+      setSuccessState({
+        title: 'New Account',
+        subtitle: 'Mobile number verified successfully! Let\'s complete your account setup.',
+        ctaLabel: 'Complete Registration',
+        onContinue: () => {
+          setSuccessState(null);
+          router.replace('/signup/profile');
+        },
+      });
     },
     onError: (error) => {
       lastSubmittedOtp.current = '';
