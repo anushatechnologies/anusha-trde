@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fontFamily, gradients, radius } from '../../constants/theme';
+import { colors, fontFamily, radius, shadows } from '../../constants/theme';
 import { authService } from '../../services/auth.service';
 import { getAuthErrorMessage } from '../../services/firebase-auth.service';
 import { mpinService } from '../../services/mpin.service';
@@ -66,7 +65,7 @@ export const MpinManagementScreen = () => {
       return 'New MPIN and confirm MPIN must match.';
     }
 
-    return 'MPIN format looks good.';
+    return 'MPIN format looks strong.';
   }, [confirmMpin, newMpin]);
 
   const saveMpin = async () => {
@@ -148,12 +147,12 @@ export const MpinManagementScreen = () => {
     <AppScreen contentStyle={styles.screen}>
       <ScreenHeader title={title} subtitle={subtitle} onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/security-center'))} />
 
-      <SurfaceCard gradient={gradients.primary}>
+      <SurfaceCard glass="dark">
         <Text style={styles.heroTitle}>{hasExistingMpin ? 'Change your security code' : 'Protect dashboard access'}</Text>
-        <Text style={styles.heroSubtitle}>{hasExistingMpin ? 'Your new MPIN will be required after future logins before the dashboard opens.' : 'Once saved, the app can require MPIN verification before showing the dashboard.'}</Text>
+        <Text style={styles.heroSubtitle}>{hasExistingMpin ? 'Your new MPIN will be required after future logins before the dashboard opens.' : 'Once saved, the app will require MPIN verification before unlocking the dashboard.'}</Text>
       </SurfaceCard>
 
-      <SurfaceCard>
+      <SurfaceCard glass="dark">
         {hasExistingMpin ? (
           <View style={styles.inputSection}>
             <Text style={styles.fieldLabel}>Current MPIN</Text>
@@ -204,52 +203,54 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 26,
-    lineHeight: 32,
-    color: colors.surface,
+    fontSize: 22,
+    lineHeight: 28,
+    color: '#FFFFFF',
   },
   heroSubtitle: {
     marginTop: 6,
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 20,
-    color: 'rgba(255,255,255,0.84)',
+    color: colors.textSecondary,
   },
   inputSection: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   fieldLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
-    color: colors.text,
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 12.5,
+    color: colors.textSecondary,
     alignSelf: 'flex-start',
-    marginBottom: 4,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   noteCard: {
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
-    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#0F172A',
     padding: 14,
     gap: 6,
-    marginVertical: 10,
+    marginVertical: 12,
   },
   noteTitle: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
-    color: colors.text,
+    fontFamily: fontFamily.headingSemi,
+    fontSize: 13.5,
+    color: '#FFFFFF',
   },
   noteText: {
     fontFamily: fontFamily.body,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   validationText: {
-    fontFamily: fontFamily.bodySemi,
+    fontFamily: fontFamily.bodyBold,
     fontSize: 12,
     lineHeight: 18,
-    color: colors.primary,
+    color: colors.cyan,
   },
 });

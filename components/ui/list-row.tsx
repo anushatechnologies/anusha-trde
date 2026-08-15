@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fontFamily } from '../../constants/theme';
+import { colors, fontFamily, radius, shadows } from '../../constants/theme';
 import { SurfaceCard } from './surface-card';
 
 type ListRowProps = {
@@ -13,12 +13,27 @@ type ListRowProps = {
   danger?: boolean;
 };
 
-export const ListRow = ({ icon, title, subtitle, trailing, onPress, danger = false }: ListRowProps) => (
-  <Pressable onPress={onPress} disabled={!onPress} style={({ pressed }) => [pressed && onPress ? styles.pressed : null]}>
-    <SurfaceCard style={styles.card}>
+export const ListRow = ({
+  icon,
+  title,
+  subtitle,
+  trailing,
+  onPress,
+  danger = false,
+}: ListRowProps) => (
+  <Pressable
+    onPress={onPress}
+    disabled={!onPress}
+    style={({ pressed }) => [pressed && onPress ? styles.pressed : null]}
+  >
+    <SurfaceCard glass="dark" style={styles.card}>
       <View style={styles.left}>
         <View style={[styles.iconWrap, danger && styles.iconWrapDanger]}>
-          <Ionicons name={icon} size={18} color={danger ? colors.danger : colors.primary} />
+          <Ionicons
+            name={icon}
+            size={18}
+            color={danger ? colors.dangerLight : colors.cyan}
+          />
         </View>
         <View style={styles.copy}>
           <Text style={[styles.title, danger && styles.danger]}>{title}</Text>
@@ -28,7 +43,7 @@ export const ListRow = ({ icon, title, subtitle, trailing, onPress, danger = fal
       {trailing || onPress ? (
         <View style={styles.right}>
           {trailing ? <Text style={styles.trailing}>{trailing}</Text> : null}
-          {onPress ? <Ionicons name="chevron-forward" size={18} color={colors.muted} /> : null}
+          {onPress ? <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} /> : null}
         </View>
       ) : null}
     </SurfaceCard>
@@ -40,9 +55,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    ...shadows.glass,
   },
   pressed: {
-    opacity: 0.96,
+    opacity: 0.88,
+    transform: [{ scale: 0.985 }],
   },
   left: {
     flexDirection: 'row',
@@ -56,36 +78,39 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: '#EEF2FF',
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapDanger: {
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderColor: 'rgba(239, 68, 68, 0.25)',
   },
   copy: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   title: {
-    fontFamily: fontFamily.bodyBold,
+    fontFamily: fontFamily.bodySemi,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   subtitle: {
     fontFamily: fontFamily.body,
-    fontSize: 13,
-    color: colors.muted,
+    fontSize: 12.5,
+    color: colors.textSecondary,
   },
   trailing: {
     fontFamily: fontFamily.bodySemi,
-    fontSize: 12,
-    color: colors.primary,
+    fontSize: 13,
+    color: colors.cyan,
   },
   danger: {
-    color: colors.danger,
+    color: colors.dangerLight,
   },
 });

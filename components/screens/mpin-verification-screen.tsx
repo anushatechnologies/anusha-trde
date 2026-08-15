@@ -1,5 +1,4 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -13,7 +12,7 @@ import {
 } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 
-import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
+import { colors, fontFamily, radius, shadows } from '../../constants/theme';
 import { authService } from '../../services/auth.service';
 import { getAuthErrorMessage } from '../../services/firebase-auth.service';
 import { useAuthStore } from '../../store/use-auth-store';
@@ -146,7 +145,7 @@ export const MpinVerificationScreen = () => {
               resizeMode="contain"
             />
             <View style={styles.shieldMiniIcon}>
-              <Ionicons name="shield-checkmark" size={14} color={colors.surface} />
+              <Ionicons name="shield-checkmark" size={14} color="#FFFFFF" />
             </View>
           </View>
 
@@ -175,13 +174,13 @@ export const MpinVerificationScreen = () => {
           <View style={styles.feedbackRow}>
             {isVerifying ? (
               <View style={styles.verifyingPill}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color={colors.cyan} />
                 <Text style={styles.verifyingText}>Verifying MPIN...</Text>
               </View>
             ) : errorMessage ? (
               <Text style={styles.errorText}>{errorMessage}</Text>
             ) : (
-              <Text style={styles.securityNote}>🔒 End-to-end encrypted security</Text>
+              <Text style={styles.securityNote}>🔒 End-to-end 256-bit encrypted security</Text>
             )}
           </View>
         </View>
@@ -198,17 +197,17 @@ export const MpinVerificationScreen = () => {
         <View style={styles.footerRow}>
           <Pressable
             onPress={() => router.push('/(auth)/forgot-mpin')}
-            style={({ pressed }) => [styles.logoutBtn, pressed && styles.logoutBtnPressed]}
+            style={({ pressed }) => [styles.actionLink, pressed && styles.actionLinkPressed]}
           >
-            <Ionicons name="key-outline" size={16} color={colors.primary} />
-            <Text style={[styles.logoutBtnText, { color: colors.primary }]}>Forgot MPIN?</Text>
+            <Ionicons name="key-outline" size={15} color={colors.cyan} />
+            <Text style={styles.actionLinkText}>Forgot MPIN?</Text>
           </Pressable>
 
           <Pressable
             onPress={() => void signOut()}
             style={({ pressed }) => [styles.logoutBtn, pressed && styles.logoutBtnPressed]}
           >
-            <Ionicons name="log-out-outline" size={16} color={colors.danger} />
+            <Ionicons name="log-out-outline" size={15} color={colors.dangerLight} />
             <Text style={styles.logoutBtnText}>Switch Account / Logout</Text>
           </Pressable>
         </View>
@@ -221,7 +220,7 @@ const styles = StyleSheet.create({
   screen: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
+    backgroundColor: '#080D1A',
   },
   container: {
     width: '100%',
@@ -240,17 +239,17 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 24,
-    backgroundColor: colors.surface,
+    backgroundColor: '#0F172A',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(56, 189, 248, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     ...shadows.card,
   },
   brandLogo: {
-    width: 58,
-    height: 58,
+    width: 54,
+    height: 54,
   },
   shieldMiniIcon: {
     position: 'absolute',
@@ -263,19 +262,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: colors.surface,
+    borderColor: '#0F172A',
   },
   brandName: {
     fontFamily: fontFamily.heading,
     fontSize: 16,
     letterSpacing: 1.5,
-    color: colors.primary,
+    color: colors.cyan,
     marginBottom: 2,
   },
   greetingText: {
     fontFamily: fontFamily.heading,
     fontSize: 22,
-    color: colors.text,
+    color: '#FFFFFF',
     textAlign: 'center',
     marginBottom: 4,
   },
@@ -283,7 +282,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 18,
-    color: colors.muted,
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 20,
   },
@@ -305,27 +304,45 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
   },
   verifyingText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.primary,
+    color: colors.cyan,
   },
   errorText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: colors.danger,
+    color: colors.dangerLight,
     textAlign: 'center',
   },
   securityNote: {
     fontFamily: fontFamily.body,
     fontSize: 11,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   footerRow: {
     marginTop: 16,
     alignItems: 'center',
+    gap: 10,
+  },
+  actionLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  actionLinkPressed: {
+    opacity: 0.8,
+  },
+  actionLinkText: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 13,
+    color: colors.cyan,
   },
   logoutBtn: {
     flexDirection: 'row',
@@ -334,14 +351,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: radius.pill,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.25)',
   },
   logoutBtnPressed: {
     opacity: 0.8,
   },
   logoutBtnText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
-    color: colors.danger,
+    fontSize: 12.5,
+    color: colors.dangerLight,
   },
 });

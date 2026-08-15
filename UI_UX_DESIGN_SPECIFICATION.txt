@@ -1,0 +1,204 @@
+================================================================================
+           ANUSHA TRADE - COMPLETE END-TO-END UI/UX DESIGN SPECIFICATION
+================================================================================
+Project: Anusha Trade (Next-Gen Wealth & Daily Investment Platform)
+Design Style: Ultra-Premium Luxury Fintech (Cred + Groww + Apple Finance Aesthetic)
+Theme: Midnight Obsidian Glassmorphism with Electric Blue & Emerald Accents
+Target Platforms: Android (React Native / Expo), iOS, Web
+
+--------------------------------------------------------------------------------
+TABLE OF CONTENTS:
+1. Master Design System & Color Palette
+2. Typography Hierarchy
+3. UI Components & Glassmorphism Guidelines
+4. Screen-by-Screen Layout & UX Architecture
+   4.1. Animated Splash Screen
+   4.2. Secure Login Screen
+   4.3. 6-Step Registration & KYC Flow
+   4.4. Wealth Dashboard (Home)
+   4.5. Investment Plans & ROI Calculator
+   4.6. 6-Level Referral & Team Network
+   4.7. Wallet, Deposits & Bank Withdrawals
+   4.8. Profile, Security & Account Management
+5. ChatGPT / Midjourney Master Prompt for UI Design
+================================================================================
+
+================================================================================
+1. MASTER DESIGN SYSTEM & COLOR PALETTE
+================================================================================
+
+A. PRIMARY PALETTE (Luxury Obsidian & Royal Electric Blue)
+- Deep Background:        #080D1A (Midnight Obsidian)
+- Card / Surface Surface: #0F172A (Deep Slate Navy)
+- Translucent Glass Fill: rgba(15, 23, 42, 0.75) / rgba(255, 255, 255, 0.05)
+- Glass Border Stroke:    rgba(255, 255, 255, 0.12) / rgba(56, 189, 248, 0.3)
+- Primary Accent:         #2563EB (Electric Royal Blue)
+- Cyan Highlight:         #38BDF8 (Sky Cyan Glow)
+- Secondary Accent:       #6366F1 (Indigo Violet)
+
+B. FUNCTIONAL & METRIC COLORS
+- Success / Profits / ROI: #10B981 / #34D399 (Emerald Glow)
+- Warning / Pending:       #F59E0B / #FBBF24 (Warm Amber)
+- Danger / Lock / Error:   #EF4444 / #F87171 (Crimson Red)
+- Muted Body Text:         #94A3B8 (Cool Slate Gray)
+- Pure Light Text:         #FFFFFF (High-Contrast Crisp White)
+- Subtle Caption:          #64748B (Dim Slate)
+
+C. LUXURY GRADIENTS
+- Primary CTA Button:      LinearGradient(135deg, #2563EB, #1D4ED8)
+- Emerald Profit Badge:    LinearGradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05))
+- Hero Portfolio Card:     LinearGradient(145deg, #1E3A8A 0%, #0F172A 70%, #080D1A 100%)
+- Golden VIP Tier:         LinearGradient(135deg, #F59E0B, #D97706)
+
+================================================================================
+2. TYPOGRAPHY HIERARCHY
+================================================================================
+Font Family: Inter / Outfit / Poppins / SF Pro Display
+- Display / Hero Figures: 32px - 36px | Bold (700/800) | Letter Spacing: -0.5px
+- Page Headers:           22px - 26px | Semi-Bold (600)
+- Section Titles:         16px - 18px | Medium (500/600)
+- Body Text:              14px | Regular (400) | Line Height: 22px
+- Captions & Tags:        11px - 12px | Semi-Bold (600) | Uppercase Tracked +1.5px
+
+================================================================================
+3. UI COMPONENTS & GLASSMORPHISM GUIDELINES
+================================================================================
+- Cards: Minimum 20px border radius, 1px frosted gradient stroke, soft drop shadow.
+- Action Pills: Circular / Capsule shape (radius: 9999px), micro-icon + label.
+- Inputs: 54px height, floating labels, clean prefix (+91 / INR ₹), focused cyan glow.
+- Animations: Fluid 60fps springs, fade-slide entries, bottom-to-top exits.
+- No Clutter: Remove unnecessary text disclaimers, multi-layered redundant borders,
+  or outdated biometric buttons. Keep interfaces focused, fast, and high-conversion.
+
+================================================================================
+4. SCREEN-BY-SCREEN LAYOUT & UX ARCHITECTURE
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1. ANIMATED SPLASH SCREEN
+--------------------------------------------------------------------------------
+- Background: Midnight Obsidian (#080D1A) with two subtle pulsating radial glow orbs.
+- Center Stage:
+  * Brand Logo inside a floating glowing capsule.
+  * Expanding dual halo pulse rings (cyan/blue).
+  * "Anusha Trade" typography with glowing subtitle: "SMART INVESTMENTS & SECURE RETURNS".
+  * Verified Badge: "🔒 Bank-Grade 256-Bit Security".
+- Exit Transition: Smooth fluid upward glide (-80px translateY + fade) directly into Login.
+
+--------------------------------------------------------------------------------
+4.2. SECURE LOGIN SCREEN
+--------------------------------------------------------------------------------
+- Header: Brand logo with "Welcome Back" greeting and quick tagline.
+- Main Form Card (Frosted Glass):
+  * Mobile Number input field with fixed "+91" prefix & phone icon.
+  * 4-Digit MPIN field with password visibility toggle & numeric keypad.
+  * Inline "Forgot MPIN?" link aligned right above the button.
+  * Primary Action: "Sign In to Dashboard" vibrant gradient button with loading spinner.
+- Footer:
+  * "Don't have an account? Create Account" high-contrast link.
+
+--------------------------------------------------------------------------------
+4.3. 6-STEP REGISTRATION & KYC FLOW
+--------------------------------------------------------------------------------
+- Header: Back button, Step Progress Pill (e.g. "STEP 1 OF 6"), and animated progress rail.
+- Step 1: Mobile Number Entry -> Automatic 6-digit OTP delivery (with backend fallback).
+- Step 2: Full Name & Email Address.
+- Step 3: Set 4-Digit MPIN & Security Password.
+- Step 4: Referral Code (Optional with instant sponsor lookup preview).
+- Step 5: KYC Verification (Aadhaar, PAN upload via Native System Picker, Face photo).
+- Step 6: Bank Account Linkage (Account Number, IFSC, Bank Name).
+- Final: "Account Created Successfully" confetti animation -> Direct redirect to Dashboard.
+
+--------------------------------------------------------------------------------
+4.4. WEALTH DASHBOARD (HOME)
+--------------------------------------------------------------------------------
+- Top Bar: User Profile Avatar, "Welcome back, {User Name}", Notification Bell with badge.
+- Portfolio Hero Card (Obsidian Glass):
+  * Label: "TOTAL PORTFOLIO & WALLET"
+  * Large Value: "₹1,25,000.00"
+  * Live Daily Growth Pill: "+₹1,250.00 Today (+1.5% ROI) ↗"
+  * 4 Quick Action Glass Pills:
+    [🚀 Invest]   [💳 Add Cash]   [💸 Withdraw]   [👥 Refer & Earn]
+- 2x2 Metric Grid:
+  * [Total Invested: ₹1,00,000]
+  * [Referral Earnings: ₹25,000]
+  * [Active Team: 148 Members]
+  * [Monthly Yield: +15.4%]
+- Interactive Referral Card: One-tap copy code, Share to WhatsApp/Telegram button.
+- Live Growth Chart: Smooth Bezier line chart showing daily cumulative earnings.
+- Recent Activity Feed: List of recent daily ROI credits and referral commissions.
+
+--------------------------------------------------------------------------------
+4.5. INVESTMENT PLANS & ROI CALCULATOR
+--------------------------------------------------------------------------------
+- Hero Card: "Grow Your Wealth with Curated Daily ROI Plans".
+- Plan Cards Carousel:
+  * Starter Plan (₹1,000 - ₹10,000) -> 1.2% Daily Return -> 90 Days.
+  * Growth Plan (₹10,001 - ₹50,000) -> 1.5% Daily Return -> 120 Days.
+  * Premium VIP (₹50,001 - ₹5,00,000) -> 2.0% Daily Return -> 180 Days.
+  * Card Elements: ROI badge, Duration, Capital Return guarantee, "Invest Now" button.
+- Interactive Calculator: Slider/Input where user enters ₹ amount and sees projected
+  Daily Profit, Weekly Profit, and Total Maturity Return in real time.
+
+--------------------------------------------------------------------------------
+4.6. 6-LEVEL REFERRAL & TEAM NETWORK
+--------------------------------------------------------------------------------
+- Top Stats: Total Team Members, Direct Referrals, Total Team Volume.
+- Level Breakdown Tabs:
+  * Level 1 (Direct): 10% Commission
+  * Level 2: 5% Commission
+  * Level 3: 3% Commission
+  * Level 4: 2% Commission
+  * Level 5: 1% Commission
+  * Level 6: 0.5% Commission
+- Member List: Card showing Name, Mobile (masked), Joining Date, Investment Status (Active/Inactive).
+
+--------------------------------------------------------------------------------
+4.7. WALLET, DEPOSITS & BANK WITHDRAWALS
+--------------------------------------------------------------------------------
+- Top Hero: Available Withdrawable Balance vs Locked Capital.
+- Quick Actions:
+  * Add Money / Deposit (UPI QR Code, Netbanking, Instant Screenshot Verification).
+  * Fast Withdrawal (Select linked bank account, enter amount, enter 4-digit MPIN).
+- Payout Schedule: Next payout countdown timer, minimum withdrawal limit rules.
+- Filterable Ledger: All | Deposits | Daily ROI | Referral Commissions | Withdrawals.
+
+--------------------------------------------------------------------------------
+4.8. PROFILE, SECURITY & ACCOUNT MANAGEMENT
+--------------------------------------------------------------------------------
+- User Identity: Photo, Full Name, Verified Investor Badge, Referral ID.
+- Settings Sections:
+  * Security: Change MPIN, Change Password, Active Device Sessions.
+  * Financials: Linked Bank Accounts, KYC Document Status (Approved/Pending).
+  * Support & Help: 24/7 WhatsApp Support, FAQs, Terms & Conditions.
+  * Logout Button: Danger outline button with confirmation sheet.
+
+================================================================================
+5. CHATGPT / MIDJOURNEY MASTER PROMPT FOR UI DESIGN
+================================================================================
+
+Copy and paste the prompt below into ChatGPT, Claude, or Midjourney:
+
+--- [COPY FROM HERE] ---
+"Act as a Principal Fintech UI/UX Product Designer from Apple and Revolut.
+Create a complete, modern, ultra-premium mobile app UI design for 'Anusha Trade',
+a high-yield investment, daily ROI, and 6-level referral network platform.
+
+Design Requirements:
+1. Aesthetic: Dark mode luxury glassmorphism (Obsidian navy #080D1A, deep slate #0F172A,
+   vibrant electric blue #2563EB, sky cyan #38BDF8, emerald green #10B981 for profits).
+2. Surfaces: Translucent frosted glass containers, delicate 1px border lighting strokes,
+   multi-layered soft elevation shadows, and subtle ambient radial glow orbs.
+3. Typography: Clean modern sans-serif typography (Inter/Outfit) with high contrast.
+4. Core Screens to generate:
+   - Screen 1: Splash Screen with floating glowing brand logo, pulse rings, and bottom-to-top fluid transition.
+   - Screen 2: Clean Login Screen with Mobile (+91), 4-Digit MPIN, 'Forgot MPIN?' link, and primary 'Sign In' gradient button.
+   - Screen 3: Wealth Dashboard with user greeting, Net Portfolio Hero card (Total Balance + Daily ROI badge),
+     4 quick-action glass pills (Invest, Add Cash, Withdraw, Refer), 2x2 metric stat grid, and live profit growth chart.
+   - Screen 4: Investment Plans screen with daily ROI cards and interactive earnings calculator.
+   - Screen 5: 6-Level Referral Tree network hierarchy with commission breakdown.
+   - Screen 6: Wallet & Withdrawal screen with instant bank transfer status.
+
+Make every screen look visually breathtaking, minimalist, clutter-free, and enterprise-grade."
+--- [END OF PROMPT] ---
+================================================================================

@@ -601,23 +601,23 @@ const styles = StyleSheet.create({
   breakdownTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   breakdownMeta: {
     marginTop: 4,
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   breakdownValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 18,
-    color: colors.primary,
+    color: colors.cyan,
   },
   emptyText: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   receiptHeader: {
     flexDirection: 'row',
@@ -628,24 +628,28 @@ const styles = StyleSheet.create({
   receiptReference: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 16,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   receiptDate: {
     marginTop: 4,
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   receiptBadge: {
     borderRadius: radius.pill,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   receiptBadgeSuccess: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(52, 211, 153, 0.35)',
   },
   receiptBadgeDefault: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
   },
   receiptBadgeText: {
     fontFamily: fontFamily.bodyBold,
@@ -653,10 +657,10 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   receiptBadgeTextSuccess: {
-    color: colors.success,
+    color: colors.successLight,
   },
   receiptBadgeTextDefault: {
-    color: colors.primary,
+    color: colors.cyan,
   },
   receiptAmountRow: {
     flexDirection: 'row',
@@ -667,17 +671,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   receiptAmount: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 17,
   },
   amountPositive: {
-    color: colors.success,
+    color: colors.successLight,
   },
   amountDefault: {
-    color: colors.text,
+    color: '#FFFFFF',
   },
   receiptMetaGrid: {
     flexDirection: 'row',
@@ -686,26 +690,30 @@ const styles = StyleSheet.create({
   receiptMetaCell: {
     flex: 1,
     borderRadius: radius.md,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     padding: 12,
     gap: 4,
   },
   receiptMetaLabel: {
     fontFamily: fontFamily.bodySemi,
-    fontSize: 12,
-    color: colors.muted,
+    fontSize: 11.5,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   receiptMetaValue: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 14,
-    color: colors.text,
+    color: '#FFFFFF',
     textTransform: 'capitalize',
   },
   receiptNote: {
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 20,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   statusHeroRow: {
     flexDirection: 'row',
@@ -739,25 +747,27 @@ const styles = StyleSheet.create({
   },
   investmentStatusChip: {
     borderRadius: radius.pill,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   investmentStatusChipText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: colors.primary,
+    color: colors.cyan,
   },
   statusBarTrack: {
-    height: 10,
+    height: 8,
     borderRadius: radius.pill,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     overflow: 'hidden',
   },
   statusBarFill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.cyan,
   },
   investmentStatusGrid: {
     flexDirection: 'row',
@@ -767,7 +777,9 @@ const styles = StyleSheet.create({
   investmentStatusCell: {
     width: '47%',
     borderRadius: radius.md,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     padding: 12,
     gap: 4,
   },

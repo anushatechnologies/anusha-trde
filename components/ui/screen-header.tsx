@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { colors, fontFamily, shadows } from '../../constants/theme';
+import { colors, fontFamily, radius, shadows } from '../../constants/theme';
 
 type ScreenHeaderProps = {
   title: string;
@@ -9,6 +9,7 @@ type ScreenHeaderProps = {
   onBackPress?: () => void;
   onRightPress?: () => void;
   rightIcon?: keyof typeof Ionicons.glyphMap;
+  rightBadge?: boolean;
 };
 
 export const ScreenHeader = ({
@@ -17,6 +18,7 @@ export const ScreenHeader = ({
   onBackPress,
   onRightPress,
   rightIcon = 'notifications-outline',
+  rightBadge = false,
 }: ScreenHeaderProps) => {
   const { width } = useWindowDimensions();
   const isCompact = width < 390;
@@ -32,7 +34,7 @@ export const ScreenHeader = ({
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
-              <Ionicons name="chevron-back" size={20} color={colors.text} />
+              <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
             </Pressable>
           ) : null}
 
@@ -51,11 +53,12 @@ export const ScreenHeader = ({
         {onRightPress ? (
           <Pressable
             onPress={onRightPress}
-            style={({ pressed }) => [styles.iconButton, styles.iconButtonAccent, pressed && styles.iconButtonPressed]}
+            style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
             accessibilityRole="button"
             accessibilityLabel="Open header action"
           >
-            <Ionicons name={rightIcon} size={18} color={colors.primary} />
+            <Ionicons name={rightIcon} size={18} color={colors.cyan} />
+            {rightBadge ? <View style={styles.badgeDot} /> : null}
           </Pressable>
         ) : null}
       </View>
@@ -65,9 +68,9 @@ export const ScreenHeader = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 4,
-    paddingTop: Platform.OS === 'android' ? 2 : 0,
-    marginBottom: 4,
+    paddingBottom: 6,
+    paddingTop: Platform.OS === 'android' ? 4 : 0,
+    marginBottom: 6,
   },
   row: {
     flexDirection: 'row',
@@ -82,23 +85,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.95)',
-    backgroundColor: colors.surface,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadows.soft,
   },
-  iconButtonAccent: {
-    backgroundColor: '#F3F7FF',
-    borderColor: 'rgba(191, 219, 254, 0.75)',
-  },
   iconButtonPressed: {
-    opacity: 0.9,
+    opacity: 0.85,
     transform: [{ scale: 0.96 }],
+    backgroundColor: '#1E293B',
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: 9,
+    right: 9,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: colors.danger,
   },
   copyWrap: {
     flex: 1,
@@ -109,7 +118,8 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.headingSemi,
     fontSize: 22,
     lineHeight: 28,
-    color: colors.text,
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
   },
   titleCompact: {
     fontSize: 20,
@@ -117,13 +127,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: fontFamily.body,
-    fontSize: 12.5,
-    lineHeight: 17,
-    color: colors.muted,
-    paddingRight: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.textSecondary,
   },
   subtitleCompact: {
-    fontSize: 11.5,
+    fontSize: 12,
     lineHeight: 16,
   },
 });

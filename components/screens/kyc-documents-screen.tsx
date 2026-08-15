@@ -5,9 +5,10 @@ import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 
 import { AppScreen } from '../../components/ui/app-screen';
 import { ScreenHeader } from '../../components/ui/screen-header';
+import { StatusBadge } from '../../components/ui/status-badge';
 import { SurfaceCard } from '../../components/ui/surface-card';
 import { AUTH_API_BASE_URL } from '../../api/backend-client';
-import { colors, fontFamily } from '../../constants/theme';
+import { colors, fontFamily, radius, shadows } from '../../constants/theme';
 import { kycService } from '../../services/kyc.service';
 
 const getFullImageUrl = (path?: string | null) => {
@@ -37,22 +38,18 @@ export const KycDocumentsScreen = () => {
     const imageUrl = getFullImageUrl(imagePath);
 
     return (
-      <SurfaceCard style={styles.card}>
+      <SurfaceCard glass="dark" style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>{title}</Text>
-          {status && (
-            <View style={[styles.statusBadge, status === 'APPROVED' ? styles.statusApproved : styles.statusPending]}>
-              <Text style={styles.statusText}>{status}</Text>
-            </View>
-          )}
+          {status ? <StatusBadge status={status} size="sm" /> : null}
         </View>
 
-        {fieldLabel && fieldValue && (
+        {fieldLabel && fieldValue ? (
           <View style={styles.fieldRow}>
             <Text style={styles.fieldLabel}>{fieldLabel}</Text>
             <Text style={styles.fieldValue}>{fieldValue}</Text>
           </View>
-        )}
+        ) : null}
 
         {imageUrl ? (
           <View style={styles.imageContainer}>
@@ -60,7 +57,7 @@ export const KycDocumentsScreen = () => {
           </View>
         ) : (
           <View style={styles.noImageContainer}>
-            <Ionicons name="image-outline" size={32} color={colors.muted} />
+            <Ionicons name="image-outline" size={32} color={colors.textSecondary} />
             <Text style={styles.noImageText}>No image uploaded</Text>
           </View>
         )}
@@ -78,14 +75,14 @@ export const KycDocumentsScreen = () => {
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <ActivityIndicator size="large" color={colors.cyan} />
         </View>
       ) : isError ? (
-        <SurfaceCard>
+        <SurfaceCard glass="dark">
           <Text style={styles.errorText}>Failed to load KYC documents. Please try again later.</Text>
         </SurfaceCard>
       ) : !submission ? (
-        <SurfaceCard>
+        <SurfaceCard glass="dark">
           <Text style={styles.errorText}>No KYC submission found for this account.</Text>
         </SurfaceCard>
       ) : (
@@ -110,12 +107,12 @@ export const KycDocumentsScreen = () => {
             submission.aadhaarBackStatus
           )}
           {renderDocumentCard(
-            'Selfie',
+            'Selfie Photo',
             submission.selfiePath,
             submission.selfieStatus
           )}
           {renderDocumentCard(
-            'Bank Proof',
+            'Bank Proof / Passbook',
             submission.bankProofPath,
             submission.bankProofStatus
           )}
@@ -134,7 +131,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontFamily: fontFamily.body,
     fontSize: 14,
-    color: colors.text,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   documentsContainer: {
@@ -144,6 +141,7 @@ const styles = StyleSheet.create({
   card: {
     padding: 16,
     gap: 12,
+    ...shadows.glass,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -151,52 +149,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardTitle: {
-    fontFamily: fontFamily.heading,
+    fontFamily: fontFamily.headingSemi,
     fontSize: 16,
-    color: colors.text,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: colors.muted,
-  },
-  statusApproved: {
-    backgroundColor: '#DEF7EC',
-  },
-  statusPending: {
-    backgroundColor: '#FEF0C7',
-  },
-  statusText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: 12,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   fieldRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 4,
+    paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   fieldLabel: {
-    fontFamily: fontFamily.body,
-    fontSize: 14,
-    color: colors.muted,
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 12,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   fieldValue: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 14,
-    color: colors.text,
+    color: colors.cyan,
   },
   imageContainer: {
     width: '100%',
     height: 200,
-    borderRadius: 12,
+    borderRadius: radius.md,
     overflow: 'hidden',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#0F172A',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   documentImage: {
     width: '100%',
@@ -205,17 +188,17 @@ const styles = StyleSheet.create({
   noImageContainer: {
     width: '100%',
     height: 120,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    borderRadius: radius.md,
+    backgroundColor: '#0F172A',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
   },
   noImageText: {
     fontFamily: fontFamily.body,
-    fontSize: 14,
-    color: colors.muted,
+    fontSize: 13,
+    color: colors.textSecondary,
   },
 });

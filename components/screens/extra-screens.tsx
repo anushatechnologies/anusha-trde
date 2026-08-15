@@ -368,50 +368,71 @@ export const ReferralsScreen = () => {
   const referralLink = dashboardData?.referralLink || '';
   const totalReferrals = teamData?.totalMembers ?? 0;
   const referralEarnings = dashboardData?.metrics.referralEarnings ?? 0;
-  const levels = teamData?.levels ?? [];
+  const serverLevels = teamData?.levels ?? [];
+
+  const defaultTiers = [
+    { level: 1, commission: 10, label: 'Direct Sponsor (Level 1)' },
+    { level: 2, commission: 5, label: 'Tier 2 Partner (Level 2)' },
+    { level: 3, commission: 3, label: 'Tier 3 Partner (Level 3)' },
+    { level: 4, commission: 2, label: 'Tier 4 Network (Level 4)' },
+    { level: 5, commission: 1, label: 'Tier 5 Network (Level 5)' },
+    { level: 6, commission: 0.5, label: 'Tier 6 Extended (Level 6)' },
+  ];
+
+  const levels = defaultTiers.map((tier) => {
+    const match = serverLevels.find((l) => l.level === tier.level);
+    return {
+      level: tier.level,
+      label: tier.label,
+      commission: match?.commission ?? tier.commission,
+      members: match?.members ?? 0,
+      earnings: match?.earnings ?? 0,
+    };
+  });
 
   return (
     <AppScreen>
-      <ScreenHeader title="Referral System" subtitle="Share your invite code, monitor team levels, and track commissions." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/team'))} />
+      <ScreenHeader title="Referral Center" subtitle="Share your invite code, monitor 6 team tiers, and track commissions." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/team'))} />
 
-      <SurfaceCard gradient={gradients.primary}>
-        <Text style={styles.heroTitle}>Grow your network</Text>
-        <Text style={styles.heroSubtitle}>Direct partners and team leaders can scale recurring earnings through your referral link.</Text>
+      <SurfaceCard glass="dark">
+        <Text style={styles.heroTitle}>Grow Your Wealth Network</Text>
+        <Text style={styles.heroSubtitle}>Earn up to 10% direct commissions and multi-level rewards on every active investment in your tree.</Text>
       </SurfaceCard>
 
       <ReferralLinkCard link={referralLink} />
 
       <View style={styles.referralMetricRow}>
-        <SurfaceCard style={styles.referralMetricCard}>
+        <SurfaceCard glass="dark" style={styles.referralMetricCard}>
           <Text style={styles.referralMetricValue}>{totalReferrals}</Text>
-          <Text style={styles.referralMetricLabel}>Total Referrals</Text>
+          <Text style={styles.referralMetricLabel}>Total Network</Text>
         </SurfaceCard>
-        <SurfaceCard style={styles.referralMetricCard}>
-          <Text style={styles.referralMetricValue}>{formatCurrency(referralEarnings)}</Text>
-          <Text style={styles.referralMetricLabel}>Commission Earned</Text>
+        <SurfaceCard glass="dark" style={styles.referralMetricCard}>
+          <Text style={[styles.referralMetricValue, { color: colors.successLight }]}>{formatCurrency(referralEarnings)}</Text>
+          <Text style={styles.referralMetricLabel}>Total Earnings</Text>
         </SurfaceCard>
       </View>
 
-      <SurfaceCard>
-        <SectionTitle title="Commission Levels" />
+      <SurfaceCard glass="dark">
+        <SectionTitle title="6-Tier Commission Structure" />
         {isDashboardLoading || isTeamLoading ? (
           <Text style={styles.supportingText}>Loading referral levels...</Text>
-        ) : levels.length ? (
+        ) : (
           levels.map((level) => (
             <View key={level.level} style={styles.levelCardRow}>
               <View>
-                <Text style={styles.levelCardTitle}>Level {level.level}</Text>
-                <Text style={styles.levelCardMeta}>{level.members} active members</Text>
+                <Text style={styles.levelCardTitle}>{level.label}</Text>
+                <Text style={styles.levelCardMeta}>{level.members} registered team members</Text>
               </View>
-              <Text style={styles.levelCardCommission}>{formatPercent(level.commission)}</Text>
+              <View style={{ alignItems: 'flex-end', gap: 2 }}>
+                <Text style={styles.levelCardCommission}>{formatPercent(level.commission)}</Text>
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 11, color: colors.textSecondary }}>{formatCurrency(level.earnings)}</Text>
+              </View>
             </View>
           ))
-        ) : (
-          <Text style={styles.supportingText}>No referral levels available yet.</Text>
         )}
       </SurfaceCard>
 
-      <ListRow icon="git-network-outline" title="Referral Tree" subtitle="Open the full network hierarchy and level overview" onPress={() => router.push('/referral-tree')} />
+      <ListRow icon="git-network-outline" title="Interactive Tree Hierarchy" subtitle="Explore your complete visual member tree" onPress={() => router.push('/referral-tree')} />
       <GradientButton label="Open Team Dashboard" onPress={() => router.push('/(tabs)/team')} />
     </AppScreen>
   );
@@ -586,8 +607,13 @@ export const WithdrawScreen = () => {
   const transactions = useWalletStore((state) => state.transactions);
   const user = useAuthStore((state) => state.user);
   const bankMask = user?.bankMask || 'No verified bank account linked';
+  const accountHolderName = user?.accountHolderName || user?.name || 'Verified Investor';
+  const bankName = user?.bankName || 'Linked Bank';
+  const ifscCode = user?.ifscCode || 'ICIC0000102';
   const withdrawals = transactions.filter((item) => item.type === 'withdrawal');
-  
+
+  const QUICK_AMOUNTS = [1000, 2500, 5000, 10000];
+
   const { data: settings, isLoading: settingsLoading } = useQuery({
     queryKey: ['withdrawal-settings'],
     queryFn: () => dashboardService.getWithdrawalSettings(),
@@ -601,11 +627,11 @@ export const WithdrawScreen = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.wallet }),
         queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
       ]);
-      Alert.alert('Withdrawal requested', 'Your withdrawal request has been submitted successfully.');
+      Alert.alert('Withdrawal Requested', 'Your bank payout request has been submitted for instant audit clearance.');
       router.push('/withdrawal-history');
     },
     onError: (error) => {
-      Alert.alert('Withdrawal failed', getAuthErrorMessage(error));
+      Alert.alert('Withdrawal Failed', getAuthErrorMessage(error));
     },
   });
 
@@ -613,17 +639,17 @@ export const WithdrawScreen = () => {
     const requestedAmount = Number(amount.replace(/[^0-9.]/g, ''));
 
     if (!requestedAmount || !Number.isFinite(requestedAmount) || requestedAmount <= 0) {
-      Alert.alert('Invalid amount', 'Enter a valid withdrawal amount to continue.');
+      Alert.alert('Invalid Amount', 'Enter a valid withdrawal amount to continue.');
       return;
     }
 
     if (!user?.bankMask.trim()) {
-      Alert.alert('Bank account required', 'Link and verify your bank account before requesting a withdrawal.');
+      Alert.alert('Bank Account Required', 'Link and verify your bank account before requesting a withdrawal.');
       return;
     }
 
     if (requestedAmount > availableBalance) {
-      Alert.alert('Insufficient balance', 'Withdrawal amount cannot be greater than the available balance.');
+      Alert.alert('Insufficient Balance', 'Withdrawal amount cannot be greater than the available balance.');
       return;
     }
 
@@ -633,11 +659,11 @@ export const WithdrawScreen = () => {
         return;
       }
       if (requestedAmount < settings.minimumWithdrawalAmount) {
-        Alert.alert('Amount too low', `Minimum withdrawal amount is ${formatCurrency(settings.minimumWithdrawalAmount)}`);
+        Alert.alert('Amount Too Low', `Minimum withdrawal amount is ${formatCurrency(settings.minimumWithdrawalAmount)}`);
         return;
       }
       if (settings.maximumWithdrawalAmount > 0 && requestedAmount > settings.maximumWithdrawalAmount) {
-        Alert.alert('Amount too high', `Maximum withdrawal amount is ${formatCurrency(settings.maximumWithdrawalAmount)}`);
+        Alert.alert('Amount Too High', `Maximum withdrawal amount is ${formatCurrency(settings.maximumWithdrawalAmount)}`);
         return;
       }
     }
@@ -647,45 +673,119 @@ export const WithdrawScreen = () => {
 
   return (
     <AppScreen>
-      <ScreenHeader title="Withdraw" subtitle="Move available funds to your verified bank account." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/wallet'))} />
-      <SurfaceCard gradient={gradients.primary}>
-        <Text style={styles.heroTitle}>Available Balance</Text>
-        <Text style={styles.heroSubtitle}>{formatCurrency(availableBalance)}</Text>
+      <ScreenHeader title="Withdraw Funds" subtitle="Instant payout directly to your verified bank account." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/wallet'))} />
+
+      {/* Available Balance Hero */}
+      <SurfaceCard glass="dark">
+        <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6 }}>Available Withdrawable Balance</Text>
+        <Text style={{ fontFamily: fontFamily.heading, fontSize: 32, color: '#FFFFFF', marginTop: 4 }}>{formatCurrency(availableBalance)}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <Ionicons name="shield-checkmark" size={14} color={colors.successLight} />
+          <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.successLight }}>Instant 24/7 IMPS / NEFT Settlement</Text>
+        </View>
       </SurfaceCard>
 
-      <SurfaceCard>
-        <Text style={styles.fieldLabel}>Withdrawal Amount</Text>
+      {/* Destination Bank Account Card */}
+      <SurfaceCard glass="dark">
+        <SectionTitle title="Destination Bank Account" actionLabel="Change" onActionPress={() => router.push('/bank-details')} />
+        <View style={{ backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.25)', padding: 14, gap: 6 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontFamily: fontFamily.headingSemi, fontSize: 16, color: '#FFFFFF' }}>{bankName}</Text>
+            <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: 'rgba(52, 211, 153, 0.35)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill }}>
+              <Text style={{ fontFamily: fontFamily.bodyBold, fontSize: 10.5, color: colors.successLight }}>VERIFIED</Text>
+            </View>
+          </View>
+          <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 14, color: colors.cyan }}>{bankMask}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+            <Text style={{ fontFamily: fontFamily.body, fontSize: 12, color: colors.textSecondary }}>Holder: {accountHolderName}</Text>
+            <Text style={{ fontFamily: fontFamily.body, fontSize: 12, color: colors.textSecondary }}>IFSC: {ifscCode}</Text>
+          </View>
+        </View>
+      </SurfaceCard>
+
+      {/* Withdrawal Form */}
+      <SurfaceCard glass="dark">
+        <Text style={styles.fieldLabel}>Enter Withdrawal Amount (₹)</Text>
+
+        {/* Quick Amount Chips */}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 6 }}>
+          {QUICK_AMOUNTS.map((amt) => (
+            <Pressable
+              key={amt}
+              onPress={() => setAmount(String(amt))}
+              style={({ pressed }) => [
+                {
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: radius.pill,
+                  backgroundColor: amount === String(amt) ? 'rgba(56, 189, 248, 0.2)' : '#0F172A',
+                  borderWidth: 1,
+                  borderColor: amount === String(amt) ? colors.cyan : 'rgba(255, 255, 255, 0.12)',
+                },
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Text style={{ fontFamily: fontFamily.bodyBold, fontSize: 12, color: amount === String(amt) ? colors.cyan : colors.textSecondary }}>
+                ₹{amt.toLocaleString('en-IN')}
+              </Text>
+            </Pressable>
+          ))}
+          {availableBalance > 0 ? (
+            <Pressable
+              onPress={() => setAmount(String(availableBalance))}
+              style={({ pressed }) => [
+                {
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: radius.pill,
+                  backgroundColor: amount === String(availableBalance) ? 'rgba(56, 189, 248, 0.2)' : '#0F172A',
+                  borderWidth: 1,
+                  borderColor: amount === String(availableBalance) ? colors.cyan : 'rgba(255, 255, 255, 0.12)',
+                },
+                pressed && { opacity: 0.8 },
+              ]}
+            >
+              <Text style={{ fontFamily: fontFamily.bodyBold, fontSize: 12, color: colors.warningLight }}>
+                Max All
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+
         <TextInput
           keyboardType="number-pad"
           value={amount}
           onChangeText={(value) => setAmount(value.replace(/[^0-9.]/g, ''))}
           style={styles.amountInput}
-          placeholder="0"
-          placeholderTextColor="#94A3B8"
+          placeholder="Enter ₹ amount"
+          placeholderTextColor={colors.textSecondary}
         />
+
         {settingsLoading ? (
-          <Text style={styles.supportingText}>Loading settings...</Text>
+          <Text style={styles.supportingText}>Loading payout guidelines...</Text>
         ) : settings ? (
           <Text style={styles.supportingText}>
-            Min: {formatCurrency(settings.minimumWithdrawalAmount)} 
-            {settings.maximumWithdrawalAmount > 0 ? ` • Max: ${formatCurrency(settings.maximumWithdrawalAmount)}` : ''}
-            {settings.feePercentage > 0 ? ` • Fee: ${settings.feePercentage}%` : ''}
+            Min withdrawal: {formatCurrency(settings.minimumWithdrawalAmount)} 
+            {settings.maximumWithdrawalAmount > 0 ? ` • Max limit: ${formatCurrency(settings.maximumWithdrawalAmount)}` : ''}
+            {settings.feePercentage > 0 ? ` • Fee: ${settings.feePercentage}%` : ' • 0% Processing Fee'}
           </Text>
         ) : null}
-        <Text style={styles.supportingText}>{`Bank account: ${bankMask}`}</Text>
+
         <GradientButton
-          label={withdrawalMutation.isPending ? 'Requesting...' : 'Request Withdrawal'}
+          label={withdrawalMutation.isPending ? 'Processing Payout...' : 'Confirm Bank Withdrawal'}
+          icon={<Ionicons name="arrow-up-circle-outline" size={18} color="#FFFFFF" />}
           onPress={handleWithdrawalRequest}
           disabled={!settings?.withdrawalEnabled || withdrawalMutation.isPending}
         />
       </SurfaceCard>
 
-      <SurfaceCard>
-        <SectionTitle title="Recent Payouts" actionLabel="History" onActionPress={() => router.push('/withdrawal-history')} />
-        {withdrawals.length ? withdrawals.map((item) => <TransactionRow key={item.id} item={item} />) : <Text style={styles.supportingText}>No payout requests yet.</Text>}
+      {/* Recent Payout Requests */}
+      <SurfaceCard glass="dark">
+        <SectionTitle title="Recent Payout Activity" actionLabel="Passbook" onActionPress={() => router.push('/withdrawal-history')} />
+        {withdrawals.length ? withdrawals.slice(0, 4).map((item) => <TransactionRow key={item.id} item={item} />) : <Text style={styles.supportingText}>No payout requests yet.</Text>}
       </SurfaceCard>
 
-      <ListRow icon="time-outline" title="Withdrawal History" subtitle="Review every processed and pending payout request" onPress={() => router.push('/withdrawal-history')} />
+      <ListRow icon="time-outline" title="Full Withdrawal History" subtitle="Review every processed and pending payout transaction" onPress={() => router.push('/withdrawal-history')} />
     </AppScreen>
   );
 };
@@ -756,7 +856,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 20,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   notificationRow: {
     flexDirection: 'row',
@@ -767,26 +867,26 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.cyan,
     marginTop: 6,
   },
   notificationDotRead: {
-    backgroundColor: '#CBD5E1',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   notificationCopy: {
     flex: 1,
     gap: 4,
   },
   notificationTitle: {
-    fontFamily: fontFamily.bodyBold,
+    fontFamily: fontFamily.headingSemi,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   notificationDescription: {
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 20,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   notificationTime: {
     fontFamily: fontFamily.bodySemi,
@@ -797,7 +897,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     gap: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   detailFieldLast: {
     borderBottomWidth: 0,
@@ -805,8 +905,8 @@ const styles = StyleSheet.create({
   },
   detailFieldLabel: {
     fontFamily: fontFamily.bodySemi,
-    fontSize: 12,
-    color: colors.muted,
+    fontSize: 11.5,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -814,7 +914,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
     lineHeight: 22,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   referralMetricRow: {
     flexDirection: 'row',
@@ -827,12 +927,12 @@ const styles = StyleSheet.create({
   referralMetricValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 24,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   referralMetricLabel: {
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   levelCardRow: {
     flexDirection: 'row',
@@ -843,18 +943,18 @@ const styles = StyleSheet.create({
   levelCardTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   levelCardMeta: {
     marginTop: 4,
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   levelCardCommission: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 18,
-    color: colors.primary,
+    color: colors.cyan,
   },
   filterWrap: {
     flexDirection: 'row',
@@ -864,49 +964,50 @@ const styles = StyleSheet.create({
   filterChip: {
     borderRadius: radius.pill,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: colors.surface,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#0F172A',
   },
   filterChipActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#DBEAFE',
+    backgroundColor: 'rgba(37, 99, 235, 0.25)',
+    borderColor: colors.cyan,
   },
   filterChipText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.textSecondary,
     textTransform: 'capitalize',
   },
   filterChipTextActive: {
-    color: colors.primary,
+    color: colors.cyan,
   },
   fieldLabel: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
-    color: colors.text,
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 12.5,
+    color: colors.textSecondary,
+    marginBottom: 4,
   },
   amountInput: {
     minHeight: 56,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
-    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: '#0F172A',
     paddingHorizontal: 16,
     fontFamily: fontFamily.headingSemi,
     fontSize: 20,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   sessionTitle: {
     fontFamily: fontFamily.headingSemi,
-    fontSize: 18,
-    color: colors.text,
+    fontSize: 17,
+    color: '#FFFFFF',
   },
   currentSession: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: colors.primary,
+    color: colors.cyan,
   },
 });
 

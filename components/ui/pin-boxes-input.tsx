@@ -46,6 +46,7 @@ export const PinBoxesInput: React.FC<PinBoxesInputProps> = ({
   };
 
   const digits = value.split('');
+  const isSixDigit = length === 6;
 
   return (
     <View style={[styles.outerWrap, style]}>
@@ -64,7 +65,7 @@ export const PinBoxesInput: React.FC<PinBoxesInputProps> = ({
       />
 
       {/* Visual PIN Boxes Grid */}
-      <Pressable onPress={handlePress} style={styles.boxesRow}>
+      <Pressable onPress={handlePress} style={[styles.boxesRow, isSixDigit && styles.boxesRowSix]}>
         {Array.from({ length }).map((_, index) => {
           const digit = digits[index] || '';
           const isBoxActive = isFocused && (index === digits.length || (index === length - 1 && digits.length === length));
@@ -75,15 +76,16 @@ export const PinBoxesInput: React.FC<PinBoxesInputProps> = ({
               key={index}
               style={[
                 styles.box,
+                isSixDigit && styles.boxSix,
                 isFilled ? styles.boxFilled : null,
                 isBoxActive ? styles.boxActive : null,
               ]}
             >
               {isFilled ? (
                 showPin ? (
-                  <Text style={styles.digitText}>{digit}</Text>
+                  <Text style={[styles.digitText, isSixDigit && styles.digitTextSix]}>{digit}</Text>
                 ) : (
-                  <View style={styles.bulletDot} />
+                  <View style={[styles.bulletDot, isSixDigit && styles.bulletDotSix]} />
                 )
               ) : isBoxActive ? (
                 <View style={styles.activeCursor} />
@@ -99,7 +101,7 @@ export const PinBoxesInput: React.FC<PinBoxesInputProps> = ({
           onPress={() => setShowPin((prev) => !prev)}
           style={({ pressed }) => [styles.eyeBtn, pressed && styles.eyeBtnPressed]}
         >
-          <Ionicons name={showPin ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.primary} />
+          <Ionicons name={showPin ? 'eye-off-outline' : 'eye-outline'} size={16} color={colors.cyan} />
           <Text style={styles.eyeBtnText}>{showPin ? 'Hide Code' : 'Show Code'}</Text>
         </Pressable>
       ) : null}
@@ -123,49 +125,65 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 14,
+    gap: 12,
     paddingVertical: 6,
   },
+  boxesRowSix: {
+    gap: 8,
+  },
   box: {
-    width: 62,
-    height: 66,
+    width: 60,
+    height: 64,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#0F172A',
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.soft,
+    ...shadows.glass,
+  },
+  boxSix: {
+    width: 48,
+    height: 56,
+    borderRadius: radius.sm,
   },
   boxFilled: {
-    borderColor: colors.primary,
-    backgroundColor: '#EEF2FF',
+    borderColor: 'rgba(56, 189, 248, 0.45)',
+    backgroundColor: '#131F37',
   },
   boxActive: {
-    borderColor: colors.primary,
-    backgroundColor: colors.surface,
+    borderColor: colors.cyan,
+    backgroundColor: '#1E293B',
     borderWidth: 2,
-    shadowColor: colors.primary,
+    shadowColor: colors.cyan,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
   },
   digitText: {
     fontFamily: fontFamily.heading,
     fontSize: 26,
-    color: colors.primary,
+    color: '#FFFFFF',
+  },
+  digitTextSix: {
+    fontSize: 22,
   },
   bulletDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: colors.primary,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.cyan,
+  },
+  bulletDotSix: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
   activeCursor: {
     width: 2,
     height: 22,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.cyan,
     borderRadius: 1,
   },
   eyeBtn: {
@@ -173,10 +191,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginTop: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(56, 189, 248, 0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.22)',
   },
   eyeBtnPressed: {
     opacity: 0.8,
@@ -184,6 +204,6 @@ const styles = StyleSheet.create({
   eyeBtnText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.primary,
+    color: colors.cyan,
   },
 });

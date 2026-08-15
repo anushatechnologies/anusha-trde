@@ -3,6 +3,7 @@ import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,12 +19,13 @@ import {
 import { FadeInView } from '../../animations/fade-in-view';
 import { runtimeConfig } from '../../constants/runtime-config';
 import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
-import { useInvestmentsQuery } from '../../hooks/use-app-queries';
+import { queryKeys, useInvestmentsQuery } from '../../hooks/use-app-queries';
 import { useReceiptPolling } from '../../hooks/use-receipt-polling';
 import { investmentService } from '../../services/investment.service';
 import { Plan } from '../../types';
 import { formatCurrency, formatPercent } from '../../utils/format';
 import { useAuthStore } from '../../store/use-auth-store';
+import { KycGateModal } from '../kyc/kyc-gate-modal';
 import { InvestmentPaymentReceipt } from '../receipt/investment-payment-receipt';
 import { ReceiptStatusCard } from '../receipt/receipt-status-card';
 import { AppScreen } from '../ui/app-screen';
@@ -127,7 +129,8 @@ const stepStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    gap: 4,
   },
   stepItem: {
     flexDirection: 'row',
@@ -138,53 +141,57 @@ const stepStyles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: '#0F172A',
   },
   dotActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#EEF2FF',
+    borderColor: colors.cyan,
+    backgroundColor: '#1E293B',
+    borderWidth: 2,
+    ...shadows.glow,
   },
   dotCompleted: {
-    borderColor: colors.success,
-    backgroundColor: colors.success,
+    borderColor: colors.successLight,
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
   },
   dotText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   dotTextActive: {
-    color: colors.primary,
+    color: colors.cyan,
   },
   label: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 11,
-    color: '#94A3B8',
+    color: colors.textSecondary,
   },
   labelActive: {
-    color: colors.primary,
+    color: colors.cyan,
+    fontFamily: fontFamily.bodyBold,
   },
   labelCompleted: {
-    color: colors.success,
+    color: colors.successLight,
   },
   line: {
     width: 20,
     height: 2,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     marginHorizontal: 4,
     borderRadius: 1,
   },
   lineCompleted: {
-    backgroundColor: colors.success,
+    backgroundColor: colors.successLight,
   },
 });
 
 export const InvestApplyScreen = () => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ planId?: string }>();
   const { data, isLoading } = useInvestmentsQuery();
   const user = useAuthStore((state) => state.user);
@@ -202,6 +209,7 @@ export const InvestApplyScreen = () => {
   const [couponValidating, setCouponValidating] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; cashbackAmount: number; message: string } | null>(null);
   const [couponError, setCouponError] = useState('');
+  const [kycGateVisible, setKycGateVisible] = useState(false);
 
   const { receipt, setReceipt } = useReceiptPolling({
     investmentId,
@@ -217,6 +225,16 @@ export const InvestApplyScreen = () => {
   }, [data?.plans, params.planId]);
 
   const amount = Number(amountText.replace(/[^0-9]/g, '')) || 0;
+
+  const openDashboardAfterSubmission = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.investments }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.wallet }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.team }),
+    ]);
+    router.replace('/(tabs)');
+  }, [queryClient, router]);
 
   const isAmountValid = plan ? amount >= plan.minInvestment && amount <= plan.maxInvestment : false;
 
@@ -253,6 +271,11 @@ export const InvestApplyScreen = () => {
   const handleApplyInvestment = useCallback(async () => {
     if (!plan || !isAmountValid) return;
 
+    if (user?.kycStatus !== 'APPROVED') {
+      setKycGateVisible(true);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const result = await investmentService.applyManualInvestment(plan.id, amount, appliedCoupon?.code);
@@ -264,7 +287,7 @@ export const InvestApplyScreen = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [plan, amount, isAmountValid, appliedCoupon]);
+  }, [plan, amount, isAmountValid, appliedCoupon, user?.kycStatus]);
 
   const handleCopyText = useCallback(async (text: string, label: string) => {
     try {
@@ -277,6 +300,11 @@ export const InvestApplyScreen = () => {
 
   const handleInitiateRazorpay = useCallback(async () => {
     if (!plan || !isAmountValid) return;
+
+    if (user?.kycStatus !== 'APPROVED') {
+      setKycGateVisible(true);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -318,8 +346,7 @@ export const InvestApplyScreen = () => {
                 if (verifyRes.receipt) {
                   setReceipt(verifyRes.receipt);
                 }
-                Alert.alert('Payment Verified', verifyRes.message || 'Payment successfully verified.');
-                setStep('success');
+                await openDashboardAfterSubmission();
               } catch (err: any) {
                 const msg = err?.response?.data?.message || err?.message || 'Signature verification failed.';
                 Alert.alert('Payment Verification Failed', msg);
@@ -362,7 +389,7 @@ export const InvestApplyScreen = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [plan, amount, isAmountValid, appliedCoupon]);
+  }, [plan, amount, isAmountValid, appliedCoupon, openDashboardAfterSubmission]);
 
   const handlePickReceipt = useCallback(async () => {
     try {
@@ -393,14 +420,14 @@ export const InvestApplyScreen = () => {
         selectedPaymentMode === 'RAZORPAY' ? 'CARD' : selectedPaymentMode,
         bankReference
       );
-      setStep('success');
+      await openDashboardAfterSubmission();
     } catch (error: any) {
       const msg = error?.response?.data?.message || error?.message || 'Failed to upload receipt.';
       Alert.alert('Upload Failed', msg);
     } finally {
       setIsSubmitting(false);
     }
-  }, [receiptUri, investmentId, amount, paymentDate, selectedPaymentMode, bankReference]);
+  }, [receiptUri, investmentId, amount, paymentDate, selectedPaymentMode, bankReference, openDashboardAfterSubmission]);
 
   if (isLoading || !data) {
     return (
@@ -479,6 +506,57 @@ export const InvestApplyScreen = () => {
       {/* STEP: Amount Entry */}
       {step === 'amount' && (
         <FadeInView>
+          {user?.kycStatus !== 'APPROVED' ? (
+            <Pressable
+              onPress={() => setKycGateVisible(true)}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: user?.kycStatus === 'PENDING' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                borderRadius: radius.md,
+                borderWidth: 1,
+                borderColor: user?.kycStatus === 'PENDING' ? 'rgba(56, 189, 248, 0.35)' : 'rgba(251, 191, 36, 0.35)',
+                padding: 12,
+                gap: 10,
+                marginBottom: 14,
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: user?.kycStatus === 'PENDING' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons
+                  name={user?.kycStatus === 'PENDING' ? 'time-outline' : 'id-card-outline'}
+                  size={20}
+                  color={user?.kycStatus === 'PENDING' ? colors.cyan : colors.warningLight}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.bodyBold,
+                    fontSize: 13,
+                    color: user?.kycStatus === 'PENDING' ? colors.cyan : colors.warningLight,
+                  }}
+                >
+                  {user?.kycStatus === 'PENDING' ? 'KYC Under Verification' : 'KYC Verification Required'}
+                </Text>
+                <Text style={{ fontFamily: fontFamily.body, fontSize: 11.5, color: colors.textSecondary, marginTop: 2 }}>
+                  {user?.kycStatus === 'PENDING'
+                    ? 'Compliance review in progress. Tap to check status.'
+                    : 'Verify your identity to activate daily payouts. Tap to verify.'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </Pressable>
+          ) : null}
+
           <SurfaceCard>
             <SectionTitle title="Investment Amount" />
             <Text style={styles.inputLabel}>
@@ -887,6 +965,18 @@ export const InvestApplyScreen = () => {
           />
         </FadeInView>
       )}
+
+      <KycGateModal
+        visible={kycGateVisible}
+        onClose={() => setKycGateVisible(false)}
+        kycStatus={user?.kycStatus}
+        planName={plan?.name}
+        onProceedInvest={() => {
+          if (user?.kycStatus === 'APPROVED') {
+            void handleApplyInvestment();
+          }
+        }}
+      />
     </AppScreen>
   );
 };
@@ -1018,15 +1108,15 @@ const styles = StyleSheet.create({
   applyCouponBtnText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 13,
-    color: colors.surface,
+    color: '#FFFFFF',
   },
   appliedCouponBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: 'rgba(52, 211, 153, 0.35)',
     borderRadius: radius.md,
     padding: 12,
   },
@@ -1039,12 +1129,12 @@ const styles = StyleSheet.create({
   appliedCouponCode: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 15,
-    color: colors.success,
+    color: colors.successLight,
   },
   appliedCouponMsg: {
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: '#166534',
+    color: colors.successLight,
   },
   removeCouponBtn: {
     padding: 4,
@@ -1052,7 +1142,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   projectionGrid: {
     flexDirection: 'row',
@@ -1061,22 +1151,24 @@ const styles = StyleSheet.create({
   projectionCell: {
     flex: 1,
     borderRadius: radius.sm,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#0F172A',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     padding: 12,
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
   projectionLabel: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 11,
-    color: colors.muted,
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   projectionValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 16,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   paymentGrid: {
     flexDirection: 'row',
@@ -1086,23 +1178,25 @@ const styles = StyleSheet.create({
   paymentOption: {
     width: '30%',
     flexGrow: 1,
-    borderRadius: radius.sm,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#0F172A',
     paddingVertical: 14,
     alignItems: 'center',
     gap: 8,
+    ...shadows.glass,
   },
   paymentOptionActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#EEF2FF',
+    borderColor: colors.cyan,
+    backgroundColor: '#1E293B',
+    ...shadows.glow,
   },
   paymentIconWrap: {
-    width: 38,
-    height: 38,
+    width: 40,
+    height: 40,
     borderRadius: 12,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1112,54 +1206,54 @@ const styles = StyleSheet.create({
   paymentLabel: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   paymentLabelActive: {
-    color: colors.primary,
+    color: colors.cyan,
     fontFamily: fontFamily.bodyBold,
   },
   textInputField: {
     minHeight: 52,
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
-    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: '#0F172A',
     paddingHorizontal: 16,
     fontFamily: fontFamily.bodySemi,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   summaryLabel: {
     fontFamily: fontFamily.body,
-    fontSize: 14,
-    color: colors.muted,
+    fontSize: 13.5,
+    color: colors.textSecondary,
   },
   summaryValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   receiptUploadZone: {
     borderRadius: radius.md,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#CBD5E1',
-    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    backgroundColor: '#0F172A',
     paddingVertical: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   receiptUploadZoneSelected: {
-    borderColor: colors.success,
-    backgroundColor: '#F0FDF4',
+    borderColor: colors.successLight,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
     borderStyle: 'solid',
   },
   receiptPlaceholder: {
@@ -1170,7 +1264,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -1178,12 +1274,12 @@ const styles = StyleSheet.create({
   receiptPlaceholderTitle: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 16,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   receiptPlaceholderSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   receiptSelected: {
     alignItems: 'center',
@@ -1192,12 +1288,12 @@ const styles = StyleSheet.create({
   receiptSelectedText: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 16,
-    color: colors.success,
+    color: colors.successLight,
   },
   receiptChangeText: {
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.muted,
+    color: colors.cyan,
   },
   successContent: {
     alignItems: 'center',
@@ -1208,40 +1304,45 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
+    backgroundColor: 'rgba(16, 185, 129, 0.18)',
+    borderWidth: 1.5,
+    borderColor: colors.successLight,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.glow,
+    ...shadows.profit,
   },
   successTitle: {
     fontFamily: fontFamily.heading,
     fontSize: 24,
-    color: colors.text,
+    color: '#FFFFFF',
     textAlign: 'center',
   },
   successSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 14,
     lineHeight: 22,
-    color: colors.muted,
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 8,
   },
   statusBadge: {
     borderRadius: radius.pill,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(251, 191, 36, 0.35)',
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
   statusBadgeText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: '#D97706',
+    color: colors.warningLight,
   },
   bankDetailBox: {
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
-    backgroundColor: '#F8FAFC',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#0F172A',
     marginTop: 10,
     overflow: 'hidden',
   },
@@ -1250,36 +1351,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   bankDetailLabel: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 11,
-    color: colors.muted,
+    color: colors.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   bankDetailValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 14,
-    color: colors.text,
+    color: '#FFFFFF',
     marginTop: 2,
   },
   copyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#1E293B',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: 'rgba(56, 189, 248, 0.3)',
   },
   copyBtnText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: colors.primary,
+    color: colors.cyan,
   },
 });

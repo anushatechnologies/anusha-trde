@@ -1,9 +1,10 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, fontFamily } from '../../constants/theme';
+import { colors, fontFamily, radius, shadows } from '../../constants/theme';
 import { TransactionItem } from '../../types';
 import { formatCurrency } from '../../utils/format';
+import { StatusBadge } from '../ui/status-badge';
 
 type TransactionRowProps = {
   item: TransactionItem;
@@ -23,22 +24,23 @@ export const TransactionRow = ({ item }: TransactionRowProps) => {
     <View style={styles.row}>
       <View style={styles.left}>
         <View style={[styles.iconWrap, positive ? styles.iconSuccess : styles.iconDefault]}>
-          <Ionicons name={iconMap[item.type]} size={20} color={positive ? colors.success : colors.primary} />
+          <Ionicons
+            name={iconMap[item.type] || 'cash-outline'}
+            size={20}
+            color={positive ? colors.successLight : colors.cyan}
+          />
         </View>
         <View style={styles.copy}>
-          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.title} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.meta}>{item.timestamp}</Text>
-          <Text style={styles.note}>{item.note}</Text>
+          {item.note ? <Text style={styles.note} numberOfLines={1}>{item.note}</Text> : null}
         </View>
       </View>
       <View style={styles.amountWrap}>
         <Text style={[styles.amount, positive ? styles.positive : styles.negative]}>
           {positive ? '+' : '-'} {formatCurrency(Math.abs(item.amount))}
         </Text>
-        <View style={styles.statusRow}>
-          <MaterialCommunityIcons name="circle-medium" size={16} color={positive ? colors.success : colors.warning} />
-          <Text style={styles.status}>{item.status}</Text>
-        </View>
+        <StatusBadge status={item.status} size="sm" />
       </View>
     </View>
   );
@@ -47,70 +49,67 @@ export const TransactionRow = ({ item }: TransactionRowProps) => {
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
+    gap: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   left: {
     flexDirection: 'row',
     flex: 1,
+    alignItems: 'center',
     gap: 12,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    ...shadows.glass,
   },
   iconDefault: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderColor: 'rgba(56, 189, 248, 0.25)',
   },
   iconSuccess: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderColor: 'rgba(52, 211, 153, 0.3)',
   },
   copy: {
     flex: 1,
-    gap: 3,
+    gap: 2,
   },
   title: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: 15,
-    color: colors.text,
+    fontFamily: fontFamily.headingSemi,
+    fontSize: 14.5,
+    color: '#FFFFFF',
   },
   meta: {
     fontFamily: fontFamily.body,
-    fontSize: 12,
-    color: colors.muted,
+    fontSize: 11.5,
+    color: colors.textSecondary,
   },
   note: {
     fontFamily: fontFamily.body,
-    fontSize: 12,
+    fontSize: 11,
     color: colors.muted,
   },
   amountWrap: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: 6,
   },
   amount: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: 14,
+    fontFamily: fontFamily.headingSemi,
+    fontSize: 15,
   },
   positive: {
-    color: colors.success,
+    color: colors.successLight,
   },
   negative: {
-    color: colors.text,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  status: {
-    fontFamily: fontFamily.bodySemi,
-    fontSize: 11,
-    color: colors.muted,
-    textTransform: 'capitalize',
+    color: '#FFFFFF',
   },
 });

@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, fontFamily, gradients } from '../../constants/theme';
+import { colors, fontFamily, gradients, shadows } from '../../constants/theme';
 import { useResponsive } from '../../utils/responsive';
 
 const tabMeta = {
@@ -53,7 +53,7 @@ export const FloatingTabBar = ({ state, descriptors, navigation }: BottomTabBarP
     <View pointerEvents="box-none" style={styles.outerContainer}>
       <View style={[styles.glassWrapper, { width: containerWidth, marginBottom: bottomPadding }]}>
         {Platform.OS === 'ios' || Platform.OS === 'android' ? (
-          <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFillObject} />
+          <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFillObject} />
         ) : null}
 
         <View style={styles.tabBarContent}>
@@ -98,7 +98,7 @@ export const FloatingTabBar = ({ state, descriptors, navigation }: BottomTabBarP
                 {isFocused ? (
                   <View style={styles.activeDotContainer}>
                     <LinearGradient
-                      colors={[colors.primary, '#60A5FA']}
+                      colors={[colors.cyan, colors.primary]}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                       style={styles.activeDot}
@@ -116,11 +116,11 @@ export const FloatingTabBar = ({ state, descriptors, navigation }: BottomTabBarP
                     end={{ x: 1, y: 1 }}
                     style={[styles.iconTileActive, isCompact && styles.iconTileCompact]}
                   >
-                    <IconComp name={meta.activeIcon as any} size={isCompact ? 18 : 20} color={colors.surface} />
+                    <IconComp name={meta.activeIcon as any} size={isCompact ? 18 : 20} color="#FFFFFF" />
                   </LinearGradient>
                 ) : (
                   <View style={[styles.iconTileInactive, isCompact && styles.iconTileCompact]}>
-                    <IconComp name={meta.inactiveIcon as any} size={isCompact ? 18 : 20} color="#64748B" />
+                    <IconComp name={meta.inactiveIcon as any} size={isCompact ? 18 : 20} color="#94A3B8" />
                   </View>
                 )}
 
@@ -156,14 +156,14 @@ const styles = StyleSheet.create({
   glassWrapper: {
     borderRadius: 28,
     overflow: 'hidden',
-    backgroundColor: Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.88)' : 'rgba(255, 255, 255, 0.82)',
+    backgroundColor: 'rgba(15, 23, 42, 0.92)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255, 255, 255, 0.95)',
-    shadowColor: '#1E3A8A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
-    elevation: 12,
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 14,
   },
   tabBarContent: {
     flexDirection: 'row',
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(238, 242, 255, 0.65)',
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
   },
   tabItemPressed: {
     opacity: 0.85,
@@ -209,11 +209,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    ...shadows.glow,
   },
   iconTileInactive: {
     width: 38,
@@ -238,10 +234,10 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     fontFamily: fontFamily.bodyBold,
-    color: colors.primary,
+    color: colors.cyan,
     letterSpacing: 0.2,
   },
   labelInactive: {
-    color: '#64748B',
+    color: '#94A3B8',
   },
 });

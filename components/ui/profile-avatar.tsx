@@ -73,14 +73,16 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   softBase: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.3)',
   },
   softText: {
     fontFamily: fontFamily.headingSemi,
-    color: colors.primary,
+    color: colors.cyan,
   },
   gradientText: {
     fontFamily: fontFamily.headingSemi,
-    color: colors.surface,
+    color: '#FFFFFF',
   },
 });

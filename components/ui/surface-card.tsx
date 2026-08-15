@@ -8,35 +8,67 @@ type SurfaceCardProps = {
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
   gradient?: readonly [string, string] | readonly [string, string, string];
-  glass?: boolean;
+  glass?: boolean | 'dark' | 'light';
 };
 
-export const SurfaceCard = ({ children, style, gradient, glass = false }: SurfaceCardProps) => {
+export const SurfaceCard = ({ children, style, gradient, glass = 'dark' }: SurfaceCardProps) => {
   if (gradient) {
     return (
-      <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.card, style]}>
+      <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.card, styles.gradientCard, style]}>
         {children}
       </LinearGradient>
     );
   }
 
-  return <View style={[styles.card, glass && styles.glassCard, style]}>{children}</View>;
+  if (glass === 'light') {
+    return (
+      <View style={[styles.card, styles.lightGlassCard, style]}>
+        <LinearGradient
+          colors={['rgba(255, 255, 255, 0.95)', 'rgba(248, 250, 252, 0.82)']}
+          style={StyleSheet.absoluteFillObject}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+        {children}
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.card, styles.darkGlassCard, style]}>
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.07)', 'rgba(255, 255, 255, 0.02)']}
+        style={StyleSheet.absoluteFillObject}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+      {children}
+    </View>
+  );
 };
 
 export const gradientSets = gradients;
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    backgroundColor: '#0F172A',
+    borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(226, 232, 240, 0.92)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     padding: 18,
     gap: 14,
-    ...shadows.card,
+    overflow: 'hidden',
+    ...shadows.glass,
   },
-  glassCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.52)',
-    borderColor: 'rgba(255,255,255,0.28)',
+  gradientCard: {
+    borderWidth: 0,
+  },
+  lightGlassCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.88)',
+    borderColor: 'rgba(255, 255, 255, 0.65)',
+  },
+  darkGlassCard: {
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
 });

@@ -34,13 +34,15 @@ export const LineChart = ({ data, height = 170 }: LineChartProps) => {
     <View>
       <Svg width="100%" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
         <Defs>
-          <LinearGradient id="chartGradient" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor={colors.primary} stopOpacity="0.25" />
-            <Stop offset="1" stopColor={colors.tertiary} stopOpacity="0.04" />
+          <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={colors.cyan} stopOpacity="0.3" />
+            <Stop offset="0.7" stopColor={colors.primary} stopOpacity="0.1" />
+            <Stop offset="1" stopColor="#080D1A" stopOpacity="0.0" />
           </LinearGradient>
           <LinearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
             <Stop offset="0" stopColor={colors.primary} />
-            <Stop offset="1" stopColor={colors.tertiary} />
+            <Stop offset="0.5" stopColor={colors.cyan} />
+            <Stop offset="1" stopColor={colors.successLight} />
           </LinearGradient>
         </Defs>
 
@@ -51,22 +53,23 @@ export const LineChart = ({ data, height = 170 }: LineChartProps) => {
             x2={chartWidth}
             y1={chartHeight * value}
             y2={chartHeight * value}
-            stroke="#E2E8F0"
+            stroke="rgba(255, 255, 255, 0.08)"
             strokeDasharray="4 6"
             strokeWidth="1"
           />
         ))}
 
         {area ? <Path d={area} fill="url(#chartGradient)" /> : null}
-        {path ? <Path d={path} fill="none" stroke="url(#lineGradient)" strokeWidth="4" strokeLinecap="round" /> : null}
+        {path ? <Path d={path} fill="none" stroke="url(#lineGradient)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" /> : null}
 
         {points.map((point) => (
           <SvgText
             key={point.label}
             x={point.x}
             y={chartHeight - 4}
-            fontSize="10"
-            fill={colors.muted}
+            fontSize="10.5"
+            fontWeight="600"
+            fill={colors.textSecondary}
             textAnchor="middle"
           >
             {point.label}
@@ -75,7 +78,7 @@ export const LineChart = ({ data, height = 170 }: LineChartProps) => {
 
         {!hasPoints ? (
           <SvgText x={chartWidth / 2} y={chartHeight / 2} fontSize="12" fill={colors.muted} textAnchor="middle">
-            No data available
+            No projection data available
           </SvgText>
         ) : null}
       </Svg>

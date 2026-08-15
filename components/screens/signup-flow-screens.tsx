@@ -18,6 +18,7 @@ import { useAuthStore } from '../../store/use-auth-store';
 import type { SignupStatus } from '../../types';
 import { useResponsive } from '../../utils/responsive';
 import { AppScreen } from '../ui/app-screen';
+import { DatePickerInput } from '../ui/date-picker-input';
 import { GradientButton } from '../ui/gradient-button';
 import { InputField } from '../ui/input-field';
 import { ScreenHeader } from '../ui/screen-header';
@@ -57,7 +58,7 @@ const FLOW_STEPS = [
     route: '/signup/terms',
     title: 'Terms & Consent',
     subtitle: 'Review and accept platform terms and risk disclosures.',
-    actionLabel: 'Agree & Register Account',
+    actionLabel: 'Agree & Enter Dashboard',
     icon: 'document-text-outline',
   },
   {
@@ -1037,14 +1038,11 @@ export const CompleteSignupScreen = () => {
         return;
       }
 
-      // Step 2: Sign in to store the access token for subsequent API calls
+      // Step 2: Sign in and complete onboarding immediately — open Dashboard!
       await signIn(registration.session);
-
-      // Step 3: Navigate to KYC document upload (step index 3)
-      const nextStep = 3;
-      const nextDraft = { ...latestDraft, currentStep: nextStep,
-        signupVerificationToken: registration.session.tokens.accessToken };
-      await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
+      completeOnboarding();
+      await signupFlowService.clearDraft();
+      router.replace('/(tabs)');
     } catch (error: any) {
       const status = error.response?.status;
       const serverData = error.response?.data;
@@ -1333,14 +1331,13 @@ export const CompleteSignupScreen = () => {
               placeholder="Enter your full name"
               icon={<Ionicons name="person-outline" size={18} color={colors.primary} />}
             />
-            <InputField labelStyle={styles.inputLabel}
-              label="Date of Birth (YYYY-MM-DD)"
+            <DatePickerInput
+              label="Date of Birth"
               value={draft.dateOfBirth}
-              onChangeText={(value) => patchDraft({ dateOfBirth: formatDobInput(value) })}
+              onChangeDate={(value) => patchDraft({ dateOfBirth: value })}
               required
-              placeholder="e.g. 1995-05-20"
-              keyboardType="number-pad"
-              icon={<Ionicons name="calendar-outline" size={18} color={colors.primary} />}
+              placeholder="YYYY-MM-DD (e.g. 1995-05-20)"
+              labelStyle={styles.inputLabel}
             />
             <InputField labelStyle={styles.inputLabel}
               label="Address"

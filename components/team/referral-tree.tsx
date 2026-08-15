@@ -16,9 +16,9 @@ export const ReferralTree = ({ levels }: ReferralTreeProps) => {
   return (
     <View style={styles.container}>
       <Svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`}>
-        <Line x1={centerX} y1="24" x2={centerX} y2={height - 36} stroke="#CBD5E1" strokeWidth="2" />
-        <Circle cx={centerX} cy="18" r="12" fill={colors.primary} />
-        <SvgText x={centerX} y="22" fill={colors.surface} fontSize="10" fontWeight="700" textAnchor="middle">
+        <Line x1={centerX} y1="24" x2={centerX} y2={height - 36} stroke="rgba(56, 189, 248, 0.3)" strokeWidth="2" />
+        <Circle cx={centerX} cy="18" r="14" fill={colors.primary} />
+        <SvgText x={centerX} y="22" fill="#FFFFFF" fontSize="10" fontWeight="700" textAnchor="middle">
           YOU
         </SvgText>
 
@@ -30,15 +30,15 @@ export const ReferralTree = ({ levels }: ReferralTreeProps) => {
 
           return (
             <View key={level.id}>
-              <Line x1={centerX} y1={y} x2={lineEnd} y2={y} stroke="#94A3B8" strokeWidth="2" />
-              <Circle cx={nodeX} cy={y} r="20" fill={right ? colors.primary : colors.tertiary} />
-              <SvgText x={nodeX} y={y + 4} fill={colors.surface} fontSize="11" fontWeight="700" textAnchor="middle">
+              <Line x1={centerX} y1={y} x2={lineEnd} y2={y} stroke="rgba(56, 189, 248, 0.25)" strokeWidth="2" />
+              <Circle cx={nodeX} cy={y} r="18" fill={right ? '#2563EB' : '#0284C7'} />
+              <SvgText x={nodeX} y={y + 4} fill="#FFFFFF" fontSize="11" fontWeight="700" textAnchor="middle">
                 L{index + 1}
               </SvgText>
               <SvgText
-                x={right ? nodeX - 34 : nodeX + 34}
-                y={y - 4}
-                fill={colors.text}
+                x={right ? nodeX - 30 : nodeX + 30}
+                y={y - 3}
+                fill="#FFFFFF"
                 fontSize="11"
                 fontWeight="700"
                 textAnchor={right ? 'end' : 'start'}
@@ -46,9 +46,9 @@ export const ReferralTree = ({ levels }: ReferralTreeProps) => {
                 {level.title}
               </SvgText>
               <SvgText
-                x={right ? nodeX - 34 : nodeX + 34}
-                y={y + 12}
-                fill={colors.muted}
+                x={right ? nodeX - 30 : nodeX + 30}
+                y={y + 13}
+                fill={colors.cyan}
                 fontSize="10"
                 textAnchor={right ? 'end' : 'start'}
               >
@@ -65,7 +65,9 @@ export const ReferralTree = ({ levels }: ReferralTreeProps) => {
 const styles = StyleSheet.create({
   container: {
     borderRadius: radius.md,
-    backgroundColor: '#F8FAFC',
-    paddingVertical: 8,
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 12,
   },
 });

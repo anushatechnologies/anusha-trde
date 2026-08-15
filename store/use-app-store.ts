@@ -15,7 +15,7 @@ type AppStore = {
 
 export const useAppStore = create<AppStore>((set, get) => ({
   isHydrated: false,
-  hasCompletedOnboarding: false,
+  hasCompletedOnboarding: true,
   notificationPermission: 'undetermined',
   hydrate: async () => {
     const persisted = await readSecure<Pick<AppStore, 'hasCompletedOnboarding' | 'notificationPermission'>>(APP_STATE_KEY);

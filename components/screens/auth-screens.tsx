@@ -154,7 +154,6 @@ const SessionCard = ({ item, showLocation = true }: { item: SessionItem; showLoc
     <Text style={styles.sessionFooter}>
       {showLocation ? `IP: ${item.ipAddress}` : `Last active: ${item.lastActive}`}
     </Text>
-    <Text style={styles.sessionFooter}>Last active: {item.lastActive}</Text>
   </SurfaceCard>
 );
 
@@ -168,6 +167,8 @@ export const LoginScreen = () => {
 
   const [mobile, setMobile] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginMode, setLoginMode] = useState<'password' | 'otp'>('password');
   const isCompact = width < 390;
 
   useEffect(() => {
@@ -184,17 +185,20 @@ export const LoginScreen = () => {
     setMobile(digits.slice(0, 10));
   };
 
-  const loginMutation = useMutation({
-    mutationFn: () => authService.loginWithMobileMpin(mobile, password),
-    onSuccess: async (data) => {
-      await signIn(data);
-      const nextRoute = authService.resolveOnboardingRoute(data.user);
-      if (nextRoute !== '/(tabs)') {
-        return;
+  // Password / MPIN Login Mutation
+  const passwordLoginMutation = useMutation({
+    mutationFn: async () => {
+      const sanitizedMobile = normalizeMobileDigits(mobile);
+      if (password.length === 4 && /^\d{4}$/.test(password)) {
+        return authService.loginWithMobileMpin(sanitizedMobile, password);
       }
+      return authService.loginWithMobilePassword(sanitizedMobile, password);
+    },
+    onSuccess: (session) => {
+      signIn(session);
       router.replace('/(tabs)');
     },
-    onError: (error) => {
+    onError: (error: any) => {
       const msg = getAuthErrorMessage(error);
       const isNotFound =
         msg.includes('USER_NOT_FOUND') ||
@@ -223,22 +227,48 @@ export const LoginScreen = () => {
           ]
         );
       } else {
-        Alert.alert('Login failed', msg);
+        Alert.alert('Login Failed', msg);
       }
+    },
+  });
+
+  // OTP Request Mutation
+  const otpLoginMutation = useMutation({
+    mutationFn: () => authService.requestOtp(`+91${normalizeMobileDigits(mobile)}`, 'login', 'mobile'),
+    onSuccess: (data) => {
+      router.push({
+        pathname: '/(auth)/otp',
+        params: {
+          target: data.target || `+91${normalizeMobileDigits(mobile)}`,
+          purpose: 'login',
+          mode: 'mobile',
+          provider: data.provider || '',
+          previewCode: data.previewCode || '',
+        },
+      });
+    },
+    onError: (error) => {
+      const msg = getAuthErrorMessage(error);
+      Alert.alert('OTP Request Failed', msg);
     },
   });
 
   const handleLogin = () => {
     const sanitizedMobile = normalizeMobileDigits(mobile);
     if (!sanitizedMobile || sanitizedMobile.length !== 10) {
-      Alert.alert('Invalid mobile number', 'Enter a valid 10 digit mobile number.');
+      Alert.alert('Invalid Mobile Number', 'Enter a valid 10-digit mobile number.');
       return;
     }
-    if (!password.trim()) {
-      Alert.alert('MPIN required', 'Enter your 4-digit MPIN to continue.');
-      return;
+
+    if (loginMode === 'password') {
+      if (!password.trim()) {
+        Alert.alert('Password Required', 'Enter your password or 4-digit MPIN to sign in.');
+        return;
+      }
+      passwordLoginMutation.mutate();
+    } else {
+      otpLoginMutation.mutate();
     }
-    loginMutation.mutate();
   };
 
   return (
@@ -252,45 +282,55 @@ export const LoginScreen = () => {
       <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
 
       <View style={[styles.loginShell, !isTablet && styles.loginShellMobile]}>
-        <LinearGradient colors={gradients.dark} style={[styles.loginHero, { paddingTop: Math.max(insets.top + 16, 34) }]}>
+        <LinearGradient colors={gradients.dark} style={[styles.loginHero, { paddingTop: Math.max(insets.top + 20, 36) }]}>
           <View style={styles.loginGlowOrbPrimary} />
           <View style={styles.loginGlowOrbSecondary} />
 
           <View style={styles.loginHeroHeader}>
             <View style={styles.loginBrandBadge}>
-              <BrandLogo size={60} />
+              <BrandLogo size={68} />
             </View>
             <View style={styles.loginHeroCopy}>
-              <Text style={styles.loginEyebrow}>SECURE SIGN IN</Text>
               <Text style={styles.loginHeroTitle}>Welcome Back</Text>
-              <Text style={styles.loginHeroSubtitle}>Access your investments, earnings, wallet activity, and referrals with one secure login.</Text>
-            </View>
-          </View>
-
-          <View style={styles.loginPillRow}>
-            <View style={styles.loginPill}>
-              <Ionicons name="shield-checkmark-outline" size={14} color={colors.surface} />
-              <Text style={styles.loginPillText}>Protected Sessions</Text>
-            </View>
-            <View style={styles.loginPill}>
-              <Ionicons name="scan-outline" size={14} color={colors.surface} />
-              <Text style={styles.loginPillText}>Biometric Ready</Text>
+              <Text style={styles.loginHeroSubtitle}>Sign in to access your investments, daily returns, and wallet.</Text>
             </View>
           </View>
         </LinearGradient>
 
-        <View style={[styles.loginPanel, !isTablet && styles.loginPanelMobile, { paddingBottom: Math.max(insets.bottom + 18, 28) }]}>
-          <View style={styles.loginModeHeader}>
-            <View style={styles.loginModeHeaderIcon}>
-              <Ionicons name="phone-portrait-outline" size={18} color={colors.primary} />
-            </View>
-            <View style={styles.loginModeHeaderCopy}>
-              <Text style={styles.loginModeHeaderTitle}>Mobile Login</Text>
-              <Text style={styles.loginModeHeaderSubtitle}>Use your registered mobile number and MPIN to continue securely.</Text>
-            </View>
-          </View>
-
+        <View style={[styles.loginPanel, !isTablet && styles.loginPanelMobile, { paddingBottom: Math.max(insets.bottom + 24, 32) }]}>
           <View style={[styles.loginFormBlock, isCompact && styles.loginFormBlockCompact]}>
+            {/* Mode Switcher Tabs */}
+            <View style={{ flexDirection: 'row', backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.08)', padding: 4, marginBottom: 16 }}>
+              <Pressable
+                onPress={() => setLoginMode('password')}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  borderRadius: radius.sm,
+                  backgroundColor: loginMode === 'password' ? colors.primary : 'transparent',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 13, color: loginMode === 'password' ? '#FFFFFF' : colors.textSecondary }}>
+                  Password / MPIN
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setLoginMode('otp')}
+                style={{
+                  flex: 1,
+                  paddingVertical: 8,
+                  borderRadius: radius.sm,
+                  backgroundColor: loginMode === 'otp' ? colors.primary : 'transparent',
+                  alignItems: 'center',
+                }}
+              >
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 13, color: loginMode === 'otp' ? '#FFFFFF' : colors.textSecondary }}>
+                  Login via OTP
+                </Text>
+              </Pressable>
+            </View>
+
             <View style={styles.loginFormFields}>
               <InputField
                 label="Mobile Number"
@@ -309,74 +349,64 @@ export const LoginScreen = () => {
                 shellStyle={styles.loginInputShell}
                 inputStyle={styles.loginInputText}
               />
-              <InputField
-                label="MPIN"
-                value={password}
-                onChangeText={setPassword}
-                secure
-                keyboardType="numeric"
-                maxLength={4}
-                textContentType="password"
-                autoComplete="password"
-                returnKeyType="done"
-                placeholder="Enter your 4-digit MPIN"
-                icon={<Ionicons name="keypad-outline" size={18} color={colors.primary} />}
-                containerStyle={styles.loginInputGroup}
-                labelStyle={styles.loginInputLabel}
-                shellStyle={styles.loginInputShell}
-                inputStyle={styles.loginInputText}
-              />
+
+              {loginMode === 'password' ? (
+                <>
+                  <InputField
+                    label="Password or 4-Digit MPIN"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    returnKeyType="done"
+                    placeholder="Enter password or MPIN"
+                    icon={<Ionicons name="lock-closed-outline" size={18} color={colors.primary} />}
+                    trailing={
+                      <Pressable onPress={() => setShowPassword((prev) => !prev)} style={{ padding: 6 }}>
+                        <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textSecondary} />
+                      </Pressable>
+                    }
+                    containerStyle={styles.loginInputGroup}
+                    labelStyle={styles.loginInputLabel}
+                    shellStyle={styles.loginInputShell}
+                    inputStyle={styles.loginInputText}
+                  />
+                  <View style={{ alignItems: 'flex-end', marginTop: -4 }}>
+                    <Pressable onPress={() => router.push('/(auth)/reset-password')}>
+                      <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>
+                        Forgot Password / MPIN?
+                      </Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <Text style={{ color: colors.muted, fontFamily: fontFamily.body, fontSize: 13 }}>
+                  We will send a 6-digit one-time password to your registered mobile.
+                </Text>
+              )}
             </View>
 
             <View style={styles.loginFormActions}>
-              <Text style={styles.loginHelperText}>
-                Use your registered 10-digit mobile number and 4-digit MPIN.
-              </Text>
-
               <GradientButton
-                label={loginMutation.isPending ? 'Logging In...' : 'Login to Dashboard'}
+                label={
+                  loginMode === 'password'
+                    ? passwordLoginMutation.isPending
+                      ? 'Signing in...'
+                      : 'Sign In to Dashboard'
+                    : otpLoginMutation.isPending
+                    ? 'Sending OTP...'
+                    : 'Send Login OTP'
+                }
                 onPress={handleLogin}
                 iconPosition="end"
+                icon={<Ionicons name="arrow-forward" size={18} color="#FFFFFF" />}
               />
-            </View>
-          </View>
-
-          <View style={[styles.loginUtilityRow, isCompact && styles.loginUtilityColumn]}>
-            <Pressable onPress={() => router.push('/(auth)/forgot-mpin')} style={({ pressed }) => [styles.loginUtilityCard, pressed && styles.loginUtilityCardPressed]}>
-              <View style={styles.loginUtilityIcon}>
-                <Ionicons name="keypad-outline" size={18} color={colors.primary} />
-              </View>
-              <View style={styles.loginUtilityCopy}>
-                <Text style={styles.loginUtilityTitle}>Forgot MPIN</Text>
-                <Text style={styles.loginUtilitySubtitle}>Reset with mobile OTP</Text>
-              </View>
-            </Pressable>
-
-            <Pressable onPress={() => router.push('/(auth)/biometric')} style={({ pressed }) => [styles.loginUtilityCard, pressed && styles.loginUtilityCardPressed]}>
-              <View style={styles.loginUtilityIcon}>
-                <Ionicons name="scan-outline" size={18} color={colors.primary} />
-              </View>
-              <View style={styles.loginUtilityCopy}>
-                <Text style={styles.loginUtilityTitle}>Biometric Login</Text>
-                <Text style={styles.loginUtilitySubtitle}>Use Face ID or fingerprint</Text>
-              </View>
-            </Pressable>
-          </View>
-
-          <View style={styles.loginSecurityCard}>
-            <View style={styles.loginSecurityIcon}>
-              <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
-            </View>
-            <View style={styles.loginSecurityCopy}>
-              <Text style={styles.loginSecurityTitle}>Built for secure access</Text>
-              <Text style={styles.loginSecurityText}>OTP verification, JWT sessions, MPIN protection, and device-level security are active for this app.</Text>
             </View>
           </View>
 
           <View style={styles.loginFooterRow}>
-            <Text style={styles.loginFooterText}>New to Anusha Trade?</Text>
-            <Pressable onPress={() => router.push('/(auth)/register')}>
-              <Text style={styles.loginFooterLink}>Create account</Text>
+            <Text style={styles.loginFooterText}>Don't have an account?</Text>
+            <Pressable onPress={() => router.push('/(auth)/register')} style={{ paddingVertical: 6, paddingHorizontal: 4 }}>
+              <Text style={styles.loginFooterLink}>Create Account</Text>
             </Pressable>
           </View>
         </View>
@@ -543,12 +573,12 @@ export const RegisterScreen = () => {
     <AppScreen contentStyle={styles.registrationFlowScreen} fullBleed backgroundColor={colors.dark} safeAreaEdges={['left', 'right']}>
       <StatusBar barStyle="light-content" backgroundColor={colors.dark} />
       <RegistrationStepCard
-        stepLabel={`STEP 1 OF ${TOTAL_REGISTRATION_STEPS}`}
-        title="Verify Mobile"
-        subtitle="Enter your phone number to begin the registration process."
+        stepLabel="CREATE ACCOUNT"
+        title="Create Account"
+        subtitle="Enter your mobile number to start investing & earning."
         icon="phone-portrait-outline"
-        progressWidth={getRegistrationProgressWidth(1)}
-        onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/onboarding'))}
+        progressWidth="15%"
+        onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(auth)/login'))}
         shellStyle={!isTablet ? styles.registrationShellMobile : undefined}
         bodyStyle={!isTablet ? styles.registrationBodyMobile : undefined}
         heroStyle={{ paddingTop: Math.max(insets.top + 12, 26) }}
@@ -665,7 +695,9 @@ export const OtpScreen = () => {
 
         await signIn(result.session);
 
-        if (purpose === 'login' && authService.resolveOnboardingRoute(result.session.user) !== '/(tabs)') {
+        if (purpose === 'login') {
+          const nextRoute = authService.resolveOnboardingRoute(result.session.user);
+          router.replace(nextRoute);
           return;
         }
 
@@ -1579,12 +1611,14 @@ const styles = StyleSheet.create({
     marginTop: -32,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#080D1A',
     paddingHorizontal: 22,
     paddingTop: 22,
     paddingBottom: 28,
     gap: 18,
     minHeight: 440,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
   },
   loginPanelMobile: {
     flexGrow: 1,
@@ -1688,23 +1722,23 @@ const styles = StyleSheet.create({
   loginInputLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: colors.text,
+    color: '#E2E8F0',
   },
   registrationInputLabel: {
-    color: '#020817',
+    color: '#E2E8F0',
   },
   loginInputShell: {
     minHeight: 52,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: colors.surface,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#0F172A',
     paddingHorizontal: 14,
   },
   loginInputText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 14.5,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   loginUtilityRow: {
     flexDirection: 'row',
@@ -1720,21 +1754,21 @@ const styles = StyleSheet.create({
     minHeight: 68,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: colors.surface,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: '#0F172A',
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 10,
   },
   loginUtilityCardPressed: {
     opacity: 0.9,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#131F37',
   },
   loginUtilityIcon: {
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1745,21 +1779,21 @@ const styles = StyleSheet.create({
   loginUtilityTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   loginUtilitySubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 11,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   loginSecurityCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     borderRadius: 16,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#0F172A',
     borderWidth: 1,
-    borderColor: '#BFDBFE',
+    borderColor: 'rgba(56, 189, 248, 0.25)',
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
@@ -1767,7 +1801,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1778,13 +1812,13 @@ const styles = StyleSheet.create({
   loginSecurityTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   loginSecurityText: {
     fontFamily: fontFamily.body,
     fontSize: 11,
     lineHeight: 16,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   loginFooterRow: {
     flexDirection: 'row',
@@ -1796,12 +1830,12 @@ const styles = StyleSheet.create({
   loginFooterText: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    color: colors.muted,
+    color: colors.textSecondary,
   },
   loginFooterLink: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 13,
-    color: colors.primary,
+    color: colors.cyan,
   },
   registrationFlowScreen: {
     flexGrow: 1,
@@ -1845,10 +1879,12 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   registrationBackButtonPressed: {
-    opacity: 0.88,
+    opacity: 0.85,
   },
   registrationSpacer: {
     width: 38,
@@ -1856,33 +1892,36 @@ const styles = StyleSheet.create({
   registrationStepLabel: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    letterSpacing: 1.2,
-    color: '#60A5FA',
+    letterSpacing: 1.5,
+    color: colors.cyan,
     textTransform: 'uppercase',
   },
   registrationIconTile: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
+    width: 62,
+    height: 62,
+    borderRadius: 20,
+    backgroundColor: '#0F172A',
+    borderWidth: 1.5,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
-    ...shadows.soft,
+    ...shadows.glow,
   },
   registrationTitle: {
     marginTop: 4,
     fontFamily: fontFamily.heading,
     fontSize: 24,
     lineHeight: 30,
-    color: colors.surface,
+    color: '#FFFFFF',
     textAlign: 'center',
+    letterSpacing: -0.3,
   },
   registrationSubtitle: {
     fontFamily: fontFamily.body,
-    fontSize: 14,
-    lineHeight: 22,
-    color: 'rgba(255,255,255,0.82)',
+    fontSize: 13.5,
+    lineHeight: 21,
+    color: 'rgba(255,255,255,0.72)',
     textAlign: 'center',
     maxWidth: 320,
   },
@@ -1891,7 +1930,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 26,
     gap: 16,
-    backgroundColor: colors.surface,
+    backgroundColor: '#080D1A',
   },
   registrationBodyMobile: {
     flexGrow: 1,
@@ -1899,12 +1938,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   registrationProgressRail: {
-    height: 5,
-    backgroundColor: '#E7ECF6',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   registrationProgressFill: {
     height: '100%',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.cyan,
   },
   registrationHint: {
     textAlign: 'center',

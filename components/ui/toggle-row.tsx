@@ -11,7 +11,7 @@ type ToggleRowProps = {
 };
 
 export const ToggleRow = ({ title, subtitle, value, onValueChange }: ToggleRowProps) => (
-  <SurfaceCard style={styles.card}>
+  <SurfaceCard glass="dark" style={styles.card}>
     <View style={styles.copy}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
@@ -19,8 +19,8 @@ export const ToggleRow = ({ title, subtitle, value, onValueChange }: ToggleRowPr
     <Switch
       value={value}
       onValueChange={onValueChange}
-      thumbColor={colors.surface}
-      trackColor={{ false: '#CBD5E1', true: colors.primary }}
+      thumbColor={value ? colors.cyan : '#94A3B8'}
+      trackColor={{ false: '#334155', true: colors.primary }}
     />
   </SurfaceCard>
 );
@@ -37,14 +37,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    fontFamily: fontFamily.bodyBold,
+    fontFamily: fontFamily.headingSemi,
     fontSize: 15,
-    color: colors.text,
+    color: '#FFFFFF',
   },
   subtitle: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    lineHeight: 20,
-    color: colors.muted,
+    lineHeight: 18,
+    color: colors.textSecondary,
   },
 });

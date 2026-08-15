@@ -57,13 +57,12 @@ function RootNavigator() {
         router.replace('/(auth)/login');
         return;
       }
-      // Require unauthenticated users who haven't completed intro slides to see onboarding
-      if (!hasCompletedOnboarding && topSegment !== 'onboarding' && topSegment !== 'splash' && topSegment !== 'signup') {
-        router.replace('/onboarding');
+      if (topSegment === 'onboarding') {
+        router.replace('/(auth)/login');
         return;
       }
       // Prevent unauthenticated access to protected areas
-      if (hasCompletedOnboarding && protectedSegments.has(topSegment)) {
+      if (protectedSegments.has(topSegment)) {
         router.replace('/(auth)/login');
         return;
       }

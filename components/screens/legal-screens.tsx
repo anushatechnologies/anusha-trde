@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
 import { colors, fontFamily, radius } from '../../constants/theme';
 import { legalService } from '../../services/legal.service';
@@ -97,13 +97,13 @@ const LegalScaffold = ({
 
   return (
     <AppScreen contentStyle={styles.screen}>
-      <SurfaceCard style={styles.card}>
+      <SurfaceCard glass="dark" style={styles.card}>
         <Text style={styles.eyebrow}>Legal & Compliance</Text>
         <Text style={styles.title}>{data?.title || titleFallback}</Text>
         <Text style={styles.intro}>{data?.summary || introFallback}</Text>
 
         {isLoading && !data ? (
-          <ActivityIndicator size="small" color={colors.primary} style={{ marginVertical: 12 }} />
+          <ActivityIndicator size="small" color={colors.cyan} style={{ marginVertical: 12 }} />
         ) : null}
 
         <Text style={styles.sectionBody}>{contentText}</Text>
@@ -139,46 +139,40 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   card: {
-    gap: 24,
+    gap: 20,
     padding: 22,
   },
   eyebrow: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 12,
+    fontSize: 11.5,
     textTransform: 'uppercase',
-    letterSpacing: 2,
-    color: colors.primary,
+    letterSpacing: 1.5,
+    color: colors.cyan,
   },
   title: {
     fontFamily: fontFamily.heading,
-    fontSize: 28,
-    color: colors.text,
+    fontSize: 26,
+    color: '#FFFFFF',
   },
   intro: {
     fontFamily: fontFamily.body,
-    fontSize: 14,
-    lineHeight: 24,
-    color: colors.muted,
+    fontSize: 13.5,
+    lineHeight: 22,
+    color: colors.textSecondary,
   },
   sectionBody: {
     fontFamily: fontFamily.body,
-    fontSize: 14,
-    lineHeight: 24,
-    color: colors.muted,
-  },
-  noteText: {
-    fontFamily: fontFamily.body,
-    fontSize: 14,
-    lineHeight: 24,
-    color: colors.danger || '#EF4444',
+    fontSize: 13.5,
+    lineHeight: 22,
+    color: colors.textSecondary,
   },
   backLinkWrap: {
     alignSelf: 'flex-start',
-    paddingTop: 4,
+    paddingTop: 8,
   },
   backLink: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 15,
-    color: colors.primary,
+    fontSize: 14.5,
+    color: colors.cyan,
   },
 });

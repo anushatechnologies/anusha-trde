@@ -3,7 +3,7 @@
     "name": "Anusha Trade",
     "slug": "investapp",
     "scheme": "investapp",
-    "version": "1.0.10",
+    "version": "1.0.13",
     "orientation": "portrait",
     "icon": "./assets/brand-logo.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
     "android": {
       "package": "com.anushamilktrades",
       "minSdkVersion": 24,
-      "versionCode": 10,
+      "versionCode": 13,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand-logo.png",
@@ -29,12 +29,7 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.POST_NOTIFICATIONS",
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -52,25 +47,12 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-dev-client",
-        {
-          "launchMode": "most-recent"
-        }
-      ],
-      [
-        "expo-local-authentication",
-        {
-          "faceIDPermission": "Allow Anusha Trade to use Face ID for secure login."
-        }
-      ],
       "expo-secure-store",
       "expo-font",
       "expo-notifications",
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Anusha Trade to access your photo library to select KYC documents.",
           "cameraPermission": "Allow Anusha Trade to access your camera to take photos of KYC documents."
         }
       ],
