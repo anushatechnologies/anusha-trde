@@ -435,7 +435,7 @@ export const CompleteSignupScreen = () => {
   const savedStep = normalizeDraftStep(draft?.currentStep ?? 0);
   const currentStep = routeStepIndex >= 0 ? routeStepIndex : savedStep;
   const currentStepMeta = FLOW_STEPS[currentStep];
-  const stepProgressWidth = `${((currentStep + 3) / TOTAL_SIGNUP_STEPS) * 100}%` as `${number}%`;
+  const stepProgressWidth = `${((currentStep + 1) / TOTAL_SIGNUP_STEPS) * 100}%` as `${number}%`;
   const passwordValue = draft?.password ?? '';
   const mpinValue = normalizeDigits(draft?.mpin ?? '');
   const panValue = normalizeUpper(draft?.panNumber ?? '');
@@ -481,9 +481,9 @@ export const CompleteSignupScreen = () => {
     }
   }, [draft, isLoadingDraft, pathname, routeStepIndex, router, savedStep]);
 
-  // Fetch KYC status when landing on KYC step (step 3) to support reupload and prefill
+  // Fetch KYC status when landing on KYC step (step 1) to support reupload and prefill
   useEffect(() => {
-    if (currentStep !== 3 || isLoadingDraft || !draft) {
+    if (currentStep !== 1 || isLoadingDraft || !draft) {
       return;
     }
 
