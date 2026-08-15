@@ -24,7 +24,7 @@ import { InputField } from '../ui/input-field';
 import { ScreenHeader } from '../ui/screen-header';
 import { SurfaceCard } from '../ui/surface-card';
 
-const TOTAL_SIGNUP_STEPS = 6;
+const TOTAL_SIGNUP_STEPS = 5;
 const MPIN_LENGTH = 4;
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
@@ -43,44 +43,37 @@ const FLOW_STEPS = [
   {
     route: '/signup/profile',
     title: 'Personal Details',
-    subtitle: 'Add your full name, date of birth, and address.',
-    actionLabel: 'Continue to Password Setup',
+    subtitle: 'Add your full name, date of birth, and residential address.',
+    actionLabel: 'Continue to PAN & KYC',
     icon: 'person-outline',
   },
   {
-    route: '/signup/password',
-    title: 'Create Password',
-    subtitle: 'Set a secure password and optional referral code.',
-    actionLabel: 'Continue to Terms & Consent',
-    icon: 'lock-closed-outline',
-  },
-  {
-    route: '/signup/terms',
-    title: 'Terms & Consent',
-    subtitle: 'Review and accept platform terms and risk disclosures.',
-    actionLabel: 'Agree & Enter Dashboard',
-    icon: 'document-text-outline',
-  },
-  {
     route: '/signup/kyc',
-    title: 'PAN & KYC Verification',
-    subtitle: 'Verify your PAN and upload your KYC identity documents.',
-    actionLabel: 'Submit Documents & Continue',
+    title: 'PAN & Document Upload',
+    subtitle: 'Enter your PAN number and upload identity documents.',
+    actionLabel: 'Continue to Bank Details',
     icon: 'id-card-outline',
   },
   {
     route: '/signup/bank',
-    title: 'Link Bank Account',
-    subtitle: 'Link your primary bank account for withdrawals and investments.',
-    actionLabel: 'Link Bank & Continue',
+    title: 'Bank Account Details',
+    subtitle: 'Add your bank details for secure deposits and payouts.',
+    actionLabel: 'Continue to Security Setup',
     icon: 'business-outline',
   },
   {
-    route: '/signup/mpin',
-    title: 'Create MPIN',
-    subtitle: 'Set a 4-digit MPIN for quick and secure dashboard access.',
-    actionLabel: 'Complete Registration',
-    icon: 'keypad-outline',
+    route: '/signup/password',
+    title: 'Security Credentials',
+    subtitle: 'Create your login password, 4-digit MPIN, and referral code.',
+    actionLabel: 'Continue to Review & Terms',
+    icon: 'lock-closed-outline',
+  },
+  {
+    route: '/signup/terms',
+    title: 'Terms & Privacy Policy',
+    subtitle: 'Review your application summary and accept platform policies.',
+    actionLabel: 'Submit Application & Open Dashboard',
+    icon: 'document-text-outline',
   },
 ] as const;
 
@@ -668,17 +661,17 @@ export const CompleteSignupScreen = () => {
         const address = draft.address.trim();
 
         if (!fullName) {
-          Alert.alert('Full name required', 'Enter your full name to continue.');
+          Alert.alert('Full Name Required', 'Enter your full name to continue.');
           return false;
         }
 
         if (!dateOfBirth) {
-          Alert.alert('Date of Birth required', 'Enter your date of birth to continue.');
+          Alert.alert('Date of Birth Required', 'Enter your date of birth to continue.');
           return false;
         }
 
         if (!isDobFormat(dateOfBirth)) {
-          Alert.alert('Invalid date format', 'Use YYYY-MM-DD format (e.g. 1995-05-20).');
+          Alert.alert('Invalid Date Format', 'Use YYYY-MM-DD format (e.g. 1995-05-20).');
           return false;
         }
 
@@ -691,15 +684,15 @@ export const CompleteSignupScreen = () => {
         let age = today.getFullYear() - birthYear;
         const m = today.getMonth() - birthMonth;
         if (m < 0 || (m === 0 && today.getDate() < birthDate)) {
-            age--;
+          age--;
         }
         if (age < 18) {
-          Alert.alert('Underage', 'You must be 18 years or older to register.');
+          Alert.alert('Age Requirement', 'You must be 18 years or older to create an investor account.');
           return false;
         }
 
         if (!address) {
-          Alert.alert('Address required', 'Enter your address to continue.');
+          Alert.alert('Address Required', 'Enter your residential address to continue.');
           return false;
         }
 
@@ -713,212 +706,109 @@ export const CompleteSignupScreen = () => {
         return true;
       }
       case 1: {
-        if (!strongPasswordPattern.test(draft.password)) {
-          Alert.alert('Weak password', 'Use at least 8 characters with uppercase, lowercase, number, and special character.');
+        // Step 1: PAN & KYC Document Upload
+        if (!isPanValid) {
+          Alert.alert('Invalid PAN Number', 'Please enter a valid 10-character PAN number (e.g. ABCDE1234F).');
           return false;
         }
 
-        if (!confirmPassword.trim()) {
-          Alert.alert('Confirm password', 'Enter the same password again to confirm it.');
+        if (!draft.panCardPhoto) {
+          Alert.alert('PAN Card Photo Required', 'Please upload or scan a clear photo of your PAN card.');
           return false;
         }
 
-        if (draft.password !== confirmPassword) {
-          Alert.alert('Password mismatch', 'Password and confirm password must match exactly.');
+        if (!isAadhaarValid) {
+          Alert.alert('Invalid Aadhaar Number', 'Please enter your 12-digit Aadhaar number.');
           return false;
         }
 
-        patchDraft(getStatusPatch('PASSWORD_CREATED'));
+        patchDraft(getStatusPatch('KYC_COMPLETED', {
+          panNumber: panValue,
+          aadhaarNumber: aadhaarValue,
+        }));
         return true;
       }
       case 2: {
-        if (!draft.investorAgreementAccepted || !draft.riskDisclosureAccepted) {
-          Alert.alert('Accept policies', 'Accept the Investor Agreement and Risk Disclosure to continue.');
-          return false;
-        }
-
-        patchDraft(getStatusPatch('TERMS_ACCEPTED'));
-        return true;
-      }
-      case 3: {
-        // KYC step — validate document fields
-        // In reupload mode, only validate documents that need re-uploading
-        const submission = kycStatusData?.submission;
-
-        if (!isPanValid) {
-          Alert.alert('Invalid PAN', 'Enter a valid 10-character PAN number.');
-          return false;
-        }
-
-        if (isReuploadMode && submission) {
-          // Reupload: only require files that are missing, REJECTED, or REUPLOAD_REQUIRED
-          const needsPan = kycService.needsUpload(submission.panCardStatus as KycDocumentStatus | undefined);
-          const needsFront = kycService.needsUpload(submission.aadhaarFrontStatus as KycDocumentStatus | undefined);
-          const needsBack = kycService.needsUpload(submission.aadhaarBackStatus as KycDocumentStatus | undefined);
-          const needsSelfie = kycService.needsUpload(submission.selfieStatus as KycDocumentStatus | undefined);
-          const needsBank = kycService.needsUpload(submission.bankProofStatus as KycDocumentStatus | undefined);
-
-          if (needsPan && !draft.panCardPhoto) {
-            Alert.alert('PAN Photo Required', 'Please re-upload a photo of your PAN card.');
-            return false;
-          }
-          if (needsFront && !draft.aadhaarFrontPhoto) {
-            Alert.alert('Aadhaar Front Required', 'Please re-upload the front side of your Aadhaar card.');
-            return false;
-          }
-          if (needsBack && !draft.aadhaarBackPhoto) {
-            Alert.alert('Aadhaar Back Required', 'Please re-upload the back side of your Aadhaar card.');
-            return false;
-          }
-          if (needsSelfie && !draft.selfiePhoto) {
-            Alert.alert('Selfie Required', 'Please re-upload a selfie photo for verification.');
-            return false;
-          }
-          if (needsBank && !draft.bankPassbookPhoto) {
-            Alert.alert('Bank Passbook Required', 'Please re-upload a photo of your bank passbook or cancelled cheque.');
-            return false;
-          }
-
-          // Must have at least one new file for reupload
-          const hasAnyNewFile = [
-            needsPan && draft.panCardPhoto,
-            needsFront && draft.aadhaarFrontPhoto,
-            needsBack && draft.aadhaarBackPhoto,
-            needsSelfie && draft.selfiePhoto,
-            needsBank && draft.bankPassbookPhoto,
-          ].some(Boolean);
-
-          if (!hasAnyNewFile) {
-            Alert.alert('No Documents', 'Please upload at least one document to resubmit.');
-            return false;
-          }
-        } else {
-          // Initial upload: require all 5 documents
-          if (!isAadhaarValid) {
-            Alert.alert('Invalid Aadhaar', 'Enter a valid 12-digit Aadhaar number.');
-            return false;
-          }
-          if (!draft.panCardPhoto) {
-            Alert.alert('PAN Photo Required', 'Please upload a photo of your PAN card.');
-            return false;
-          }
-          if (!draft.aadhaarFrontPhoto) {
-            Alert.alert('Aadhaar Front Required', 'Please upload the front side of your Aadhaar card.');
-            return false;
-          }
-          if (!draft.aadhaarBackPhoto) {
-            Alert.alert('Aadhaar Back Required', 'Please upload the back side of your Aadhaar card.');
-            return false;
-          }
-          if (!draft.selfiePhoto) {
-            Alert.alert('Selfie Required', 'Please take or upload a selfie photo for verification.');
-            return false;
-          }
-          if (!draft.bankPassbookPhoto) {
-            Alert.alert('Bank Passbook Required', 'Please upload a photo of your bank passbook or cancelled cheque.');
-            return false;
-          }
-        }
-
-        patchDraft(getStatusPatch('KYC_COMPLETED'));
-        return true;
-      }
-      case 4: {
-        // Bank linking step — validate account details
+        // Step 2: Bank Account Details
         if (!isAccountNumberValid) {
-          Alert.alert('Invalid Account', 'Enter a valid bank account number (9–18 digits).');
+          Alert.alert('Invalid Account Number', 'Enter a valid bank account number (9–18 digits).');
           return false;
         }
         if (!isConfirmAccountNumberValid) {
-          Alert.alert('Account Mismatch', 'Account numbers must match.');
+          Alert.alert('Account Number Mismatch', 'Bank account numbers do not match.');
           return false;
         }
         if (!isIfscValid) {
-          Alert.alert('Invalid IFSC', 'Enter a valid 11-character IFSC code.');
+          Alert.alert('Invalid IFSC Code', 'Enter a valid 11-character bank IFSC code.');
           return false;
         }
         if (!bankNameValue.trim()) {
           Alert.alert('Bank Name Required', 'Please enter your bank name.');
           return false;
         }
-        patchDraft(getStatusPatch('BANK_LINKED'));
+
+        patchDraft(getStatusPatch('BANK_LINKED', {
+          accountNumber: accountNumberValue,
+          confirmAccountNumber: confirmAccountNumberValue,
+          ifscCode: ifscValue,
+          bankName: bankNameValue,
+          accountHolderName: draft.accountHolderName || draft.fullName,
+        }));
         return true;
       }
-      case 5: {
-        const mpin = normalizeDigits(draft.mpin).slice(0, MPIN_LENGTH);
+      case 3: {
+        // Step 3: Password & Security MPIN Setup
+        if (!strongPasswordPattern.test(draft.password)) {
+          Alert.alert('Weak Password', 'Password must be at least 8 characters long with uppercase, lowercase, number, and a special character.');
+          return false;
+        }
 
+        if (!confirmPassword.trim()) {
+          Alert.alert('Confirm Password', 'Enter the same password again to confirm.');
+          return false;
+        }
+
+        if (draft.password !== confirmPassword) {
+          Alert.alert('Password Mismatch', 'Password and confirm password must match exactly.');
+          return false;
+        }
+
+        const mpin = normalizeDigits(draft.mpin).slice(0, MPIN_LENGTH);
         if (!new RegExp(`^\\d{${MPIN_LENGTH}}$`).test(mpin)) {
-          Alert.alert('Invalid MPIN', 'Enter a 4 digit MPIN.');
+          Alert.alert('Invalid MPIN', 'Enter a 4-digit security MPIN.');
           return false;
         }
 
         if (simpleMpins.has(mpin) || isSequentialMpin(mpin)) {
-          Alert.alert('Weak MPIN', 'Avoid simple MPIN values like 1111 or 1234.');
+          Alert.alert('Weak MPIN', 'Avoid simple sequences like 1234 or repeated digits like 1111.');
           return false;
         }
 
         if (mpin !== confirmMpin) {
-          Alert.alert('MPIN mismatch', 'MPIN and confirm MPIN must match.');
+          Alert.alert('MPIN Mismatch', 'MPIN and confirm MPIN must match.');
           return false;
         }
 
-        patchDraft(getStatusPatch('MPIN_CREATED', { mpin }));
+        patchDraft(getStatusPatch('PASSWORD_CREATED', {
+          password: draft.password,
+          mpin,
+        }));
+        return true;
+      }
+      case 4: {
+        // Step 4: Terms & Privacy Policy Review
+        if (!draft.investorAgreementAccepted || !draft.riskDisclosureAccepted) {
+          Alert.alert('Accept Policies', 'You must accept the Terms & Conditions and Privacy Policy to create your account.');
+          return false;
+        }
+
+        patchDraft(getStatusPatch('TERMS_ACCEPTED'));
         return true;
       }
       default:
         return true;
     }
   };
-
-  // KYC polling is removed — KYC submit goes directly to bank
-
-  const stopKycPolling = () => {
-    if (kycPollRef.current) {
-      clearInterval(kycPollRef.current);
-      kycPollRef.current = null;
-    }
-  };
-
-  const startKycPolling = () => {
-    stopKycPolling();
-    setIsPollingKyc(true);
-    const fetchStatus = async () => {
-      try {
-        const data = await kycService.getKycStatus();
-        setKycStatusData(data);
-        if (data.kycStatus === 'NOT_SUBMITTED') {
-          stopKycPolling();
-          setIsPollingKyc(false);
-          const backStep = 3;
-          const backDraft = { ...draftRef.current!, currentStep: backStep };
-          await persistDraftAndNavigate(backDraft, FLOW_STEPS[backStep].route);
-          return;
-        }
-        if (data.kycStatus === 'APPROVED') {
-          stopKycPolling();
-          setIsPollingKyc(false);
-          // Sync auth store state so RootNavigator's resolveOnboardingRoute knows KYC is APPROVED
-          await useAuthStore.getState().updateUser({ kycStatus: 'APPROVED' });
-          // Auto-navigate to Bank Linking (index 4 in FLOW_STEPS) on approval
-          const nextStep = 4;
-          const nextDraft = { ...draftRef.current!, currentStep: nextStep };
-          await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
-          return;
-        }
-        if (data.kycStatus === 'REJECTED' || data.kycStatus === 'REUPLOAD_REQUIRED') {
-          stopKycPolling();
-          setIsPollingKyc(false);
-          await useAuthStore.getState().updateUser({ kycStatus: data.kycStatus });
-        }
-      } catch {
-        // silent — keep polling
-      }
-    };
-    void fetchStatus();
-    kycPollRef.current = setInterval(() => { void fetchStatus(); }, 5000);
-  };
-
-  // KYC polling screen removed — no polling needed in new flow
 
   const goNext = async () => {
     if (!draftRef.current || !validateStep()) {
@@ -935,11 +825,6 @@ export const CompleteSignupScreen = () => {
   };
 
   const goBack = async () => {
-    if (!draftRef.current) {
-      router.replace('/signup/mobile');
-      return;
-    }
-
     if (currentStep === 0) {
       if (router.canGoBack()) {
         router.back();
@@ -951,48 +836,48 @@ export const CompleteSignupScreen = () => {
 
     const previousStep = Math.max(currentStep - 1, 0);
     const previousDraft = {
-      ...draftRef.current,
+      ...draftRef.current!,
       currentStep: previousStep,
     };
 
     await persistDraftAndNavigate(previousDraft, FLOW_STEPS[previousStep].route);
   };
 
-  // Called from Terms step (step 3) — Register user, then navigate to KYC document upload
-  const registerAndGoToKyc = async () => {
+  // Called from Terms step (Step 4 / Final Step) — Submit application, attach KYC docs, and open Dashboard
+  const registerAndSubmitApplication = async () => {
     if (!draftRef.current || !validateStep()) {
       return;
     }
 
     const latestDraft = draftRef.current;
 
-    // Pre-flight validation: catch corrupted/empty fields before hitting the backend
+    // Pre-flight validation
     if (!latestDraft.fullName.trim()) {
-      Alert.alert('Missing Information', 'Full name is missing. Go back to the Profile step and enter your name.');
+      Alert.alert('Missing Information', 'Full name is missing. Go back to Personal Details.');
       return;
     }
     if (!latestDraft.mobile.trim()) {
-      Alert.alert('Missing Information', 'Mobile number is missing. Please restart the signup from mobile verification.');
+      Alert.alert('Missing Information', 'Mobile number is missing. Please restart signup.');
       return;
     }
     if (!latestDraft.password || !strongPasswordPattern.test(latestDraft.password)) {
-      Alert.alert('Invalid Password', 'Your password was lost or does not meet the requirements.\n\nGo back to the Password step and re-enter a password with at least 8 characters, including uppercase, lowercase, number, and special character.');
+      Alert.alert('Invalid Password', 'Password must meet security requirements. Go back to Security Credentials.');
       return;
     }
     if (!latestDraft.dateOfBirth.trim()) {
-      Alert.alert('Missing Information', 'Date of birth is missing. Go back to the Profile step and enter your date of birth.');
+      Alert.alert('Missing Information', 'Date of birth is missing.');
       return;
     }
     if (!latestDraft.address.trim()) {
-      Alert.alert('Missing Information', 'Address is missing. Go back to the Profile step and enter your address.');
+      Alert.alert('Missing Information', 'Address is missing.');
       return;
     }
     if (!latestDraft.investorAgreementAccepted || !latestDraft.riskDisclosureAccepted) {
-      Alert.alert('Accept Policies', 'You must accept the Investor Agreement and Risk Disclosure to continue.');
+      Alert.alert('Accept Policies', 'You must accept the Terms and Privacy Policy to continue.');
       return;
     }
     if (!latestDraft.signupVerificationToken) {
-      Alert.alert('Session Expired', 'Your verification session has expired. Please restart the signup from mobile verification.');
+      Alert.alert('Session Expired', 'Your verification session has expired. Please restart signup from mobile verification.');
       return;
     }
 
@@ -1010,10 +895,10 @@ export const CompleteSignupScreen = () => {
         mpin: latestDraft.mpin || undefined,
         dateOfBirth: latestDraft.dateOfBirth || undefined,
         address: latestDraft.address || undefined,
-        panNumber: latestDraft.panNumber || undefined,
+        panNumber: latestDraft.panNumber?.trim().toUpperCase() || undefined,
         aadhaarLast4: latestDraft.aadhaarNumber ? latestDraft.aadhaarNumber.slice(-4) : undefined,
         bankAccountNumber: latestDraft.accountNumber || undefined,
-        bankIfscCode: latestDraft.ifscCode || undefined,
+        bankIfscCode: latestDraft.ifscCode?.trim().toUpperCase() || undefined,
         bankName: latestDraft.bankName || undefined,
         referredByCode: latestDraft.referredByCode || undefined,
         termsAccepted: latestDraft.investorAgreementAccepted,
@@ -1038,8 +923,46 @@ export const CompleteSignupScreen = () => {
         return;
       }
 
-      // Step 2: Sign in and complete onboarding immediately — open Dashboard!
+      // Step 2: Sign in session
       await signIn(registration.session);
+
+      // Step 3: Background upload KYC documents if attached
+      if (latestDraft.panCardPhoto || latestDraft.aadhaarFrontPhoto || latestDraft.selfiePhoto || latestDraft.bankPassbookPhoto) {
+        try {
+          await kycService.submitKyc({
+            panCardImageUri: latestDraft.panCardPhoto,
+            aadhaarFrontImageUri: latestDraft.aadhaarFrontPhoto,
+            aadhaarBackImageUri: latestDraft.aadhaarBackPhoto,
+            selfiePhotoUri: latestDraft.selfiePhoto,
+            bankPassbookUri: latestDraft.bankPassbookPhoto,
+            panNumber: latestDraft.panNumber,
+            aadhaarLast4: latestDraft.aadhaarNumber ? latestDraft.aadhaarNumber.slice(-4) : '',
+            dateOfBirth: latestDraft.dateOfBirth,
+            address: latestDraft.address,
+          });
+        } catch (kycErr) {
+          console.warn('KYC background submission notice:', kycErr);
+        }
+      }
+
+      // Step 4: Save MPIN locally
+      if (latestDraft.mpin) {
+        await mpinService.saveMpinForAccount({
+          email: userEmail,
+          mobile: latestDraft.mobile,
+          mpin: latestDraft.mpin,
+        });
+      }
+
+      // Step 5: Update session and open Dashboard immediately!
+      await useAuthStore.getState().updateUser({
+        kycStatus: 'PENDING',
+        accountStatus: 'ACTIVE',
+        bankVerified: Boolean(latestDraft.accountNumber),
+        panNumber: latestDraft.panNumber?.trim().toUpperCase(),
+        address: latestDraft.address,
+        dateOfBirth: latestDraft.dateOfBirth,
+      });
       completeOnboarding();
       await signupFlowService.clearDraft();
       router.replace('/(tabs)');
@@ -1049,7 +972,7 @@ export const CompleteSignupScreen = () => {
       let errorMessage = 'Something went wrong. Please try again.';
 
       if (status === 404) {
-        errorMessage = 'Registration endpoint is currently unavailable on server. Please verify your connection or try again.';
+        errorMessage = 'Registration endpoint is currently unavailable. Please verify your connection or try again.';
       } else if (serverData) {
         const mainMessage = serverData.message || serverData.error || 'Registration failed';
         const details: string[] = Array.isArray(serverData.details) ? serverData.details : [];
@@ -1063,251 +986,9 @@ export const CompleteSignupScreen = () => {
         errorMessage = error.message;
       }
 
-      Alert.alert('Registration failed', errorMessage);
+      Alert.alert('Registration Failed', errorMessage);
     } finally {
       setIsRegisteringAndActivating(false);
-    }
-  };
-
-  // Called from KYC step (step 3) — Submit KYC documents (initial or reupload)
-  const submitKycDocuments = async () => {
-    if (!draftRef.current || !validateStep()) {
-      return;
-    }
-
-    setIsSubmittingKyc(true);
-
-    try {
-      const latestDraft = draftRef.current;
-      const submission = kycStatusData?.submission;
-
-      // In reupload mode, only send files that need re-uploading
-      let panUri = latestDraft.panCardPhoto;
-      let frontUri = latestDraft.aadhaarFrontPhoto;
-      let backUri = latestDraft.aadhaarBackPhoto;
-      let selfieUri = latestDraft.selfiePhoto;
-      let bankUri = latestDraft.bankPassbookPhoto;
-
-      if (isReuploadMode && submission) {
-        // Only include files for documents that need re-upload
-        if (!kycService.needsUpload(submission.panCardStatus as KycDocumentStatus | undefined)) panUri = '';
-        if (!kycService.needsUpload(submission.aadhaarFrontStatus as KycDocumentStatus | undefined)) frontUri = '';
-        if (!kycService.needsUpload(submission.aadhaarBackStatus as KycDocumentStatus | undefined)) backUri = '';
-        if (!kycService.needsUpload(submission.selfieStatus as KycDocumentStatus | undefined)) selfieUri = '';
-        if (!kycService.needsUpload(submission.bankProofStatus as KycDocumentStatus | undefined)) bankUri = '';
-      }
-
-      await kycService.submitKyc({
-        panCardImageUri: panUri,
-        aadhaarFrontImageUri: frontUri,
-        aadhaarBackImageUri: backUri,
-        selfiePhotoUri: selfieUri,
-        bankPassbookUri: bankUri,
-        panNumber: latestDraft.panNumber,
-        aadhaarLast4: latestDraft.aadhaarNumber.slice(-4),
-        dateOfBirth: latestDraft.dateOfBirth,
-        address: latestDraft.address,
-      });
-
-      // Update auth store with KYC PENDING status
-      await useAuthStore.getState().updateUser({ kycStatus: 'PENDING' });
-
-      // Navigate directly to Bank Linking (step index 4) — no polling screen
-      const nextStep = 4;
-      const nextDraft = { ...latestDraft, currentStep: nextStep };
-      await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
-    } catch (error: any) {
-      const serverData = error.response?.data;
-      let errorMessage = 'Could not submit your documents. Try again.';
-
-      if (serverData) {
-        const mainMessage = serverData.message || serverData.error || errorMessage;
-        const details: string[] = Array.isArray(serverData.details) ? serverData.details : [];
-        errorMessage = details.length > 0 ? `${mainMessage}\n\n${details.map((d: string) => `• ${d}`).join('\n')}` : mainMessage;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert('KYC Submission Failed', errorMessage);
-    } finally {
-      setIsSubmittingKyc(false);
-    }
-  };
-
-  // Called from Bank step (step 4) — Link bank account, go to MPIN
-  const submitBank = async () => {
-    if (!draftRef.current || !validateStep()) {
-      return;
-    }
-
-    setIsSubmittingBank(true);
-
-    try {
-      const latestDraft = draftRef.current;
-      const accessToken = useAuthStore.getState().accessToken;
-
-      if (!accessToken) {
-        throw new Error('Session expired. Please sign in again.');
-      }
-
-      // Step A: Link bank account
-      await bankService.linkBank(
-        latestDraft.accountHolderName || latestDraft.fullName,
-        latestDraft.accountNumber,
-        latestDraft.ifscCode,
-        latestDraft.bankName
-      );
-
-      // Sync auth store state so RootNavigator's resolveOnboardingRoute knows bank is verified
-      await useAuthStore.getState().updateUser({ bankVerified: true, accountStatus: 'ACTIVE' });
-
-      // Navigate directly to MPIN Creation (step index 5)
-      const nextStep = 5;
-      const nextDraft = { ...latestDraft, currentStep: nextStep };
-      await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
-    } catch (error: any) {
-      const serverData = error.response?.data;
-      let errorMessage = 'Could not link your bank account. Try again.';
-
-      if (serverData) {
-        const mainMessage = serverData.message || serverData.error || errorMessage;
-        const details: string[] = Array.isArray(serverData.details) ? serverData.details : [];
-        errorMessage = details.length > 0 ? `${mainMessage}\n\n${details.map((d: string) => `• ${d}`).join('\n')}` : mainMessage;
-      } else if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-
-      Alert.alert('Bank Linking Failed', errorMessage);
-    } finally {
-      setIsSubmittingBank(false);
-    }
-  };
-
-  const [isActivating, setIsActivating] = useState(false);
-
-  // Called from Activation step — Activate account on backend and proceed
-  const activateAccountStep = async () => {
-    setIsActivating(true);
-    try {
-      const accessToken = useAuthStore.getState().accessToken;
-      if (!accessToken) throw new Error('Session expired. Please sign in again.');
-
-      await authService.activateAccount(accessToken);
-      
-      // Update session locally to reflect active status
-      await useAuthStore.getState().updateUser({ accountStatus: 'ACTIVE' });
-
-      const nextStep = 4;
-      const nextDraft = { ...draftRef.current!, currentStep: nextStep, accountActivated: true };
-      await persistDraftAndNavigate(nextDraft, FLOW_STEPS[nextStep].route);
-    } catch (error: any) {
-      const serverData = error.response?.data;
-      const errorMessage = serverData?.message || serverData?.error || error.message || 'Activation failed.';
-      Alert.alert('Activation Failed', errorMessage);
-    } finally {
-      setIsActivating(false);
-    }
-  };
-
-  const finishSignup = async () => {
-    if (!draftRef.current || !validateStep()) {
-      return;
-    }
-
-    setIsFinishingSignup(true);
-
-    try {
-      const latestDraft = draftRef.current;
-
-      if (!latestDraft) {
-        return;
-      }
-
-      // Step 1: Save MPIN locally
-      await mpinService.saveMpinForAccount({
-        email: latestDraft.email,
-        mobile: latestDraft.mobile,
-        mpin: normalizeDigits(latestDraft.mpin),
-      });
-
-      // Get authenticated session from auth store
-      const user = useAuthStore.getState().user;
-      const accessToken = useAuthStore.getState().accessToken;
-      const refreshToken = useAuthStore.getState().refreshToken;
-      const expiresAt = useAuthStore.getState().expiresAt;
-
-      if (!user || !accessToken) {
-        throw new Error('No active authenticated session found. Please sign in.');
-      }
-
-      const currentSession = {
-        user,
-        tokens: {
-          accessToken,
-          refreshToken: refreshToken ?? '',
-          expiresAt: expiresAt ?? (Date.now() + 24 * 60 * 60 * 1000),
-        },
-      };
-
-      // Step 2: Set MPIN on the backend
-      const session = await authService.setMpin(currentSession, normalizeDigits(latestDraft.mpin));
-
-      // Step 3: Update the user profile with the REAL data the user entered during signup
-      const updatedSession = {
-        ...session,
-        user: {
-          ...session.user,
-          name: latestDraft.fullName || session.user.name,
-          email: latestDraft.email || session.user.email,
-          mobile: latestDraft.mobile || session.user.mobile,
-          dateOfBirth: latestDraft.dateOfBirth || session.user.dateOfBirth,
-          address: latestDraft.address || session.user.address,
-          panNumber: latestDraft.panNumber?.trim().toUpperCase() || session.user.panNumber,
-          aadhaarMasked: latestDraft.aadhaarNumber
-            ? `XXXX XXXX ${latestDraft.aadhaarNumber.replace(/\D/g, '').slice(-4).padStart(4, '0')}`
-            : session.user.aadhaarMasked,
-          bankName: latestDraft.bankName || session.user.bankName,
-          accountHolderName: latestDraft.accountHolderName || latestDraft.fullName || session.user.accountHolderName,
-          ifscCode: latestDraft.ifscCode?.trim().toUpperCase() || session.user.ifscCode,
-          bankMask: latestDraft.accountNumber
-            ? `A/C **** ${latestDraft.accountNumber.replace(/\D/g, '').slice(-4)}`
-            : session.user.bankMask,
-          investorAgreementAccepted: latestDraft.investorAgreementAccepted,
-          riskDisclosureAccepted: latestDraft.riskDisclosureAccepted,
-          communicationConsent: latestDraft.communicationConsent,
-          referralCode: latestDraft.referredByCode || session.user.referralCode,
-        },
-      };
-
-      // Step 4: Persist the enriched session with real user data
-      await signIn(updatedSession);
-      markMpinVerified();
-
-      // Use the onboarding resolver to determine the next route.
-      // MPIN creation does NOT automatically mean dashboard access.
-      const nextRoute = authService.resolveOnboardingRoute(updatedSession.user);
-      if (nextRoute === '/(tabs)') {
-        // All onboarding complete — dashboard
-        await completeOnboarding();
-        await signupFlowService.clearDraft();
-        router.replace({
-          pathname: '/success',
-          params: {
-            title: 'MPIN Created',
-            subtitle: 'Your account is active and your MPIN has been created successfully.',
-            cta: 'Go to Dashboard',
-            redirect: '/(tabs)',
-          },
-        });
-      } else {
-        // Onboarding is NOT complete — route to the correct pending step
-        await signupFlowService.clearDraft();
-        router.replace(nextRoute);
-      }
-    } catch (error) {
-      Alert.alert('Signup failed', error instanceof Error ? error.message : 'We could not finish the signup right now.');
-    } finally {
-      setIsFinishingSignup(false);
     }
   };
 
@@ -1318,17 +999,18 @@ export const CompleteSignupScreen = () => {
 
     switch (currentStep) {
       case 0:
+        // Step 0: Personal Details
         return (
           <>
             <View style={styles.infoPanel}>
-              <Text style={styles.infoPanelText}>Your verified mobile number is ready. Enter your personal details to continue.</Text>
+              <Text style={styles.infoPanelText}>Your verified mobile number is ready. Enter your personal details to begin.</Text>
             </View>
             <InputField labelStyle={styles.inputLabel}
               label="Full Name"
               value={draft.fullName}
               onChangeText={(value) => patchDraft({ fullName: value })}
               required
-              placeholder="Enter your full name"
+              placeholder="Enter your full legal name"
               icon={<Ionicons name="person-outline" size={18} color={colors.primary} />}
             />
             <DatePickerInput
@@ -1340,261 +1022,40 @@ export const CompleteSignupScreen = () => {
               labelStyle={styles.inputLabel}
             />
             <InputField labelStyle={styles.inputLabel}
-              label="Address"
+              label="Residential Address"
               value={draft.address}
               onChangeText={(value) => patchDraft({ address: value })}
               required
-              placeholder="Enter your residential address"
+              placeholder="Enter your permanent / residential address"
               icon={<Ionicons name="location-outline" size={18} color={colors.primary} />}
             />
           </>
         );
       case 1: {
-        const score = Object.values(passwordChecks).filter(Boolean).length;
-        
-        return (
-          <>
-            <InputField labelStyle={styles.inputLabel}
-              label="Create Password"
-              value={draft.password}
-              onChangeText={(value) => patchDraft({ password: value })}
-              secure
-              required
-              placeholder="Enter a secure password"
-              icon={<Ionicons name="lock-closed-outline" size={18} color={colors.primary} />}
-            />
-            
-            <PasswordStrengthMeter score={score} isEmpty={draft.password.length === 0} checks={passwordChecks} />
-
-            <InputField labelStyle={styles.inputLabel}
-              label="Confirm Password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secure
-              required
-              placeholder="Enter the same password again"
-              icon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />}
-              trailing={
-                confirmPassword.length > 0 && confirmPassword === draft.password ? (
-                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                ) : undefined
-              }
-            />
-
-            <InputField labelStyle={styles.inputLabel}
-              label="Referral Code (Optional)"
-              value={draft.referredByCode}
-              onChangeText={(value) => patchDraft({ referredByCode: normalizeUpper(value).slice(0, 12) })}
-              placeholder="Enter referral code"
-              autoCapitalize="characters"
-              icon={<Ionicons name="pricetag-outline" size={18} color={colors.primary} />}
-            />
-          </>
-        );
-      }
-      case 2: {
-        return (
-          <>
-            <View style={styles.infoPanel}>
-              <Text style={styles.infoPanelText}>Review the terms below, then accept to create your account.</Text>
-            </View>
-
-            <View style={styles.termsTable}>
-              <View style={[styles.termsRow, styles.termsRowHeader]}>
-                <Text style={styles.termsCellFeatureHeader}>Feature</Text>
-                <Text style={styles.termsCellDetailsHeader}>Details</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Minimum Investment</Text>
-                <Text style={styles.termsCellDetails}>Rs5,000</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Maximum Investment</Text>
-                <Text style={styles.termsCellDetails}>Rs10,00,000</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Lock-in Period</Text>
-                <Text style={styles.termsCellDetails}>6 Months</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Monthly Interest</Text>
-                <Text style={styles.termsCellDetails}>10%</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Interest Credit</Text>
-                <Text style={styles.termsCellDetails}>Wallet</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Wallet Withdrawal Minimum</Text>
-                <Text style={styles.termsCellDetails}>Rs1,000</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Withdrawal Approval</Text>
-                <Text style={styles.termsCellDetails}>Admin Approval</Text>
-              </View>
-              <View style={styles.termsRow}>
-                <Text style={styles.termsCellFeature}>Investment Completion Return</Text>
-                <Text style={styles.termsCellDetails}>90%</Text>
-              </View>
-              <View style={[styles.termsRow, styles.termsRowLast]}>
-                <Text style={styles.termsCellFeature}>Early Withdrawal Return</Text>
-                <Text style={styles.termsCellDetails}>70%</Text>
-              </View>
-            </View>
-
-            <Text style={styles.termsText}>
-              All returns and payout timelines are subject to verification and platform policy updates.
-              {'\n\n'}
-              Any fraud, policy abuse, or invalid KYC or payment information may result in account suspension.
-              {'\n\n'}
-              By continuing, you acknowledge that these terms may be revised from time to time.
-            </Text>
-
-            <View style={{ flexDirection: 'row', gap: 10, marginVertical: 12 }}>
-              <Pressable
-                onPress={openTerms}
-                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.12)', alignItems: 'center' }}
-              >
-                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>📄 Read Terms</Text>
-              </Pressable>
-              <Pressable
-                onPress={openPrivacyPolicy}
-                style={{ flex: 1, paddingVertical: 10, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.12)', alignItems: 'center' }}
-              >
-                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>🔒 Read Privacy Policy</Text>
-              </Pressable>
-            </View>
-
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, marginTop: 4 }}>
-              <Text style={{ fontSize: 13, fontFamily: fontFamily.bodySemi, color: colors.primary }}>
-                Required Policies & Agreements
-              </Text>
-              <Pressable
-                onPress={() => {
-                  const allSelected = draft.investorAgreementAccepted && draft.riskDisclosureAccepted;
-                  patchDraft({
-                    investorAgreementAccepted: !allSelected,
-                    riskDisclosureAccepted: !allSelected,
-                    communicationConsent: !allSelected ? true : draft.communicationConsent,
-                  });
-                }}
-              >
-                <Text style={{ fontSize: 12, fontFamily: fontFamily.bodyBold, color: colors.primary }}>
-                  {draft.investorAgreementAccepted && draft.riskDisclosureAccepted ? 'Deselect All' : '✓ Accept All'}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View style={{ gap: 10, marginBottom: 16 }}>
-              <CheckboxRow
-                checked={draft.investorAgreementAccepted}
-                onPress={() => patchDraft({ investorAgreementAccepted: !draft.investorAgreementAccepted })}
-                label="I Accept the Terms & Conditions and Investor Agreement *"
-              />
-              <CheckboxRow
-                checked={draft.riskDisclosureAccepted}
-                onPress={() => patchDraft({ riskDisclosureAccepted: !draft.riskDisclosureAccepted })}
-                label="I Accept the Privacy Policy and Risk Disclosure *"
-              />
-            </View>
-
-            <Text style={{ fontSize: 13, fontFamily: fontFamily.bodySemi, color: colors.muted, marginBottom: 6 }}>
-              Optional Communications
-            </Text>
-            <View style={{ gap: 8, marginBottom: 24 }}>
-              <CheckboxRow
-                checked={draft.communicationConsent}
-                onPress={() => patchDraft({ communicationConsent: !draft.communicationConsent })}
-                label="I consent to receive investment updates and platform notifications"
-              />
-            </View>
-          </>
-        );
-      }
-
-      case 3: {
-        // KYC Document Upload — supports both initial upload and reupload
-        const submission4 = kycStatusData?.submission;
-
-        const docStatusChip = (label: string, status?: string, reason?: string) => {
-          if (!status || !isReuploadMode) return null;
-          const isOk = status === 'APPROVED';
-          const isErr = status === 'REJECTED' || status === 'REUPLOAD_REQUIRED';
-          return (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <Ionicons
-                name={isOk ? 'checkmark-circle' : isErr ? 'close-circle' : 'ellipse-outline'}
-                size={14}
-                color={isOk ? colors.success : isErr ? colors.danger : '#94A3B8'}
-              />
-              <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 11, color: isOk ? colors.success : isErr ? colors.danger : '#94A3B8' }}>
-                {label}: {isOk ? 'Approved' : isErr ? 'Reupload Required' : 'Pending'}
-              </Text>
-              {reason ? (
-                <Text style={{ fontFamily: fontFamily.body, fontSize: 10, color: colors.danger, flex: 1 }} numberOfLines={2}>
-                  — {reason}
-                </Text>
-              ) : null}
-            </View>
-          );
-        };
-
-        const needsPan = !isReuploadMode || kycService.needsUpload(submission4?.panCardStatus as KycDocumentStatus | undefined);
-        const needsFront = !isReuploadMode || kycService.needsUpload(submission4?.aadhaarFrontStatus as KycDocumentStatus | undefined);
-        const needsBack = !isReuploadMode || kycService.needsUpload(submission4?.aadhaarBackStatus as KycDocumentStatus | undefined);
-        const needsSelfie = !isReuploadMode || kycService.needsUpload(submission4?.selfieStatus as KycDocumentStatus | undefined);
-        const needsBank = !isReuploadMode || kycService.needsUpload(submission4?.bankProofStatus as KycDocumentStatus | undefined);
-
-        if (kycFormDisabled) {
-          return (
-            <>
-              <View style={styles.infoPanel}>
-                <Text style={styles.infoPanelText}>Your KYC documents have been approved. No further uploads are needed.</Text>
-              </View>
-            </>
-          );
-        }
-
+        // Step 1: PAN & Document Upload (Here before Terms and Dashboard)
         return (
           <>
             <View style={styles.infoPanel}>
               <Text style={styles.infoPanelText}>
-                {isReuploadMode
-                  ? 'Some documents need to be re-uploaded. Only upload the documents marked below.'
-                  : 'Upload all required documents. These will be submitted together for admin review.'}
+                Provide your PAN and identity details. Upload photos now for quick KYC approval upon registration.
               </Text>
             </View>
-
-            {isReuploadMode && kycStatusData?.submission?.rejectionReason ? (
-              <View style={[styles.infoPanel, { borderColor: colors.danger + '44', backgroundColor: colors.danger + '11' }]}>
-                <Text style={[styles.infoPanelText, { color: colors.danger }]}>
-                  Admin feedback: {kycStatusData.submission.rejectionReason}
-                </Text>
-                {kycStatusData.submission.adminNotes ? (
-                  <Text style={[styles.infoPanelText, { color: colors.danger, marginTop: 4, fontSize: 12 }]}>
-                    Note: {kycStatusData.submission.adminNotes}
-                  </Text>
-                ) : null}
-              </View>
-            ) : null}
 
             <InputField labelStyle={styles.inputLabel}
               label="PAN Number"
               value={draft.panNumber}
               onChangeText={(value) => patchDraft({ panNumber: normalizeUpper(value).slice(0, 10) })}
-              placeholder="Enter 10-character PAN"
+              placeholder="Enter 10-character PAN (e.g. ABCDE1234F)"
               autoCapitalize="characters"
               required
               icon={<Ionicons name="card-outline" size={18} color={colors.primary} />}
             />
-            {docStatusChip('PAN Card', submission4?.panCardStatus, submission4?.panCardRejectionReason)}
-            {needsPan ? (
-              <ImageUploadButton
-                label="📸 Upload PAN Card Photo"
-                uri={draft.panCardPhoto}
-                onPress={() => pickImage('panCardPhoto')}
-              />
-            ) : null}
+
+            <ImageUploadButton
+              label="📸 Upload PAN Card Photo *"
+              uri={draft.panCardPhoto}
+              onPress={() => pickImage('panCardPhoto')}
+            />
 
             <InputField labelStyle={styles.inputLabel}
               label="Aadhaar Number"
@@ -1605,56 +1066,45 @@ export const CompleteSignupScreen = () => {
               required
               icon={<Ionicons name="id-card-outline" size={18} color={colors.primary} />}
             />
-            {docStatusChip('Aadhaar Front', submission4?.aadhaarFrontStatus, submission4?.aadhaarFrontRejectionReason)}
-            {needsFront ? (
-              <ImageUploadButton
-                label="📸 Upload Aadhaar Front"
-                uri={draft.aadhaarFrontPhoto}
-                onPress={() => pickImage('aadhaarFrontPhoto')}
-              />
-            ) : null}
 
-            {docStatusChip('Aadhaar Back', submission4?.aadhaarBackStatus, submission4?.aadhaarBackRejectionReason)}
-            {needsBack ? (
-              <ImageUploadButton
-                label="📸 Upload Aadhaar Back"
-                uri={draft.aadhaarBackPhoto}
-                onPress={() => pickImage('aadhaarBackPhoto')}
-              />
-            ) : null}
+            <ImageUploadButton
+              label="📸 Upload Aadhaar Front (Optional)"
+              uri={draft.aadhaarFrontPhoto}
+              onPress={() => pickImage('aadhaarFrontPhoto')}
+            />
 
-            {docStatusChip('Selfie', submission4?.selfieStatus, submission4?.selfieRejectionReason)}
-            {needsSelfie ? (
-              <ImageUploadButton
-                label="🤳 Upload Selfie Photo"
-                uri={draft.selfiePhoto}
-                onPress={() => pickImage('selfiePhoto')}
-              />
-            ) : null}
+            <ImageUploadButton
+              label="📸 Upload Aadhaar Back (Optional)"
+              uri={draft.aadhaarBackPhoto}
+              onPress={() => pickImage('aadhaarBackPhoto')}
+            />
 
-            {docStatusChip('Bank Passbook', submission4?.bankProofStatus, submission4?.bankProofRejectionReason)}
-            {needsBank ? (
-              <ImageUploadButton
-                label="🏦 Upload Bank Passbook / Cancelled Cheque"
-                uri={draft.bankPassbookPhoto}
-                onPress={() => pickImage('bankPassbookPhoto')}
-              />
-            ) : null}
+            <ImageUploadButton
+              label="🤳 Upload Selfie Photo (Optional)"
+              uri={draft.selfiePhoto}
+              onPress={() => pickImage('selfiePhoto')}
+            />
+
+            <ImageUploadButton
+              label="🏦 Upload Bank Passbook / Cheque (Optional)"
+              uri={draft.bankPassbookPhoto}
+              onPress={() => pickImage('bankPassbookPhoto')}
+            />
           </>
         );
       }
-      case 4:
-        // Bank Linking — account details
+      case 2:
+        // Step 2: Bank Account Details
         return (
           <>
             <View style={styles.infoPanel}>
-              <Text style={styles.infoPanelText}>Link your primary bank account. Your KYC is approved and you are ready to proceed.</Text>
+              <Text style={styles.infoPanelText}>Link your primary bank account for seamless investment deposits and monthly returns.</Text>
             </View>
             <InputField labelStyle={styles.inputLabel}
               label="Account Holder Name"
               value={draft.accountHolderName || draft.fullName}
               onChangeText={(value) => patchDraft({ accountHolderName: value })}
-              placeholder="Name as per bank records"
+              placeholder="Name as per bank passbook"
               required
               icon={<Ionicons name="person-outline" size={18} color={colors.primary} />}
             />
@@ -1690,17 +1140,47 @@ export const CompleteSignupScreen = () => {
               label="Bank Name"
               value={draft.bankName}
               onChangeText={(value) => patchDraft({ bankName: value })}
-              placeholder="e.g. HDFC Bank"
+              placeholder="e.g. HDFC Bank, SBI, ICICI"
               required
               icon={<Ionicons name="wallet-outline" size={18} color={colors.primary} />}
             />
           </>
         );
-      case 5:
+      case 3: {
+        // Step 3: Security Credentials (Password & MPIN)
+        const score = Object.values(passwordChecks).filter(Boolean).length;
+
         return (
           <>
+            <InputField labelStyle={styles.inputLabel}
+              label="Create Password"
+              value={draft.password}
+              onChangeText={(value) => patchDraft({ password: value })}
+              secure
+              required
+              placeholder="Enter a secure password"
+              icon={<Ionicons name="lock-closed-outline" size={18} color={colors.primary} />}
+            />
+
+            <PasswordStrengthMeter score={score} isEmpty={draft.password.length === 0} checks={passwordChecks} />
+
+            <InputField labelStyle={styles.inputLabel}
+              label="Confirm Password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secure
+              required
+              placeholder="Enter the same password again"
+              icon={<Ionicons name="shield-checkmark-outline" size={18} color={colors.primary} />}
+              trailing={
+                confirmPassword.length > 0 && confirmPassword === draft.password ? (
+                  <Ionicons name="checkmark-circle" size={20} color={colors.success} />
+                ) : undefined
+              }
+            />
+
             <PinEntryBoxes
-              label="Enter 4-digit MPIN"
+              label="Set 4-digit Security MPIN"
               value={draft.mpin}
               isFocused={isMpinFocused}
               onPress={() => {
@@ -1726,8 +1206,9 @@ export const CompleteSignupScreen = () => {
               selectionColor="transparent"
               style={styles.hiddenKeyboardInput}
             />
+
             <PinEntryBoxes
-              label="Confirm MPIN"
+              label="Confirm 4-digit MPIN"
               value={confirmMpin}
               isFocused={isConfirmMpinFocused}
               onPress={() => {
@@ -1753,14 +1234,128 @@ export const CompleteSignupScreen = () => {
               selectionColor="transparent"
               style={styles.hiddenKeyboardInput}
             />
-            <Text style={styles.inlineNote}>Do not use simple patterns like 1234 or 1111.</Text>
-            {mpinValue ? (
-              <Text style={[styles.inlineNote, isMpinValid ? styles.inlineNoteActive : styles.inlineNoteMuted]}>
-                {isMpinValid ? 'MPIN format looks strong.' : 'Use 4 digits and avoid easy sequences.'}
-              </Text>
-            ) : null}
+
+            <InputField labelStyle={styles.inputLabel}
+              label="Referral Code (Optional)"
+              value={draft.referredByCode}
+              onChangeText={(value) => patchDraft({ referredByCode: normalizeUpper(value).slice(0, 12) })}
+              placeholder="Enter referral code"
+              autoCapitalize="characters"
+              icon={<Ionicons name="pricetag-outline" size={18} color={colors.primary} />}
+            />
           </>
         );
+      }
+      case 4: {
+        // Step 4: Final Step — Application Summary, Privacy Policy & Terms Acceptance
+        const docCount = [
+          draft.panCardPhoto && 'PAN Card',
+          draft.aadhaarFrontPhoto && 'Aadhaar Front',
+          draft.aadhaarBackPhoto && 'Aadhaar Back',
+          draft.selfiePhoto && 'Selfie Photo',
+          draft.bankPassbookPhoto && 'Bank Proof',
+        ].filter(Boolean);
+
+        return (
+          <>
+            <View style={styles.infoPanel}>
+              <Text style={styles.infoPanelText}>
+                Review your profile details below. Read and accept platform policies to submit your application and open your dashboard.
+              </Text>
+            </View>
+
+            {/* Application Overview Summary Card */}
+            <View style={[styles.termsTable, { backgroundColor: '#0F172A', borderColor: 'rgba(56, 189, 248, 0.3)', marginBottom: 16 }]}>
+              <View style={[styles.termsRow, styles.termsRowHeader, { backgroundColor: 'rgba(56, 189, 248, 0.12)' }]}>
+                <Text style={[styles.termsCellFeatureHeader, { color: colors.cyan }]}>Application Summary</Text>
+                <Text style={[styles.termsCellDetailsHeader, { color: colors.cyan }]}>Status</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Applicant Name</Text>
+                <Text style={styles.termsCellDetails}>{draft.fullName || '—'}</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Mobile Number</Text>
+                <Text style={styles.termsCellDetails}>{draft.mobile || '—'}</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Date of Birth</Text>
+                <Text style={styles.termsCellDetails}>{draft.dateOfBirth || '—'}</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>PAN Number</Text>
+                <Text style={styles.termsCellDetails}>{draft.panNumber ? `${draft.panNumber.slice(0, 5)}XXXX${draft.panNumber.slice(-1)}` : '—'}</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Bank Account</Text>
+                <Text style={styles.termsCellDetails}>{draft.accountNumber ? `**** ${draft.accountNumber.slice(-4)} (${draft.bankName || 'Bank'})` : '—'}</Text>
+              </View>
+              <View style={[styles.termsRow, styles.termsRowLast]}>
+                <Text style={styles.termsCellFeature}>KYC Documents</Text>
+                <Text style={[styles.termsCellDetails, { color: colors.success, fontFamily: fontFamily.bodyBold }]}>
+                  {docCount.length > 0 ? `${docCount.length} Uploaded ✓` : 'PAN Attached ✓'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Platform Terms Table */}
+            <View style={styles.termsTable}>
+              <View style={[styles.termsRow, styles.termsRowHeader]}>
+                <Text style={styles.termsCellFeatureHeader}>Investment Plan</Text>
+                <Text style={styles.termsCellDetailsHeader}>Terms</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Minimum Investment</Text>
+                <Text style={styles.termsCellDetails}>Rs 5,000</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Maximum Investment</Text>
+                <Text style={styles.termsCellDetails}>Rs 10,00,000</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Lock-in Period</Text>
+                <Text style={styles.termsCellDetails}>6 Months</Text>
+              </View>
+              <View style={styles.termsRow}>
+                <Text style={styles.termsCellFeature}>Monthly Return</Text>
+                <Text style={styles.termsCellDetails}>10% credited to wallet</Text>
+              </View>
+              <View style={[styles.termsRow, styles.termsRowLast]}>
+                <Text style={styles.termsCellFeature}>Withdrawal Minimum</Text>
+                <Text style={styles.termsCellDetails}>Rs 1,000 (Admin Approval)</Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 10, marginVertical: 12 }}>
+              <Pressable
+                onPress={openTerms}
+                style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.25)', alignItems: 'center' }}
+              >
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>📄 Read Terms</Text>
+              </Pressable>
+              <Pressable
+                onPress={openPrivacyPolicy}
+                style={{ flex: 1, paddingVertical: 11, paddingHorizontal: 12, backgroundColor: '#0F172A', borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.25)', alignItems: 'center' }}
+              >
+                <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.cyan }}>🔒 Read Privacy Policy</Text>
+              </Pressable>
+            </View>
+
+            <View style={{ gap: 10, marginBottom: 16 }}>
+              <CheckboxRow
+                checked={draft.investorAgreementAccepted}
+                onPress={() => patchDraft({ investorAgreementAccepted: !draft.investorAgreementAccepted })}
+                label="I Accept the Terms & Conditions and Investor Agreement *"
+              />
+              <CheckboxRow
+                checked={draft.riskDisclosureAccepted}
+                onPress={() => patchDraft({ riskDisclosureAccepted: !draft.riskDisclosureAccepted })}
+                label="I Accept the Privacy Policy and Risk Disclosure *"
+              />
+            </View>
+          </>
+        );
+      }
       default:
         return null;
     }
@@ -1798,29 +1393,11 @@ export const CompleteSignupScreen = () => {
   // Determine button label and handler based on step
   const getButtonConfig = () => {
     switch (currentStep) {
-      case 2: // Terms → Register & go to KYC
+      case 4: // Terms & Privacy Policy (Final Step) → Submit application & open dashboard
         return {
-          label: isRegisteringAndActivating ? 'Creating Account...' : currentStepMeta.actionLabel,
-          onPress: () => void registerAndGoToKyc(),
+          label: isRegisteringAndActivating ? 'Submitting Application...' : currentStepMeta.actionLabel,
+          onPress: () => void registerAndSubmitApplication(),
           disabled: isRegisteringAndActivating,
-        };
-      case 3: // KYC → Submit all documents
-        return {
-          label: isSubmittingKyc ? 'Submitting Documents...' : currentStepMeta.actionLabel,
-          onPress: () => void submitKycDocuments(),
-          disabled: isSubmittingKyc,
-        };
-      case 4: // Bank → Submit & go to MPIN
-        return {
-          label: isSubmittingBank ? 'Linking Bank...' : currentStepMeta.actionLabel,
-          onPress: () => void submitBank(),
-          disabled: isSubmittingBank,
-        };
-      case 5: // MPIN → Finish signup
-        return {
-          label: isFinishingSignup ? 'Creating MPIN...' : currentStepMeta.actionLabel,
-          onPress: () => void finishSignup(),
-          disabled: isFinishingSignup,
         };
       default:
         return {
@@ -1837,7 +1414,7 @@ export const CompleteSignupScreen = () => {
     <AppScreen
       contentStyle={styles.page}
       fullBleed
-      contentBottomInset={currentStep === 5 ? Math.max(insets.bottom + 220, 240) : Math.max(insets.bottom + 72, 88)}
+      contentBottomInset={currentStep === 3 ? Math.max(insets.bottom + 220, 240) : Math.max(insets.bottom + 72, 88)}
       backgroundColor={colors.dark}
       safeAreaEdges={['left', 'right']}
       scrollViewProps={{ keyboardShouldPersistTaps: 'handled' }}
@@ -1849,7 +1426,7 @@ export const CompleteSignupScreen = () => {
             <Pressable onPress={goBack} style={({ pressed }) => [styles.heroBackButton, pressed && styles.heroBackButtonPressed]}>
               <Ionicons name="arrow-back" size={22} color={colors.surface} />
             </Pressable>
-            <Text style={styles.heroStepLabel}>STEP {currentStep + 3} OF {TOTAL_SIGNUP_STEPS}</Text>
+            <Text style={styles.heroStepLabel}>STEP {currentStep + 1} OF {TOTAL_SIGNUP_STEPS}</Text>
             <View style={styles.heroSpacer} />
           </View>
 
@@ -1876,4 +1453,3 @@ export const CompleteSignupScreen = () => {
     </AppScreen>
   );
 };
-

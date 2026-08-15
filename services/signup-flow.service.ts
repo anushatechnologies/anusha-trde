@@ -11,14 +11,10 @@ export const signupStepRoutes = [
   '/signup/mobile',
   '/signup/otp',
   '/signup/profile',
-  '/signup/password',
-  '/signup/referral',
-  '/signup/terms',
   '/signup/kyc',
-  '/signup/kyc-status',
   '/signup/bank',
-  '/signup/activate',
-  '/signup/mpin',
+  '/signup/password',
+  '/signup/terms',
 ] as const;
 
 export const getSignupRouteForStep = (stepIndex: number) =>
