@@ -123,8 +123,10 @@ const RegistrationStepCard = ({
 
     <View style={[styles.registrationBody, bodyStyle]}>{children}</View>
 
-    <View style={styles.registrationProgressRail}>
-      <View style={[styles.registrationProgressFill, { width: progressWidth }]} />
+    <View style={styles.registrationProgressRailWrap}>
+      <View style={styles.registrationProgressRail}>
+        <View style={[styles.registrationProgressFill, { width: progressWidth }]} />
+      </View>
     </View>
   </View>
 );
@@ -589,6 +591,8 @@ export const RegisterScreen = () => {
           value={mobile}
           onChangeText={handleRegisterMobileChange}
           keyboardType="phone-pad"
+          showSoftInputOnFocus
+          disableFullscreenUI
           maxLength={10}
           prefixText="+91"
           placeholder="98765 43210"
@@ -1939,7 +1943,16 @@ const styles = StyleSheet.create({
   },
   registrationProgressRail: {
     height: 4,
+    width: '100%',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  registrationProgressRailWrap: {
+    width: '100%',
+    paddingHorizontal: 22,
+    paddingBottom: 10,
+    backgroundColor: colors.surface,
   },
   registrationProgressFill: {
     height: '100%',
