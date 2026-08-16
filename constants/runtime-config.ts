@@ -38,13 +38,13 @@ export const runtimeConfig = {
     process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID ||
     process.env.RAZORPAY_KEY_ID ||
     extra.razorpayKeyId ||
-    ''
+    'rzp_live_TO6q7NUVnPM6bA'
   ).trim(),
   razorpayKeySecret: String(
     process.env.EXPO_PUBLIC_RAZORPAY_KEY_SECRET ||
     process.env.RAZORPAY_KEY_SECRET ||
     extra.razorpayKeySecret ||
-    ''
+    'pRMq2obuE51XoJlH3NDyUl9w'
   ).trim(),
 };
 
