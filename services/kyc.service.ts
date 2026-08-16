@@ -13,10 +13,19 @@ export type KycStatusResponse = {
   mpinCreated?: boolean;
   canUpload: boolean;
   profile?: {
+    fullName?: string;
+    email?: string;
+    mobileNumber?: string;
     panNumber?: string;
     aadhaarLast4?: string;
     dateOfBirth?: string;
     address?: string;
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankIfscCode?: string;
+    bankVerified?: boolean;
+    accountHolderName?: string;
+    memberSince?: string;
   };
   submission?: {
     id: string;

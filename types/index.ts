@@ -66,6 +66,7 @@ export type UserProfile = {
   ifscCode: string;
   panNumber: string;
   aadhaarMasked: string;
+  aadhaarLast4?: string;
   initials: string;
   biometricEnabled: boolean;
   passwordConfigured: boolean;
