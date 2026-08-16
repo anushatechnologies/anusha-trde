@@ -97,6 +97,32 @@ export const HomeScreen = () => {
     }
   };
 
+  const handleWhatsAppSupport = async () => {
+    const phone = '919000000000';
+    const message = encodeURIComponent(
+      `Hello Anusha Trades Wealth Concierge, I am ${user?.name || 'an Investor'} (Mobile: ${user?.mobile || ''}). I need assistance with my investment portfolio.`
+    );
+    const url = `whatsapp://send?phone=${phone}&text=${message}`;
+    const webUrl = `https://wa.me/${phone}?text=${message}`;
+    try {
+      const canOpen = await Linking.canOpenURL(url);
+      if (canOpen) {
+        await Linking.openURL(url);
+      } else {
+        await Linking.openURL(webUrl);
+      }
+    } catch {
+      await Linking.openURL(webUrl);
+    }
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning,';
+    if (hour < 17) return 'Good afternoon,';
+    return 'Good evening,';
+  };
+
   const totalTeamMembers = data?.teamLevels?.reduce((sum, level) => sum + level.members, 0) ?? 0;
   const homeMetricGap = 12;
   const homeMetricWidth = Math.max((width - horizontalPadding * 2 - homeMetricGap) / 2, 0);
@@ -104,22 +130,41 @@ export const HomeScreen = () => {
 
   return (
     <AppScreen refreshing={isRefetching} onRefresh={() => void refetch()}>
-      {/* Top Greeting & User Profile Bar */}
+      {/* Top Greeting & User Profile Bar with KYC Pill */}
       <View style={styles.dashboardHeaderRow}>
         <View style={styles.dashboardUserLead}>
-          <ProfileAvatar name={user?.name || 'Investor'} photoUrl={user?.profilePhoto} size={46} borderRadius={16} variant="gradient" />
+          <ProfileAvatar name={user?.name || 'Investor'} photoUrl={user?.profilePhoto} size={48} borderRadius={16} variant="gradient" />
           <View style={styles.dashboardUserCopy}>
-            <Text style={styles.dashboardGreeting}>Welcome back,</Text>
+            <Text style={styles.dashboardGreeting}>{getGreeting()}</Text>
             <Text style={styles.dashboardUserName}>{user?.name || 'Investor'}</Text>
           </View>
         </View>
-        <Pressable
-          onPress={() => router.push('/notifications')}
-          style={({ pressed }) => [styles.notificationBtn, pressed && styles.notificationBtnPressed]}
-        >
-          <Ionicons name="notifications-outline" size={20} color="#374151" />
-          <View style={styles.notificationDot} />
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {user?.kycStatus === 'APPROVED' ? (
+            <View style={styles.kycApprovedBadge}>
+              <Ionicons name="shield-checkmark" size={12} color="#16A34A" />
+              <Text style={styles.kycApprovedText}>Verified</Text>
+            </View>
+          ) : user?.kycStatus === 'PENDING' ? (
+            <View style={styles.kycPendingBadge}>
+              <Ionicons name="time-outline" size={12} color="#D97706" />
+              <Text style={styles.kycPendingText}>In Review</Text>
+            </View>
+          ) : (
+            <Pressable onPress={() => router.push('/kyc-documents')} style={styles.kycPromptBadge}>
+              <Ionicons name="shield-outline" size={12} color="#2563EB" />
+              <Text style={styles.kycPromptText}>Verify KYC</Text>
+            </Pressable>
+          )}
+
+          <Pressable
+            onPress={() => router.push('/notifications')}
+            style={({ pressed }) => [styles.notificationBtn, pressed && styles.notificationBtnPressed]}
+          >
+            <Ionicons name="notifications-outline" size={20} color="#374151" />
+            <View style={styles.notificationDot} />
+          </Pressable>
+        </View>
       </View>
 
       {isLoading || !data ? (
@@ -142,17 +187,17 @@ export const HomeScreen = () => {
               <View style={styles.portfolioTopRow}>
                 <View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={styles.portfolioLabel}>TOTAL PORTFOLIO & WALLET</Text>
+                    <Text style={styles.portfolioLabel}>TOTAL ASSET VALUE</Text>
                     <Pressable onPress={() => setShowBalance(!showBalance)} hitSlop={8}>
                       <Ionicons
                         name={showBalance ? 'eye-outline' : 'eye-off-outline'}
-                        size={15}
+                        size={16}
                         color={colors.primary}
                       />
                     </Pressable>
                   </View>
                   <Text style={styles.portfolioBalance}>
-                    {showBalance ? formatCurrency(data.metrics.walletBalance) : '••••••••'}
+                    {showBalance ? formatCurrency((data.metrics.walletBalance || 0) + (data.metrics.totalInvested || 0)) : '••••••••'}
                   </Text>
                 </View>
                 <View style={styles.growthBadge}>
@@ -161,7 +206,29 @@ export const HomeScreen = () => {
                 </View>
               </View>
 
-              <View style={styles.portfolioMetricsDivider} />
+              {/* 3-Metric Asset Breakdown Strip */}
+              <View style={styles.portfolioSubMetricsRow}>
+                <View style={styles.portfolioSubMetricCol}>
+                  <Text style={styles.portfolioSubMetricLabel}>Invested</Text>
+                  <Text style={styles.portfolioSubMetricValue}>
+                    {showBalance ? formatCompactCurrency(data.metrics.totalInvested || 0) : '••••'}
+                  </Text>
+                </View>
+                <View style={styles.portfolioSubMetricDivider} />
+                <View style={styles.portfolioSubMetricCol}>
+                  <Text style={styles.portfolioSubMetricLabel}>Available</Text>
+                  <Text style={[styles.portfolioSubMetricValue, { color: colors.primary }]}>
+                    {showBalance ? formatCompactCurrency(data.metrics.walletBalance || 0) : '••••'}
+                  </Text>
+                </View>
+                <View style={styles.portfolioSubMetricDivider} />
+                <View style={styles.portfolioSubMetricCol}>
+                  <Text style={styles.portfolioSubMetricLabel}>Earnings</Text>
+                  <Text style={[styles.portfolioSubMetricValue, { color: colors.success }]}>
+                    {showBalance ? `+${formatCompactCurrency(data.metrics.referralEarnings || 0)}` : '••••'}
+                  </Text>
+                </View>
+              </View>
 
               {/* 4 Fast Action Pills */}
               <View style={styles.quickActionPillRow}>
@@ -239,6 +306,29 @@ export const HomeScreen = () => {
             </View>
           </View>
 
+          {/* Featured Investment Plans Spotlight Banner */}
+          <SurfaceCard style={{ backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', padding: 16, borderRadius: radius.lg }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ backgroundColor: '#EFF6FF', width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="flame" size={16} color="#2563EB" />
+                </View>
+                <Text style={{ fontFamily: fontFamily.heading, fontSize: 16, color: '#0F172A' }}>Featured High-Yield Plans</Text>
+              </View>
+              <Pressable onPress={() => router.push('/(tabs)/invest')}>
+                <Text style={{ fontFamily: fontFamily.bodyBold, fontSize: 12.5, color: colors.primary }}>Explore All &gt;</Text>
+              </Pressable>
+            </View>
+            <Text style={{ fontFamily: fontFamily.body, fontSize: 13, color: '#64748B', lineHeight: 18, marginBottom: 12 }}>
+              Earn daily passive returns up to 1.8% daily ROI with automated 24/7 bank credits and compounding maturity payouts.
+            </Text>
+            <GradientButton
+              label="Explore & Invest in Plans"
+              icon={<Ionicons name="sparkles" size={17} color="#FFFFFF" />}
+              onPress={handleInvestPress}
+            />
+          </SurfaceCard>
+
           {/* Referral Card */}
           <ReferralLinkCard link={data.referralLink} />
 
@@ -269,6 +359,23 @@ export const HomeScreen = () => {
               <TransactionRow key={item.id} item={item} />
             ))}
           </SurfaceCard>
+
+          {/* VIP WhatsApp Support Desk */}
+          <Pressable onPress={handleWhatsAppSupport} style={styles.vipSupportCard}>
+            <View style={styles.vipSupportLead}>
+              <View style={styles.vipSupportIconWrap}>
+                <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
+              </View>
+              <View style={styles.vipSupportCopy}>
+                <Text style={styles.vipSupportTitle}>24/7 VIP Wealth Desk</Text>
+                <Text style={styles.vipSupportSubtitle}>Instant priority WhatsApp assistance</Text>
+              </View>
+            </View>
+            <View style={styles.vipSupportBtn}>
+              <Text style={styles.vipSupportBtnText}>Chat Live</Text>
+              <Ionicons name="arrow-forward" size={12} color="#FFFFFF" />
+            </View>
+          </Pressable>
         </>
       )}
 
@@ -948,14 +1055,155 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
     backgroundColor: '#DC2626',
   },
+  kycApprovedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#DCFCE7',
+    borderColor: '#BBF7D0',
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  kycApprovedText: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 11,
+    color: '#166534',
+  },
+  kycPendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  kycPendingText: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 11,
+    color: '#92400E',
+  },
+  kycPromptBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EFF6FF',
+    borderColor: '#DBEAFE',
+    borderWidth: 1,
+    borderRadius: radius.pill,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  kycPromptText: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 11,
+    color: '#1E40AF',
+  },
   portfolioHeroCard: {
     padding: 20,
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
     ...shadows.card,
+  },
+  portfolioSubMetricsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginTop: 14,
+    marginBottom: 16,
+  },
+  portfolioSubMetricCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  portfolioSubMetricLabel: {
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 11,
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  portfolioSubMetricValue: {
+    fontFamily: fontFamily.heading,
+    fontSize: 15,
+    color: '#0F172A',
+  },
+  portfolioSubMetricDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#E2E8F0',
+  },
+  vipSupportCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: radius.lg,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+    shadowColor: '#16A34A',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+    gap: 12,
+    marginTop: 4,
+  },
+  vipSupportLead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  vipSupportIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vipSupportCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  vipSupportTitle: {
+    fontFamily: fontFamily.heading,
+    fontSize: 14.5,
+    color: '#14532D',
+  },
+  vipSupportSubtitle: {
+    fontFamily: fontFamily.body,
+    fontSize: 12,
+    color: '#166534',
+  },
+  vipSupportBtn: {
+    backgroundColor: '#15803D',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: radius.pill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  vipSupportBtnText: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 12,
+    color: '#FFFFFF',
   },
   investHeroCard: {
     padding: 20,
