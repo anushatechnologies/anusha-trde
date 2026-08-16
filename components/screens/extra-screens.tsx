@@ -11,6 +11,7 @@ import { TransactionRow } from '../../components/transactions/transaction-row';
 import { colors, fontFamily, gradients, radius } from '../../constants/theme';
 import { queryKeys, useDashboardQuery, useNotificationsQuery, useSessionsQuery, useTeamQuery } from '../../hooks/use-app-queries';
 import { dashboardService } from '../../services/dashboard.service';
+import { bankService } from '../../services/bank.service';
 import { getAuthErrorMessage } from '../../services/firebase-auth.service';
 import { notificationPermissionsService } from '../../services/notification-permissions.service';
 import { useAppStore } from '../../store/use-app-store';
@@ -192,6 +193,29 @@ export const PersonalInformationScreen = () => {
 export const BankDetailsScreen = () => {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const bankQuery = useQuery({
+    queryKey: ['bank-details'],
+    queryFn: bankService.getBankDetails,
+    enabled: Boolean(user),
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    if (!bankQuery.data) {
+      return;
+    }
+
+    void updateUser({
+      bankMask: bankQuery.data.accountNumberMasked === 'No bank account linked'
+        ? user?.bankMask || ''
+        : bankQuery.data.accountNumberMasked,
+      accountHolderName: bankQuery.data.accountHolderName || user?.accountHolderName || '',
+      bankName: bankQuery.data.bankName || user?.bankName || '',
+      ifscCode: bankQuery.data.ifscCode || user?.ifscCode || '',
+      bankVerified: bankQuery.data.bankVerified ?? user?.bankVerified ?? false,
+    });
+  }, [bankQuery.data, updateUser, user?.accountHolderName, user?.bankName, user?.bankMask, user?.bankVerified, user?.ifscCode]);
 
   if (!user) {
     return (
@@ -204,12 +228,22 @@ export const BankDetailsScreen = () => {
     );
   }
 
-  const bankMask = formatProfileValue(user.bankMask, 'No verified bank account linked');
-  const accountHolderName = formatProfileValue(user.accountHolderName, 'Not added yet');
-  const ifscCode = formatProfileValue(user.ifscCode, 'Not added yet');
+  const bankMask = formatProfileValue(
+    bankQuery.data?.accountNumberMasked === 'No bank account linked' ? user.bankMask : bankQuery.data?.accountNumberMasked || user.bankMask,
+    bankQuery.isLoading ? 'Loading bank details...' : 'No verified bank account linked'
+  );
+  const accountHolderName = formatProfileValue(
+    bankQuery.data?.accountHolderName || user.accountHolderName,
+    bankQuery.isLoading ? 'Loading bank details...' : 'Not added yet'
+  );
+  const ifscCode = formatProfileValue(
+    bankQuery.data?.ifscCode || user.ifscCode,
+    bankQuery.isLoading ? 'Loading bank details...' : 'Not added yet'
+  );
   const memberSince = formatProfileValue(user.memberSince, 'Not available yet');
   const kycStatus = user.kycStatus === 'APPROVED' ? 'APPROVED' : 'PENDING';
-  const withdrawalAccess = user.bankMask.trim() && user.kycStatus === 'APPROVED'
+  const hasLinkedBank = Boolean(bankQuery.data?.accountNumberMasked && bankQuery.data.accountNumberMasked !== 'No bank account linked') || Boolean(user.bankMask.trim());
+  const withdrawalAccess = hasLinkedBank && user.kycStatus === 'APPROVED'
     ? 'Ready for withdrawals'
     : 'Unavailable until bank linking and verification are complete';
 
@@ -240,7 +274,7 @@ export const BankDetailsScreen = () => {
         ))}
       </SurfaceCard>
 
-      <GradientButton label={user.bankMask.trim() ? 'Open Withdraw' : 'Open Settings'} onPress={() => router.push(user.bankMask.trim() ? '/withdraw' : '/settings')} />
+      <GradientButton label={hasLinkedBank ? 'Open Withdraw' : 'Open Settings'} onPress={() => router.push(hasLinkedBank ? '/withdraw' : '/settings')} />
       <ListRow icon="shield-checkmark-outline" title="Security Center" subtitle="Review protection and account verification settings" onPress={() => router.push('/security-center')} />
     </AppScreen>
   );
@@ -894,16 +928,20 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   detailField: {
-    paddingVertical: 14,
-    gap: 6,
+    minHeight: 62,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    borderBottomColor: colors.borderLight,
   },
   detailFieldLast: {
     borderBottomWidth: 0,
     paddingBottom: 0,
   },
   detailFieldLabel: {
+    flex: 0.9,
     fontFamily: fontFamily.bodySemi,
     fontSize: 11.5,
     color: colors.textSecondary,
@@ -911,10 +949,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   detailFieldValue: {
+    flex: 1.1,
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
     lineHeight: 22,
-    color: '#FFFFFF',
+    color: colors.textHeading,
+    textAlign: 'right',
   },
   referralMetricRow: {
     flexDirection: 'row',

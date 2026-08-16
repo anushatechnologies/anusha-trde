@@ -956,6 +956,7 @@ export const CompleteSignupScreen = () => {
 
       // Step 5: Update session and open Dashboard immediately!
       await useAuthStore.getState().updateUser({
+        mpinConfigured: Boolean(latestDraft.mpin),
         kycStatus: 'PENDING',
         accountStatus: 'ACTIVE',
         bankVerified: Boolean(latestDraft.accountNumber),

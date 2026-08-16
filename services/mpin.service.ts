@@ -15,7 +15,23 @@ type StoredMpinRecord = {
 };
 
 const normalizeEmail = (value?: string) => value?.trim().toLowerCase() || '';
-const normalizeMobile = (value?: string) => value?.trim() || '';
+const normalizeMobile = (value?: string) => {
+  const digits = value?.replace(/\D/g, '') || '';
+
+  if (!digits) {
+    return '';
+  }
+
+  // Store Indian numbers in one canonical form so 9876543210,
+  // 919876543210, and +91 9876543210 refer to the same account.
+  const nationalNumber = digits.length === 10
+    ? digits
+    : digits.startsWith('91') && digits.length >= 12
+      ? digits.slice(-10)
+      : digits;
+
+  return nationalNumber.length === 10 ? `+91${nationalNumber}` : `+${digits}`;
+};
 
 const matchesRecord = (record: StoredMpinRecord, account: MpinAccount) => {
   const email = normalizeEmail(account.email);

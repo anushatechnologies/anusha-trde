@@ -48,15 +48,17 @@ export const bankService = {
     const response = await apiClient.get<Record<string, any>>('/api/bank/details');
     const data = response.data || {};
     const rawAcc = String(data.bankAccountNumber || data.accountNumber || data.accountNumberMasked || '').trim();
-    const masked = rawAcc ? (rawAcc.startsWith('A/C') ? rawAcc : `A/C **** ${rawAcc.slice(-4)}`) : 'No bank account linked';
+    const lastFour = rawAcc.match(/(\d{4})\s*$/)?.[1] || '';
+    const masked = lastFour ? `A/C **** ${lastFour}` : 'No bank account linked';
+    const ifsc = String(data.bankIfscCode || data.ifscCode || data.ifsc || '').trim().toUpperCase();
     return {
       accountHolderName: String(data.accountHolderName || data.name || ''),
       accountNumberMasked: masked,
       bankAccountNumber: rawAcc,
-      ifscCode: String(data.bankIfscCode || data.ifscCode || data.ifsc || ''),
-      bankIfscCode: String(data.bankIfscCode || data.ifscCode || data.ifsc || ''),
+      ifscCode: ifsc,
+      bankIfscCode: ifsc,
       bankName: String(data.bankName || ''),
-      bankVerified: Boolean(data.bankVerified),
+      bankVerified: Boolean(data.bankVerified ?? data.verified),
       bankVerifiedAt: data.bankVerifiedAt ? String(data.bankVerifiedAt) : undefined,
     };
   },

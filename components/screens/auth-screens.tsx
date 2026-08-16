@@ -1006,7 +1006,7 @@ export const ForgotPasswordScreen = () => {
       }
       setStep('otp');
       setSeconds(60);
-      Alert.alert('OTP Sent', `A 6-digit verification code has been sent via SMS & WhatsApp to +91 ${digits}`);
+      Alert.alert('OTP Sent', `A 6-digit verification code has been sent by Firebase SMS to +91 ${digits}`);
     } catch (err: any) {
       Alert.alert('Error', getAuthErrorMessage(err) || `Failed to send OTP for ${recoveryType === 'password' ? 'password' : 'MPIN'} reset.`);
     } finally {
@@ -1031,7 +1031,8 @@ export const ForgotPasswordScreen = () => {
       }
       setStep('complete');
     } catch (err: any) {
-      Alert.alert('Verification Failed', getAuthErrorMessage(err) || 'Invalid or expired OTP code. Use 123456 in test mode.');
+      const serverMessage = err?.response?.data?.message || err?.response?.data?.error;
+      Alert.alert('Verification Failed', serverMessage || getAuthErrorMessage(err) || 'Firebase verification failed. Please request a new OTP.');
     } finally {
       setIsLoading(false);
     }
@@ -1098,7 +1099,7 @@ export const ForgotPasswordScreen = () => {
     step === 'mobile'
       ? `Enter your registered mobile number to receive a secure OTP for ${recoveryType === 'password' ? 'password' : 'MPIN'} reset.`
       : step === 'otp'
-      ? `Enter the 6-digit code sent via WhatsApp & SMS to +91 ${mobile}.`
+      ? `Enter the 6-digit Firebase SMS code sent to +91 ${mobile}.`
       : recoveryType === 'password'
       ? 'Create and confirm a new secure password.'
       : 'Create and confirm your new 4-digit security MPIN.';
@@ -1167,7 +1168,7 @@ export const ForgotPasswordScreen = () => {
               placeholder="98765 43210"
               icon={<Ionicons name="call-outline" size={18} color={colors.primary} />}
             />
-            <Text style={styles.registrationHint}>A 6-digit verification code will be sent to your mobile via SMS & WhatsApp.</Text>
+            <Text style={styles.registrationHint}>A 6-digit verification code will be sent to your mobile by Firebase SMS.</Text>
             <GradientButton
               label={isLoading ? 'Sending OTP...' : 'Send Verification OTP'}
               onPress={handleSendOtp}

@@ -247,7 +247,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       return;
     }
 
-    const nextUser = normalizeUser({ ...current, ...userPatch });
+    // A successful MPIN setup must survive profile/dashboard refreshes even
+    // when an older backend payload omits mpinCreated or incorrectly returns
+    // false. MPIN configuration is intentionally one-way here; changing the
+    // MPIN does not remove the configured state.
+    const nextUser = normalizeUser({
+      ...current,
+      ...userPatch,
+      mpinConfigured: current.mpinConfigured || Boolean(userPatch.mpinConfigured),
+    });
 
     if (!nextUser) {
       return;
