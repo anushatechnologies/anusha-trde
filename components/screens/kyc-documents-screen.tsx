@@ -14,7 +14,9 @@ import { kycService } from '../../services/kyc.service';
 const getFullImageUrl = (path?: string | null) => {
   if (!path) return null;
   if (path.startsWith('http')) return path;
-  return `${AUTH_API_BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  // KYC paths are storage-relative (for example `kyc/file.jpg`). They are
+  // served by the authenticated file-view endpoint, not as public root URLs.
+  return `${AUTH_API_BASE_URL}/api/files/view?path=${encodeURIComponent(path.replace(/^\//, ''))}`;
 };
 
 export const KycDocumentsScreen = () => {
@@ -151,14 +153,14 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.textHeading,
   },
   fieldRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    borderBottomColor: colors.borderLight,
   },
   fieldLabel: {
     fontFamily: fontFamily.bodySemi,

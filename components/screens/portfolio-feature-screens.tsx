@@ -446,9 +446,9 @@ export const InvestmentStatusScreen = () => {
     return (
       <AppScreen>
         <ScreenHeader title="Investment Status" subtitle="Track progress, expected returns, and maturity details." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
-        <SurfaceCard gradient={gradients.dark}>
-          <Text style={styles.heroTitle}>Investment Status</Text>
-          <Text style={styles.heroSubtitle}>No active investments are available yet.</Text>
+        <SurfaceCard style={styles.emptyStatusCard}>
+          <Text style={styles.emptyStatusTitle}>Investment Status</Text>
+          <Text style={styles.emptyStatusSubtitle}>No active investments are available yet.</Text>
         </SurfaceCard>
         <SurfaceCard>
           <Text style={styles.emptyText}>Your portfolio progress will appear here after the first investment is created.</Text>
@@ -563,6 +563,22 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 34,
     color: '#FFFFFF',
+  },
+  emptyStatusCard: {
+    backgroundColor: colors.surfaceSubtle,
+    borderColor: colors.border,
+  },
+  emptyStatusTitle: {
+    fontFamily: fontFamily.heading,
+    fontSize: 28,
+    lineHeight: 34,
+    color: colors.textHeading,
+  },
+  emptyStatusSubtitle: {
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    lineHeight: 20,
+    color: colors.textBody,
   },
   heroSubtitle: {
     fontFamily: fontFamily.body,

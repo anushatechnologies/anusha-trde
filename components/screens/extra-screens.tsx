@@ -712,7 +712,7 @@ export const WithdrawScreen = () => {
       {/* Available Balance Hero */}
       <SurfaceCard glass="dark">
         <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6 }}>Available Withdrawable Balance</Text>
-        <Text style={{ fontFamily: fontFamily.heading, fontSize: 32, color: '#FFFFFF', marginTop: 4 }}>{formatCurrency(availableBalance)}</Text>
+        <Text style={{ fontFamily: fontFamily.heading, fontSize: 32, color: colors.textHeading, marginTop: 4 }}>{formatCurrency(availableBalance)}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
           <Ionicons name="shield-checkmark" size={14} color={colors.successLight} />
           <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.successLight }}>Instant 24/7 IMPS / NEFT Settlement</Text>
@@ -724,13 +724,13 @@ export const WithdrawScreen = () => {
         <SectionTitle title="Destination Bank Account" actionLabel="Change" onActionPress={() => router.push('/bank-details')} />
         <View style={{ backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: '#DBEAFE', padding: 14, gap: 6 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Text style={{ fontFamily: fontFamily.headingSemi, fontSize: 16, color: '#FFFFFF' }}>{bankName}</Text>
+            <Text style={{ fontFamily: fontFamily.headingSemi, fontSize: 16, color: colors.textHeading, flex: 1 }}>{bankName}</Text>
             <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', borderWidth: 1, borderColor: 'rgba(52, 211, 153, 0.35)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill }}>
               <Text style={{ fontFamily: fontFamily.bodyBold, fontSize: 10.5, color: colors.successLight }}>VERIFIED</Text>
             </View>
           </View>
           <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 14, color: colors.cyan }}>{bankMask}</Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+          <View style={{ marginTop: 4, gap: 3 }}>
             <Text style={{ fontFamily: fontFamily.body, fontSize: 12, color: colors.textSecondary }}>Holder: {accountHolderName}</Text>
             <Text style={{ fontFamily: fontFamily.body, fontSize: 12, color: colors.textSecondary }}>IFSC: {ifscCode}</Text>
           </View>

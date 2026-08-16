@@ -78,6 +78,13 @@ export const receiptService = {
       }
 
       const dataUri = `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`;
+      // Android treats unsupported data URIs as an app deep link. That
+      // produces `investapp:///` and Expo Router shows Unmatched Route.
+      // Generated receipts need a real PDF/HTML viewer integration; avoid
+      // sending the invalid URI into the app router in the meantime.
+      if (Platform.OS !== 'web') {
+        return false;
+      }
       await Linking.openURL(dataUri);
       return true;
     } catch (error) {
