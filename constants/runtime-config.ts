@@ -5,6 +5,8 @@ type ExpoExtraConfig = {
   enableTestingOtp?: boolean;
   testingOtpCode?: string;
   useMockApi?: boolean;
+  razorpayKeyId?: string;
+  razorpayKeySecret?: string;
 };
 
 const extra = (Constants.expoConfig?.extra as ExpoExtraConfig | undefined) ?? {};
@@ -32,7 +34,18 @@ export const runtimeConfig = {
   useMockApi: process.env.EXPO_PUBLIC_USE_MOCK_API
     ? process.env.EXPO_PUBLIC_USE_MOCK_API === 'true'
     : Boolean(extra.useMockApi),
-  razorpayKeyId: String(process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || '').trim(),
+  razorpayKeyId: String(
+    process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID ||
+    process.env.RAZORPAY_KEY_ID ||
+    extra.razorpayKeyId ||
+    ''
+  ).trim(),
+  razorpayKeySecret: String(
+    process.env.EXPO_PUBLIC_RAZORPAY_KEY_SECRET ||
+    process.env.RAZORPAY_KEY_SECRET ||
+    extra.razorpayKeySecret ||
+    ''
+  ).trim(),
 };
 
 export const SUPPORT_CONFIG = {

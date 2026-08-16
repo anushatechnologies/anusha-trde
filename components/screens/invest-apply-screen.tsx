@@ -7,7 +7,6 @@ import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -17,11 +16,10 @@ import {
   View,
 } from 'react-native';
 
-import { FadeInView } from '../../animations/fade-in-view';
 import { runtimeConfig } from '../../constants/runtime-config';
 import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
 import { queryKeys, useInvestmentsQuery } from '../../hooks/use-app-queries';
-import { investmentService, RazorpayCheckoutOrderResponse } from '../../services/investment.service';
+import { investmentService } from '../../services/investment.service';
 import { Plan, ReceiptDetails } from '../../types';
 import { formatCurrency, formatPercent } from '../../utils/format';
 import { useAuthStore } from '../../store/use-auth-store';
@@ -35,6 +33,13 @@ import { SkeletonBlock } from '../ui/skeleton-block';
 import { SurfaceCard } from '../ui/surface-card';
 
 type Step = 'configure' | 'success';
+
+type VerifiedPaymentInfo = {
+  paymentId: string;
+  orderId: string;
+  verifiedAt: string;
+  amount: number;
+};
 
 const loadRazorpayScript = (): Promise<boolean> => {
   return new Promise((resolve) => {
@@ -63,6 +68,7 @@ export const InvestApplyScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [investmentId, setInvestmentId] = useState('');
   const [receipt, setReceipt] = useState<ReceiptDetails | null>(null);
+  const [verifiedPayment, setVerifiedPayment] = useState<VerifiedPaymentInfo | null>(null);
 
   const [couponCode, setCouponCode] = useState('');
   const [couponValidating, setCouponValidating] = useState(false);
@@ -122,6 +128,7 @@ export const InvestApplyScreen = () => {
 
   /**
    * 100% Automated Razorpay Payment Trigger
+   * ONLY transitions to step === 'success' after backend HMAC-SHA256 signature verification passes.
    */
   const handlePayWithRazorpay = useCallback(async () => {
     if (!plan || !isAmountValid) return;
@@ -133,14 +140,14 @@ export const InvestApplyScreen = () => {
 
     setIsSubmitting(true);
     try {
-      // 1. Create Razorpay order on backend
+      // 1. Create Razorpay checkout order on backend
       const checkoutData = await investmentService.createRazorpayCheckout(plan.id, amount, appliedCoupon?.code);
       const invId = checkoutData.investment.id;
       setInvestmentId(invId);
 
       const razorpayKey = runtimeConfig.razorpayKeyId || checkoutData.checkout.keyId;
       if (!razorpayKey) {
-        throw new Error('Razorpay is not configured. Please contact support.');
+        throw new Error('Razorpay Key is not configured. Please check environment configuration or contact support.');
       }
 
       if (Platform.OS === 'web') {
@@ -172,21 +179,31 @@ export const InvestApplyScreen = () => {
                   response.razorpay_payment_id,
                   response.razorpay_signature
                 );
+                
                 if (verifyRes.receipt) {
                   setReceipt(verifyRes.receipt);
                 }
+
+                setVerifiedPayment({
+                  paymentId: response.razorpay_payment_id,
+                  orderId: response.razorpay_order_id,
+                  verifiedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  amount,
+                });
+
                 await refreshAppData();
+                // ONLY show success after verification succeeds
                 setStep('success');
               } catch (err: any) {
                 const msg = err?.response?.data?.message || err?.message || 'Payment signature verification failed.';
-                Alert.alert('Payment Error', msg);
+                Alert.alert('Payment Verification Failed', msg);
               } finally {
                 setIsSubmitting(false);
               }
             },
             modal: {
               ondismiss: () => {
-                Alert.alert('Payment Cancelled', 'Razorpay checkout was cancelled. You can retry at any time.');
+                Alert.alert('Payment Cancelled', 'Razorpay checkout was closed. You can retry at any time.');
               },
             },
             theme: { color: '#2563EB' },
@@ -219,6 +236,7 @@ export const InvestApplyScreen = () => {
         theme: { color: '#2563EB' },
       });
 
+      // 2. Verify signature on backend
       const verifyRes = await investmentService.verifyRazorpayPayment(
         invId,
         nativePayment.razorpay_order_id,
@@ -229,9 +247,26 @@ export const InvestApplyScreen = () => {
       if (verifyRes.receipt) {
         setReceipt(verifyRes.receipt);
       }
+
+      setVerifiedPayment({
+        paymentId: nativePayment.razorpay_payment_id,
+        orderId: nativePayment.razorpay_order_id,
+        verifiedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        amount,
+      });
+
       await refreshAppData();
+      // ONLY show success after verification succeeds
       setStep('success');
     } catch (error: any) {
+      if (
+        error?.code === 0 ||
+        error?.description?.toLowerCase()?.includes('cancel') ||
+        error?.message?.toLowerCase()?.includes('cancel')
+      ) {
+        Alert.alert('Payment Cancelled', 'Razorpay checkout was cancelled. You can retry at any time.');
+        return;
+      }
       const msg = error?.response?.data?.message || error?.message || 'Failed to complete Razorpay payment.';
       Alert.alert('Razorpay Payment', msg);
     } finally {
@@ -239,7 +274,7 @@ export const InvestApplyScreen = () => {
     }
   }, [plan, amount, isAmountValid, appliedCoupon, user, refreshAppData]);
 
-  if (isLoading || !data) {
+  if (isLoading && !data) {
     return (
       <AppScreen>
         <ScreenHeader title="New Investment" subtitle="Loading plans..." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/invest'))} />
@@ -263,7 +298,7 @@ export const InvestApplyScreen = () => {
   return (
     <AppScreen>
       <ScreenHeader
-        title="Invest via Razorpay"
+        title={step === 'success' ? 'Investment Confirmed' : 'Invest via Razorpay'}
         subtitle={`Plan: ${plan.name}`}
         onBackPress={() => {
           if (step === 'success') {
@@ -277,7 +312,7 @@ export const InvestApplyScreen = () => {
       />
 
       {step === 'configure' ? (
-        <FadeInView>
+        <View style={{ width: '100%' }}>
           {/* Plan Highlight Banner */}
           <SurfaceCard gradient={gradients.primary} style={styles.planCard}>
             <View style={styles.planHeroRow}>
@@ -383,7 +418,7 @@ export const InvestApplyScreen = () => {
 
           {/* Real-time Returns Projection */}
           {isAmountValid && (
-            <FadeInView delay={100}>
+            <View style={{ width: '100%' }}>
               <SurfaceCard style={styles.projectionCard}>
                 <SectionTitle title="Projected Returns Summary" />
                 <View style={styles.projectionGrid}>
@@ -406,12 +441,12 @@ export const InvestApplyScreen = () => {
                   </View>
                 </View>
               </SurfaceCard>
-            </FadeInView>
+            </View>
           )}
 
           {/* Coupon Code Section */}
           {isAmountValid && (
-            <FadeInView delay={150}>
+            <View style={{ width: '100%' }}>
               <SurfaceCard style={styles.couponCard}>
                 <SectionTitle title="Promo / Cashback Coupon" />
                 {appliedCoupon ? (
@@ -455,7 +490,7 @@ export const InvestApplyScreen = () => {
                   </View>
                 )}
               </SurfaceCard>
-            </FadeInView>
+            </View>
           )}
 
           {/* Razorpay Trust & Payment Methods Banner */}
@@ -501,10 +536,10 @@ export const InvestApplyScreen = () => {
             onPress={handlePayWithRazorpay}
             disabled={!isAmountValid || isSubmitting}
           />
-        </FadeInView>
+        </View>
       ) : (
-        /* STEP: Instant Active Investment Success Screen */
-        <FadeInView>
+        /* STEP: Verified Active Investment Success Screen */
+        <View style={{ width: '100%' }}>
           <SurfaceCard style={styles.successCard}>
             <View style={styles.successIconBubble}>
               <Ionicons name="checkmark-done" size={38} color="#16A34A" />
@@ -517,7 +552,7 @@ export const InvestApplyScreen = () => {
 
             <View style={styles.successInfoBox}>
               <View style={styles.successInfoRow}>
-                <Text style={styles.successInfoLabel}>Plan</Text>
+                <Text style={styles.successInfoLabel}>Plan Name</Text>
                 <Text style={styles.successInfoValue}>{plan.name}</Text>
               </View>
               <View style={styles.successInfoRow}>
@@ -525,11 +560,17 @@ export const InvestApplyScreen = () => {
                 <Text style={[styles.successInfoValue, { color: colors.success }]}>{formatCurrency(amount)}</Text>
               </View>
               <View style={styles.successInfoRow}>
-                <Text style={styles.successInfoLabel}>Payment Mode</Text>
-                <Text style={styles.successInfoValue}>Razorpay Online</Text>
+                <Text style={styles.successInfoLabel}>Monthly ROI Rate</Text>
+                <Text style={styles.successInfoValue}>{formatPercent(plan.roi)}</Text>
               </View>
+              {verifiedPayment?.paymentId ? (
+                <View style={styles.successInfoRow}>
+                  <Text style={styles.successInfoLabel}>Payment ID</Text>
+                  <Text style={styles.successInfoValueMono}>{verifiedPayment.paymentId}</Text>
+                </View>
+              ) : null}
               <View style={styles.successInfoRow}>
-                <Text style={styles.successInfoLabel}>Status</Text>
+                <Text style={styles.successInfoLabel}>Investment Status</Text>
                 <View style={styles.activeStatusBadge}>
                   <Ionicons name="checkmark-circle" size={12} color="#16A34A" />
                   <Text style={styles.activeStatusText}>ACTIVE</Text>
@@ -539,7 +580,7 @@ export const InvestApplyScreen = () => {
 
             {receipt && <ReceiptStatusCard receipt={receipt} />}
 
-            <View style={{ gap: 10, marginTop: 16 }}>
+            <View style={{ gap: 10, marginTop: 16, width: '100%' }}>
               <GradientButton
                 label="View Active Portfolio"
                 icon={<Ionicons name="pie-chart-outline" size={18} color="#FFFFFF" />}
@@ -553,7 +594,7 @@ export const InvestApplyScreen = () => {
               </Pressable>
             </View>
           </SurfaceCard>
-        </FadeInView>
+        </View>
       )}
 
       <KycGateModal
@@ -700,19 +741,19 @@ const styles = StyleSheet.create({
   amountInput: {
     flex: 1,
     fontFamily: fontFamily.heading,
-    fontSize: 26,
+    fontSize: 24,
     color: '#0F172A',
     padding: 0,
   },
   presetChipRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     marginTop: 12,
-    flexWrap: 'wrap',
   },
   presetChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: radius.pill,
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
@@ -720,21 +761,16 @@ const styles = StyleSheet.create({
   },
   presetChipActive: {
     backgroundColor: '#EFF6FF',
-    borderColor: '#2563EB',
+    borderColor: colors.primary,
   },
   presetChipText: {
-    fontFamily: fontFamily.bodyBold,
+    fontFamily: fontFamily.bodySemi,
     fontSize: 12,
     color: '#475569',
   },
   presetChipTextActive: {
-    color: '#2563EB',
-  },
-  errorText: {
-    fontFamily: fontFamily.bodySemi,
-    fontSize: 12,
-    color: '#DC2626',
-    marginTop: 8,
+    color: colors.primary,
+    fontFamily: fontFamily.bodyBold,
   },
   projectionCard: {
     padding: 18,
@@ -748,17 +784,12 @@ const styles = StyleSheet.create({
   projectionGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    marginTop: 10,
   },
   projectionCell: {
-    flex: 1,
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    padding: 10,
     gap: 4,
+    flex: 1,
   },
   projectionLabel: {
     fontFamily: fontFamily.body,
@@ -767,7 +798,7 @@ const styles = StyleSheet.create({
   },
   projectionValue: {
     fontFamily: fontFamily.headingSemi,
-    fontSize: 13.5,
+    fontSize: 14,
     color: '#0F172A',
   },
   couponCard: {
@@ -787,24 +818,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
     paddingHorizontal: 12,
-    gap: 8,
+    marginTop: 8,
   },
   couponInput: {
     flex: 1,
-    height: 44,
-    fontFamily: fontFamily.bodyBold,
+    fontFamily: fontFamily.bodySemi,
     fontSize: 14,
     color: '#0F172A',
-    letterSpacing: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
   },
   applyCouponBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: colors.primary,
     paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: radius.md,
+    paddingVertical: 8,
+    borderRadius: radius.sm,
   },
   applyCouponBtnDisabled: {
-    opacity: 0.5,
+    backgroundColor: '#94A3B8',
   },
   applyCouponBtnText: {
     fontFamily: fontFamily.bodyBold,
@@ -815,27 +846,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#F0FDF4',
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#DCFCE7',
     borderRadius: radius.md,
-    padding: 10,
+    padding: 12,
+    marginTop: 8,
   },
   appliedCouponInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
     flex: 1,
   },
   appliedCouponCode: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 13,
-    color: '#166534',
+    color: '#15803D',
   },
   appliedCouponMsg: {
     fontFamily: fontFamily.body,
     fontSize: 11,
-    color: '#15803D',
+    color: '#166534',
   },
   removeCouponBtn: {
     padding: 4,
@@ -843,62 +875,61 @@ const styles = StyleSheet.create({
   razorpayTrustCard: {
     padding: 16,
     borderRadius: radius.lg,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     marginBottom: 16,
-    gap: 12,
+    ...shadows.card,
   },
   razorpayTrustRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    marginBottom: 12,
   },
   razorpayLogoWrap: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: '#EFF6FF',
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
     alignItems: 'center',
     justifyContent: 'center',
   },
   razorpayTrustTitle: {
-    fontFamily: fontFamily.heading,
-    fontSize: 14.5,
+    fontFamily: fontFamily.headingSemi,
+    fontSize: 14,
     color: '#0F172A',
   },
   razorpayTrustSubtitle: {
     fontFamily: fontFamily.body,
-    fontSize: 12,
+    fontSize: 11.5,
     color: '#64748B',
     lineHeight: 16,
   },
   trustPillRow: {
     flexDirection: 'row',
-    gap: 6,
     flexWrap: 'wrap',
+    gap: 6,
   },
   trustPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: radius.pill,
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
   },
   trustPillText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 10.5,
-    color: '#475569',
+    color: '#334155',
   },
   successCard: {
     padding: 24,
-    borderRadius: radius.lg,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -910,26 +941,25 @@ const styles = StyleSheet.create({
     height: 72,
     borderRadius: 36,
     backgroundColor: '#DCFCE7',
-    borderWidth: 2,
-    borderColor: '#BBF7D0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   successTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 20,
+    fontSize: 21,
     color: '#0F172A',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   successSubtitle: {
     fontFamily: fontFamily.body,
     fontSize: 13,
     color: '#64748B',
-    textAlign: 'center',
     lineHeight: 19,
-    marginBottom: 20,
+    textAlign: 'center',
+    marginBottom: 18,
+    paddingHorizontal: 8,
   },
   successInfoBox: {
     width: '100%',
@@ -939,7 +969,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
     padding: 14,
     gap: 10,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   successInfoRow: {
     flexDirection: 'row',
@@ -952,43 +982,49 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   successInfoValue: {
-    fontFamily: fontFamily.headingSemi,
-    fontSize: 13.5,
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 13,
     color: '#0F172A',
+  },
+  successInfoValueMono: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 11.5,
+    color: colors.primary,
   },
   activeStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     backgroundColor: '#DCFCE7',
-    borderWidth: 1,
-    borderColor: '#BBF7D0',
     borderRadius: radius.pill,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   activeStatusText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 11,
-    color: '#166534',
+    fontSize: 10,
+    color: '#15803D',
   },
   backToHomeBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingVertical: 12,
-    borderRadius: radius.md,
-    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
   },
   backToHomeText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 13.5,
-    color: '#334155',
+    color: colors.primary,
+  },
+  errorText: {
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 12,
+    color: '#DC2626',
+    marginTop: 6,
   },
   emptyText: {
     fontFamily: fontFamily.body,
     fontSize: 13.5,
     color: '#64748B',
     textAlign: 'center',
-    padding: 16,
+    paddingVertical: 20,
   },
 });
