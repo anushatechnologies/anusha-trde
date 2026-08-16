@@ -145,8 +145,9 @@ const resolveMobileOtpProvider = ({
   provider?: OtpProvider;
   hasPreviewOtp?: boolean;
 }): OtpProvider => {
-  // Always use the backend OTP provider directly — completely eliminates reCAPTCHA, Play Integrity and webviews!
-  return 'MOBILE_OTP';
+  // Real Android builds must use Firebase Phone Auth so Firebase sends the SMS.
+  // The backend is used only after Firebase verifies the phone identity.
+  return 'FIREBASE_PHONE_AUTH';
 };
 
 const isRecoverableOtpBootstrapError = (error: unknown) => {
@@ -591,89 +592,16 @@ export const authService = {
     }
 
     const normalizedPhone = firebaseAuthService.normalizePhoneNumber(target);
-    const mobileNumber = normalizeMobileNumber(normalizedPhone);
-    const countryCode = extractCountryCode(normalizedPhone);
 
-    let responseData: {
-      expiresInMinutes?: number;
-      message?: string;
-      mobileNumber?: string;
-      nextStep?: string;
-      otp?: string;
-      phoneNumber?: string;
-      provider?: OtpProvider;
-      userExists?: boolean;
-    } = {};
-
-    // Step 1: Notify backend that we want OTP
-    try {
-      const otpPayload = {
-        phone: normalizedPhone,
-        phoneNumber: normalizedPhone,
-        countryCode,
-        mobileNumber,
-        channel: 'MOBILE_OTP',
-        useFirebase: false,
-        type: purpose === 'login' ? 'LOGIN' : 'REGISTRATION',
-      };
-
-      let response: any;
-      try {
-        response = await backendApiClient.post('/api/auth/onboarding/send-otp', otpPayload);
-      } catch (err: any) {
-        if (err.response?.status === 404) {
-          response = await backendApiClient.post('/api/auth/send-otp', otpPayload);
-        } else {
-          throw err;
-        }
-      }
-
-      if ('success' in response.data && response.data.success === false || 'error' in response.data && response.data.error) {
-        throw new Error((response.data as any).error || response.data.message || 'Failed to send OTP');
-      }
-
-      responseData = response.data;
-    } catch (error) {
-      if (!isRecoverableOtpBootstrapError(error)) {
-        throw error;
-      }
-    }
-
-    let provider = resolveMobileOtpProvider({
-      provider: responseData.provider,
-      hasPreviewOtp: Boolean(responseData.otp),
-    });
-    let previewCode = responseData.otp;
+    const provider = resolveMobileOtpProvider({ provider: 'FIREBASE_PHONE_AUTH' });
 
     // Step 2: If Firebase is the provider, call signInWithPhoneNumber() —
     // this is what ACTUALLY sends the OTP SMS to the user's phone.
-    if (provider === 'FIREBASE_PHONE_AUTH') {
-      try {
-        await firebaseAuthService.requestPhoneOtp(normalizedPhone, forceResend);
-      } catch (error) {
-        if (shouldFallbackToBackendMobileOtp(error)) {
-          console.warn('Firebase Phone Auth not configured, falling back to backend OTP:', error);
-          // Only uncomment if you want to alert the user during testing
-          // alert(`Firebase Auth Error: ${error instanceof Error ? error.message : 'Missing SHA-1'}. Falling back to backend.`);
-          
-          try {
-            responseData = await requestBackendMobileOtp({ countryCode, mobileNumber, purpose });
-            provider = 'MOBILE_OTP';
-            previewCode = responseData.otp;
-          } catch (backendError) {
-            throw backendError;
-          }
-        } else {
-          throw error;
-        }
-      }
-    }
+    await firebaseAuthService.requestPhoneOtp(normalizedPhone, forceResend);
 
     return {
-      ...responseData,
       provider,
-      previewCode,
-      target: responseData.phoneNumber || normalizedPhone,
+      target: normalizedPhone,
     };
   },
   verifyOtp: async (
@@ -852,7 +780,7 @@ export const authService = {
     try {
       firebaseVerification = await firebaseAuthService.confirmPhoneOtp(code);
     } catch (fbError) {
-      console.warn('Firebase confirmPhoneOtp failed or expired, falling back to backend OTP verification:', fbError);
+      throw fbError;
     }
 
     if (firebaseVerification) {
@@ -1273,44 +1201,17 @@ export const authService = {
     }
 
     const mobileNorm = normalizeMobileNumber(trimmed);
-    const requestBody = {
-      mobileNumber: mobileNorm,
-      mobile: mobileNorm,
-      phone: `+91${mobileNorm}`,
-      identifier: mobileNorm,
-      email: trimmed.includes('@') ? normalizeEmail(trimmed) : undefined,
-    };
-
-    const response = await backendApiClient.post<PasswordResetRequestResult>('/api/auth/forgot-password', requestBody);
-    return response.data;
+    await firebaseAuthService.requestPhoneOtp(`+91${mobileNorm}`, true);
+    return { message: 'Firebase OTP sent to your registered mobile number.' };
   },
   verifyResetPasswordOtp: async (mobileNumber: string, otp: string) => {
     const trimmed = normalizeMobileNumber(mobileNumber.trim());
     const otpCode = otp.trim();
-    const payload = {
+    const firebaseVerification = await firebaseAuthService.confirmPhoneOtp(otpCode);
+    const response = await backendApiClient.post('/api/auth/verify-reset-password-otp', {
       mobileNumber: trimmed,
-      mobile: trimmed,
-      phone: `+91${trimmed}`,
-      phoneNumber: `+91${trimmed}`,
-      otp: otpCode,
-      code: otpCode,
-      purpose: 'PASSWORD_RESET',
-      type: 'PASSWORD_RESET',
-    };
-    let response: any;
-    try {
-      response = await backendApiClient.post('/api/auth/verify-reset-password-otp', payload);
-    } catch (err: any) {
-      if (err.response?.status === 404 || err.response?.status === 400) {
-        try {
-          response = await backendApiClient.post('/api/auth/verify-otp', payload);
-        } catch (innerErr: any) {
-          response = await backendApiClient.post('/api/auth/onboarding/verify-otp', payload);
-        }
-      } else {
-        throw err;
-      }
-    }
+      idToken: firebaseVerification.idToken,
+    });
     const data = response.data || {};
     const token = data.resetToken || data.token || data.signupVerificationToken || 'verified_reset_token';
     return {
@@ -1347,59 +1248,17 @@ export const authService = {
     if (!trimmed) {
       throw new Error('Enter your registered mobile number.');
     }
-    const payload = {
-      mobileNumber: trimmed,
-      mobile: trimmed,
-      phone: trimmed,
-      phoneNumber: `+91${trimmed}`,
-      countryCode: '+91',
-      purpose: 'FORGOT_MPIN',
-      type: 'FORGOT_MPIN',
-      channel: 'MOBILE_OTP',
-    };
-    let response: any;
-    try {
-      response = await backendApiClient.post('/api/auth/forgot-mpin', payload);
-    } catch (err: any) {
-      if (err.response?.status === 404 || err.response?.status === 400) {
-        try {
-          response = await backendApiClient.post('/api/auth/send-otp', payload);
-        } catch (innerErr: any) {
-          response = await backendApiClient.post('/api/auth/onboarding/send-otp', payload);
-        }
-      } else {
-        throw err;
-      }
-    }
-    return response.data;
+    await firebaseAuthService.requestPhoneOtp(`+91${normalizeMobileNumber(trimmed)}`, true);
+    return { status: 'SUCCESS', message: 'Firebase OTP sent to your registered mobile number.' };
   },
   verifyResetMpinOtp: async (mobileNumber: string, otp: string) => {
     const trimmed = mobileNumber.trim();
     const otpCode = otp.trim();
-    const payload = {
+    const firebaseVerification = await firebaseAuthService.confirmPhoneOtp(otpCode);
+    const response = await backendApiClient.post('/api/auth/verify-reset-mpin-otp', {
       mobileNumber: trimmed,
-      mobile: trimmed,
-      phone: trimmed,
-      phoneNumber: `+91${trimmed}`,
-      otp: otpCode,
-      code: otpCode,
-      purpose: 'FORGOT_MPIN',
-      type: 'FORGOT_MPIN',
-    };
-    let response: any;
-    try {
-      response = await backendApiClient.post('/api/auth/verify-reset-mpin-otp', payload);
-    } catch (err: any) {
-      if (err.response?.status === 404 || err.response?.status === 400) {
-        try {
-          response = await backendApiClient.post('/api/auth/verify-otp', payload);
-        } catch (innerErr: any) {
-          response = await backendApiClient.post('/api/auth/onboarding/verify-otp', payload);
-        }
-      } else {
-        throw err;
-      }
-    }
+      idToken: firebaseVerification.idToken,
+    });
     const data = response.data || {};
     const token = data.resetToken || data.token || data.signupVerificationToken || data.accessToken || (data.session && data.session.tokens ? data.session.tokens.accessToken : '') || 'verified_reset_token';
     return {
