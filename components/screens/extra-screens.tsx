@@ -9,6 +9,7 @@ import { LineChart } from '../../components/charts/line-chart';
 import { ReferralLinkCard } from '../../components/dashboard/referral-link-card';
 import { TransactionRow } from '../../components/transactions/transaction-row';
 import { colors, fontFamily, gradients, radius } from '../../constants/theme';
+import { SUPPORT_CONFIG, openWhatsAppSupport } from '../../constants/runtime-config';
 import { queryKeys, useDashboardQuery, useNotificationsQuery, useSessionsQuery, useTeamQuery } from '../../hooks/use-app-queries';
 import { dashboardService } from '../../services/dashboard.service';
 import { bankService } from '../../services/bank.service';
@@ -623,7 +624,16 @@ export const SettingsScreen = () => {
         onValueChange={setAutoLogout}
       />
 
-      <ListRow icon="help-circle-outline" title="Support" subtitle="Contact the help desk or raise a ticket." />
+      <ListRow
+        icon="logo-whatsapp"
+        title="24/7 WhatsApp Support"
+        subtitle={`Instant chat assistance on ${SUPPORT_CONFIG.displayPhone}`}
+        onPress={() =>
+          openWhatsAppSupport(
+            `Hello Anusha Trade Support, I need assistance with my account settings.`
+          )
+        }
+      />
       <ListRow
         icon="document-text-outline"
         title="Terms & Conditions"

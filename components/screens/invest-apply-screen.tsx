@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
+import RazorpayCheckout from 'react-native-razorpay';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -195,15 +196,31 @@ export const InvestApplyScreen = () => {
         }
       }
 
-      // Native Mobile Razorpay Verification
-      const mockPaymentId = `pay_${Math.random().toString(36).substring(2, 14).toUpperCase()}`;
-      const mockSignature = `mock_sig_${Math.random().toString(36).substring(2, 16)}`;
+      // Native Android/iOS Razorpay Checkout
+      const nativePayment = await RazorpayCheckout.open({
+        key: razorpayKey,
+        amount: checkoutData.checkout.amount || amount * 100,
+        currency: checkoutData.checkout.currency || 'INR',
+        name: 'Anusha Trades',
+        description: checkoutData.checkout.description || `Investment in ${plan.name}`,
+        order_id: checkoutData.checkout.orderId,
+        prefill: {
+          name: checkoutData.checkout.investorName || user?.name || '',
+          email: checkoutData.checkout.investorEmail || user?.email || '',
+          contact: checkoutData.checkout.investorContact || user?.mobile || '',
+        },
+        notes: {
+          investmentId: invId,
+          planId: plan.id,
+        },
+        theme: { color: '#2563EB' },
+      });
 
       const verifyRes = await investmentService.verifyRazorpayPayment(
         invId,
-        checkoutData.checkout.orderId,
-        mockPaymentId,
-        mockSignature
+        nativePayment.razorpay_order_id,
+        nativePayment.razorpay_payment_id,
+        nativePayment.razorpay_signature
       );
 
       if (verifyRes.receipt) {

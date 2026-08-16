@@ -21,6 +21,7 @@ import { KycGateModal } from '../../components/kyc/kyc-gate-modal';
 import { ReferralTree } from '../../components/team/referral-tree';
 import { TransactionRow } from '../../components/transactions/transaction-row';
 import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
+import { SUPPORT_CONFIG, openWhatsAppSupport } from '../../constants/runtime-config';
 import { useDashboardQuery, useInvestmentsQuery, useTeamQuery, useWalletQuery } from '../../hooks/use-app-queries';
 import { useAuthStore } from '../../store/use-auth-store';
 import { useInvestmentStore } from '../../store/use-investment-store';
@@ -97,23 +98,10 @@ export const HomeScreen = () => {
     }
   };
 
-  const handleWhatsAppSupport = async () => {
-    const phone = '919000000000';
-    const message = encodeURIComponent(
+  const handleWhatsAppSupport = () => {
+    void openWhatsAppSupport(
       `Hello Anusha Trades Wealth Concierge, I am ${user?.name || 'an Investor'} (Mobile: ${user?.mobile || ''}). I need assistance with my investment portfolio.`
     );
-    const url = `whatsapp://send?phone=${phone}&text=${message}`;
-    const webUrl = `https://wa.me/${phone}?text=${message}`;
-    try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) {
-        await Linking.openURL(url);
-      } else {
-        await Linking.openURL(webUrl);
-      }
-    } catch {
-      await Linking.openURL(webUrl);
-    }
   };
 
   const getGreeting = () => {
@@ -368,7 +356,7 @@ export const HomeScreen = () => {
               </View>
               <View style={styles.vipSupportCopy}>
                 <Text style={styles.vipSupportTitle}>24/7 VIP Wealth Desk</Text>
-                <Text style={styles.vipSupportSubtitle}>Instant priority WhatsApp assistance</Text>
+                <Text style={styles.vipSupportSubtitle}>Instant WhatsApp assistance ({SUPPORT_CONFIG.displayPhone})</Text>
               </View>
             </View>
             <View style={styles.vipSupportBtn}>
@@ -846,11 +834,9 @@ export const ProfileScreen = () => {
   const stackProfileStats = width < 390;
 
   const handleWhatsAppSupport = () => {
-    try {
-      void Linking.openURL('https://wa.me/919999999999?text=Hello%20Anusha%20Trade%20Support,%20I%20need%20assistance.');
-    } catch {
-      Alert.alert('Support', 'Please contact support at support@anushatrade.com');
-    }
+    void openWhatsAppSupport(
+      `Hello Anusha Trade Support, I am ${user.name || 'an Investor'} (Mobile: ${user.mobile || ''}). I need assistance.`
+    );
   };
 
   const handleConfirmLogout = () => {
@@ -971,7 +957,7 @@ export const ProfileScreen = () => {
 
       {/* Support & Legal Section */}
       <SectionTitle title="Support & Legal" />
-      <ListRow icon="logo-whatsapp" title="24/7 VIP WhatsApp Support" subtitle="Chat live with dedicated wealth concierge" onPress={handleWhatsAppSupport} />
+      <ListRow icon="logo-whatsapp" title="24/7 VIP WhatsApp Support" subtitle={`Chat live with dedicated concierge (${SUPPORT_CONFIG.displayPhone})`} onPress={handleWhatsAppSupport} />
       <ListRow icon="shield-outline" title="Terms & Conditions" subtitle="Platform rules and investment agreements" onPress={() => router.push('/terms')} />
       <ListRow icon="lock-closed-outline" title="Privacy Policy" subtitle="Data encryption and investor protection policy" onPress={() => router.push('/privacy')} />
 

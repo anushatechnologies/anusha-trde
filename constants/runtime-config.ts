@@ -35,4 +35,32 @@ export const runtimeConfig = {
   razorpayKeyId: String(process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || '').trim(),
 };
 
+export const SUPPORT_CONFIG = {
+  whatsappNumber: '918522918866',
+  displayPhone: '+91 85229 18866',
+  supportEmail: 'support@anushatrade.com',
+};
+
+export const openWhatsAppSupport = async (message?: string) => {
+  const phone = SUPPORT_CONFIG.whatsappNumber;
+  const text = encodeURIComponent(message || 'Hello Anusha Trade Support, I need assistance.');
+  const appUrl = `whatsapp://send?phone=${phone}&text=${text}`;
+  const webUrl = `https://wa.me/${phone}?text=${text}`;
+
+  try {
+    const { Linking } = require('react-native');
+    const canOpen = await Linking.canOpenURL(appUrl);
+    if (canOpen) {
+      await Linking.openURL(appUrl);
+    } else {
+      await Linking.openURL(webUrl);
+    }
+  } catch {
+    try {
+      const { Linking } = require('react-native');
+      await Linking.openURL(webUrl);
+    } catch {}
+  }
+};
+
 export const isTestingOtpMode = runtimeConfig.useMockApi && runtimeConfig.enableTestingOtp;
