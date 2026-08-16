@@ -1597,24 +1597,22 @@ export const SuccessScreen = () => {
     receiptNumber?: string;
     receiptUrl?: string;
     emailStatus?: string;
-    whatsappStatus?: string;
   }>();
   const title = getParam(params.title, 'Success');
   const subtitle = getParam(params.subtitle, 'The requested action completed successfully.');
   const cta = getParam(params.cta, 'Continue');
   const redirect = getParam(params.redirect, '/(tabs)');
   const investmentId = getParam(params.investmentId, '');
-  const showReceipt = Boolean(investmentId || params.receiptNumber || params.whatsappStatus || params.emailStatus);
+  const showReceipt = Boolean(investmentId || params.receiptNumber || params.emailStatus);
 
   const initialReceipt = useMemo(
     () => ({
       receiptNumber: getParam(params.receiptNumber, investmentId ? `ATR-${investmentId.slice(-6).toUpperCase()}` : 'ATR-2026-000001'),
       receiptUrl: getParam(params.receiptUrl, ''),
       emailStatus: (getParam(params.emailStatus, 'SENT') as any),
-      whatsappStatus: (getParam(params.whatsappStatus, 'DELIVERED') as any),
       available: true,
     }),
-    [params.receiptNumber, params.receiptUrl, params.emailStatus, params.whatsappStatus, investmentId]
+    [params.receiptNumber, params.receiptUrl, params.emailStatus, investmentId]
   );
 
   const { receipt } = useReceiptPolling({

@@ -23,15 +23,6 @@ export type AuthTokens = {
 
 export type KycStatusValue = 'NOT_SUBMITTED' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'REUPLOAD_REQUIRED';
 
-export type WhatsAppReceiptStatus =
-  | 'NOT_SENT'
-  | 'QUEUED'
-  | 'SENDING'
-  | 'SENT'
-  | 'DELIVERED'
-  | 'READ'
-  | 'FAILED';
-
 export type EmailReceiptStatus =
   | 'NOT_SENT'
   | 'QUEUED'
@@ -44,7 +35,6 @@ export type ReceiptDetails = {
   receiptNumber?: string;
   receiptUrl?: string;
   emailStatus?: EmailReceiptStatus;
-  whatsappStatus?: WhatsAppReceiptStatus;
   available?: boolean;
 };
 

@@ -175,11 +175,11 @@ export const KycDocumentsScreen = () => {
     : 'Verified on File';
   const dateOfBirth = profile?.dateOfBirth || authUser?.dateOfBirth || 'Verified';
   const address = profile?.address || authUser?.address || 'Verified Residential Address';
-  const bankName = profile?.bankName || authUser?.bankName || 'State Bank of India';
+  const bankName = profile?.bankName || authUser?.bankName || 'Not added yet';
   const bankMask = profile?.bankAccountNumber
     ? `A/C •••• ${profile.bankAccountNumber.slice(-4)}`
-    : authUser?.bankMask || 'A/C •••• 0000';
-  const ifscCode = profile?.bankIfscCode || authUser?.ifscCode || 'SBIN0000000';
+    : authUser?.bankMask || 'No bank account linked';
+  const ifscCode = profile?.bankIfscCode || authUser?.ifscCode || 'Not added yet';
   const kycStatus = kycData?.kycStatus || authUser?.kycStatus || 'APPROVED';
 
   return (

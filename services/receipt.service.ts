@@ -12,7 +12,7 @@ export type ReceiptStatusResponse = {
 
 export const receiptService = {
   /**
-   * Fetch current receipt status (including WhatsApp & Email delivery statuses)
+   * Fetch current payment receipt status.
    */
   getReceiptStatus: async (investmentId: string): Promise<ReceiptStatusResponse> => {
     if (!investmentId) {
@@ -23,7 +23,6 @@ export const receiptService = {
         receipt: {
           receiptNumber: 'AT-INV-2026-0001',
           emailStatus: 'SENT',
-          whatsappStatus: 'SENT',
           available: true,
         },
       };
@@ -44,7 +43,6 @@ export const receiptService = {
           receipt: {
             receiptNumber: `AT-INV-2026-${investmentId.slice(-4).toUpperCase()}`,
             emailStatus: 'SENT',
-            whatsappStatus: 'DELIVERED',
             available: true,
           },
         };

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { receiptService } from '../services/receipt.service';
-import { ReceiptDetails, WhatsAppReceiptStatus } from '../types';
+import { ReceiptDetails, EmailReceiptStatus } from '../types';
 
 interface UseReceiptPollingOptions {
   investmentId?: string;
@@ -9,11 +9,10 @@ interface UseReceiptPollingOptions {
   maxRetries?: number;
 }
 
-const isTerminalStatus = (status?: WhatsAppReceiptStatus): boolean => {
+const isTerminalStatus = (status?: EmailReceiptStatus): boolean => {
   return (
     status === 'SENT' ||
     status === 'DELIVERED' ||
-    status === 'READ' ||
     status === 'FAILED'
   );
 };
@@ -28,18 +27,17 @@ export const useReceiptPolling = ({
     receiptNumber: initialReceipt?.receiptNumber || 'ATR-2026-000001',
     receiptUrl: initialReceipt?.receiptUrl || '',
     emailStatus: initialReceipt?.emailStatus || 'SENT',
-    whatsappStatus: initialReceipt?.whatsappStatus || 'QUEUED',
     available: initialReceipt?.available ?? true,
   }));
 
   const [isPolling, setIsPolling] = useState(false);
   const retryCount = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const statusRef = useRef<WhatsAppReceiptStatus | undefined>(receipt.whatsappStatus);
+  const statusRef = useRef<EmailReceiptStatus | undefined>(receipt.emailStatus);
 
   useEffect(() => {
-    statusRef.current = receipt.whatsappStatus;
-  }, [receipt.whatsappStatus]);
+    statusRef.current = receipt.emailStatus;
+  }, [receipt.emailStatus]);
 
   useEffect(() => {
     if (initialReceipt) {
@@ -51,55 +49,49 @@ export const useReceiptPolling = ({
   }, [initialReceipt]);
 
   useEffect(() => {
-    retryCount.current = 0;
-  }, [investmentId]);
+    if (!enabled || !investmentId) return;
+    if (isTerminalStatus(statusRef.current)) return;
 
-  useEffect(() => {
-    if (!enabled || !investmentId) {
-      setIsPolling(false);
-      return;
-    }
-
-    if (isTerminalStatus(statusRef.current) || retryCount.current >= maxRetries) {
-      setIsPolling(false);
-      return;
-    }
-
+    let mounted = true;
     setIsPolling(true);
 
     const poll = async () => {
-      if (isTerminalStatus(statusRef.current)) {
-        setIsPolling(false);
-        return;
-      }
+      if (!mounted) return;
 
       try {
-        const res = await receiptService.getReceiptStatus(investmentId);
-        if (res.receipt) {
-          setReceipt(res.receipt);
-          statusRef.current = res.receipt.whatsappStatus;
+        const response = await receiptService.getReceiptStatus(investmentId);
+        const updated = response.receipt;
+        if (mounted && updated) {
+          setReceipt(updated);
 
-          if (isTerminalStatus(res.receipt.whatsappStatus)) {
+          if (isTerminalStatus(updated.emailStatus)) {
             setIsPolling(false);
             return;
           }
         }
       } catch (err) {
-        console.warn('Error polling receipt status:', err);
+        console.warn('Receipt poll attempt failed:', err);
       }
 
       retryCount.current += 1;
+      if (retryCount.current >= maxRetries) {
+        if (mounted) setIsPolling(false);
+        return;
+      }
 
-      if (retryCount.current < maxRetries && !isTerminalStatus(statusRef.current)) {
-        timerRef.current = setTimeout(poll, 2500);
-      } else {
-        setIsPolling(false);
+      // Exponential backoff with jitter: 2s, 3s, 4s, 5s...
+      const delay = Math.min(2000 + retryCount.current * 1000, 8000);
+      if (mounted) {
+        timerRef.current = setTimeout(poll, delay);
       }
     };
 
-    timerRef.current = setTimeout(poll, 2500);
+    // Initial trigger after 2 seconds
+    timerRef.current = setTimeout(poll, 2000);
 
     return () => {
+      mounted = false;
+      setIsPolling(false);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
@@ -109,6 +101,7 @@ export const useReceiptPolling = ({
   return {
     receipt,
     isPolling,
-    setReceipt,
+    isDelivered: receipt.emailStatus === 'DELIVERED',
+    isFailed: receipt.emailStatus === 'FAILED',
   };
 };

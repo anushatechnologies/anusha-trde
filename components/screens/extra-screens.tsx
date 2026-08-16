@@ -12,13 +12,14 @@ import { colors, fontFamily, gradients, radius } from '../../constants/theme';
 import { queryKeys, useDashboardQuery, useNotificationsQuery, useSessionsQuery, useTeamQuery } from '../../hooks/use-app-queries';
 import { dashboardService } from '../../services/dashboard.service';
 import { bankService } from '../../services/bank.service';
+import { kycService } from '../../services/kyc.service';
 import { getAuthErrorMessage } from '../../services/firebase-auth.service';
 import { notificationPermissionsService } from '../../services/notification-permissions.service';
 import { useAppStore } from '../../store/use-app-store';
 import { useAuthStore } from '../../store/use-auth-store';
 import { useNotificationStore } from '../../store/use-notification-store';
 import { useWalletStore } from '../../store/use-wallet-store';
-import { formatCurrency, formatPercent } from '../../utils/format';
+import { formatCurrency, formatPercent, formatDate } from '../../utils/format';
 import { AppScreen } from '../ui/app-screen';
 import { GradientButton } from '../ui/gradient-button';
 import { ListRow } from '../ui/list-row';
@@ -123,6 +124,12 @@ export const NotificationsScreen = () => {
 export const PersonalInformationScreen = () => {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const kycQuery = useQuery({
+    queryKey: ['kyc-status'],
+    queryFn: kycService.getKycStatus,
+    enabled: Boolean(user),
+    staleTime: 10_000,
+  });
 
   if (!user) {
     return (
@@ -135,24 +142,64 @@ export const PersonalInformationScreen = () => {
     );
   }
 
-  const displayName = formatProfileValue(user.name, user.mobile || 'Your account');
-  const mobile = user.mobile ? `+91 ${user.mobile.replace(/\D/g, '').slice(-10)}` : 'Mobile number not added';
-  const dateOfBirth = formatProfileValue(user.dateOfBirth, 'Not added yet');
-  const profilePhotoStatus = user.profilePhoto?.trim() ? 'Added to account' : 'Not added yet';
+  const kycProfile = kycQuery.data?.profile;
+  const kycSubmission = kycQuery.data?.submission;
+
+  const displayName = formatProfileValue(kycProfile?.fullName || user.name, user.mobile || 'Your account');
+  const email = formatProfileValue(kycProfile?.email || user.email, 'Not added yet');
+  const mobile = user.mobile
+    ? `+91 ${user.mobile.replace(/\D/g, '').slice(-10)}`
+    : (kycProfile?.mobileNumber ? `+91 ${kycProfile.mobileNumber.replace(/\D/g, '').slice(-10)}` : 'Mobile number not added');
+
+  const rawDob = kycProfile?.dateOfBirth || user.dateOfBirth;
+  const dateOfBirth = rawDob && rawDob !== '1995-01-01' && rawDob !== '01 Jan 1995'
+    ? formatDate(rawDob)
+    : 'Not added yet';
+
+  const rawPan = kycProfile?.panNumber || user.panNumber;
+  const panNumber = rawPan && rawPan !== 'ABCDE1234F' ? rawPan.toUpperCase() : 'Not added yet';
+
+  const rawAadhaar = kycProfile?.aadhaarLast4 || user.aadhaarLast4;
+  const aadhaarMasked = rawAadhaar && rawAadhaar !== '1234'
+    ? `•••• •••• ${rawAadhaar.slice(-4)}`
+    : (user.aadhaarMasked && !user.aadhaarMasked.includes('1234') ? user.aadhaarMasked : 'Not added yet');
+
+  const rawAddress = kycProfile?.address || user.address;
+  const address = rawAddress && rawAddress !== 'India' && rawAddress !== 'Mumbai' ? rawAddress : 'Not added yet';
+
+  const bankName = formatProfileValue(kycProfile?.bankName || user.bankName, 'Not linked yet');
+  const rawBankAcc = kycProfile?.bankAccountNumber || user.bankMask;
+  const bankAccount = rawBankAcc && rawBankAcc !== '1234567890'
+    ? (rawBankAcc.length > 4 ? `•••• •••• ${rawBankAcc.slice(-4)}` : rawBankAcc)
+    : 'Not linked yet';
+  const ifscCode = formatProfileValue(kycProfile?.bankIfscCode || user.ifscCode, 'Not added yet');
+
+  const kycStatus = (kycQuery.data?.kycStatus || user.kycStatus || 'NOT_SUBMITTED').toUpperCase();
+  const kycStatusDisplay = kycStatus === 'APPROVED'
+    ? 'Verified (Government Approved)'
+    : (kycStatus === 'PENDING' ? 'Under Review' : 'Pending Verification');
+
+  const profilePhotoUrl = kycSubmission?.selfiePath || user.profilePhoto;
+  const profilePhotoStatus = profilePhotoUrl ? 'Uploaded & Stored' : 'Not added yet';
+
   const referralCode = formatProfileValue(user.referralCode, 'Not generated yet');
-  const memberSince = formatProfileValue(user.memberSince, 'Not available yet');
+  const memberSince = formatProfileValue(kycProfile?.memberSince ? formatDate(kycProfile.memberSince) : user.memberSince, 'Recently');
   const accountLevel = formatProfileValue(user.levelTitle, 'Verified Investor');
-  const panNumber = formatProfileValue(user.panNumber, 'Not added yet');
-  const aadhaarMasked = formatProfileValue(user.aadhaarMasked, 'Not added yet');
   const mpinStatus = formatStatusValue(user.mpinConfigured, 'Active (4-digit MPIN)', 'Not configured');
   const biometricStatus = formatStatusValue(user.biometricEnabled, 'Enabled on this device', 'Not enabled');
 
   const fields = [
     { label: 'Full Name', value: displayName },
     { label: 'Registered Mobile', value: mobile },
+    { label: 'Email Address', value: email },
+    { label: 'KYC Status', value: kycStatusDisplay },
     { label: 'Date of Birth', value: dateOfBirth },
     { label: 'PAN Number', value: panNumber },
     { label: 'Aadhaar (Last 4)', value: aadhaarMasked },
+    { label: 'Permanent Address', value: address },
+    { label: 'Linked Bank', value: bankName },
+    { label: 'Account (Masked)', value: bankAccount },
+    { label: 'Bank IFSC Code', value: ifscCode },
     { label: 'Profile Photo', value: profilePhotoStatus },
     { label: 'Referral Code', value: referralCode },
     { label: 'Member Since', value: memberSince },
@@ -167,7 +214,7 @@ export const PersonalInformationScreen = () => {
 
       <SurfaceCard gradient={gradients.primary}>
         <View style={styles.profileHeroRow}>
-          <ProfileAvatar name={displayName} photoUrl={user.profilePhoto} size={68} borderRadius={22} />
+          <ProfileAvatar name={displayName} photoUrl={profilePhotoUrl} size={68} borderRadius={22} />
           <View style={styles.profileHeroCopy}>
             <Text style={styles.heroTitle}>{displayName}</Text>
             <Text style={styles.heroSubtitle}>{mobile}</Text>
@@ -184,6 +231,7 @@ export const PersonalInformationScreen = () => {
         ))}
       </SurfaceCard>
 
+      <ListRow icon="document-text-outline" title="KYC Verification Documents" subtitle="View and manage verified government IDs and Bank Proof" onPress={() => router.push('/kyc-documents')} />
       <ListRow icon="shield-checkmark-outline" title="Security Center" subtitle="Protect this account and review sign-in security" onPress={() => router.push('/security-center')} />
       <ListRow icon="notifications-outline" title="Notification Settings" subtitle="Manage alerts linked to this profile" onPress={() => router.push('/settings')} />
     </AppScreen>
@@ -200,6 +248,7 @@ export const BankDetailsScreen = () => {
     enabled: Boolean(user),
     staleTime: 30_000,
   });
+  const hasUsableBankMask = (value?: string) => Boolean(value?.trim()) && !/0{4}\s*$/.test(value.trim());
 
   useEffect(() => {
     if (!bankQuery.data) {
@@ -208,7 +257,7 @@ export const BankDetailsScreen = () => {
 
     void updateUser({
       bankMask: bankQuery.data.accountNumberMasked === 'No bank account linked'
-        ? user?.bankMask || ''
+        ? (hasUsableBankMask(user?.bankMask) ? user?.bankMask : '')
         : bankQuery.data.accountNumberMasked,
       accountHolderName: bankQuery.data.accountHolderName || user?.accountHolderName || '',
       bankName: bankQuery.data.bankName || user?.bankName || '',
@@ -229,7 +278,9 @@ export const BankDetailsScreen = () => {
   }
 
   const bankMask = formatProfileValue(
-    bankQuery.data?.accountNumberMasked === 'No bank account linked' ? user.bankMask : bankQuery.data?.accountNumberMasked || user.bankMask,
+    bankQuery.data?.accountNumberMasked === 'No bank account linked'
+      ? (hasUsableBankMask(user.bankMask) ? user.bankMask : '')
+      : bankQuery.data?.accountNumberMasked || (hasUsableBankMask(user.bankMask) ? user.bankMask : ''),
     bankQuery.isLoading ? 'Loading bank details...' : 'No verified bank account linked'
   );
   const accountHolderName = formatProfileValue(
@@ -240,17 +291,22 @@ export const BankDetailsScreen = () => {
     bankQuery.data?.ifscCode || user.ifscCode,
     bankQuery.isLoading ? 'Loading bank details...' : 'Not added yet'
   );
+  const displayBankMask = bankMask === 'A/C **** 0000' ? 'No verified bank account linked' : bankMask;
+  const displayIfscCode = ifscCode === 'SBIN0000000' ? 'Not added yet' : ifscCode;
   const memberSince = formatProfileValue(user.memberSince, 'Not available yet');
   const kycStatus = user.kycStatus === 'APPROVED' ? 'APPROVED' : 'PENDING';
-  const hasLinkedBank = Boolean(bankQuery.data?.accountNumberMasked && bankQuery.data.accountNumberMasked !== 'No bank account linked') || Boolean(user.bankMask.trim());
+  const hasLinkedBank = Boolean(
+    (bankQuery.data?.accountNumberMasked && bankQuery.data.accountNumberMasked !== 'No bank account linked') ||
+    hasUsableBankMask(user.bankMask)
+  );
   const withdrawalAccess = hasLinkedBank && user.kycStatus === 'APPROVED'
     ? 'Ready for withdrawals'
     : 'Unavailable until bank linking and verification are complete';
 
   const fields = [
     { label: 'Account Holder Name', value: accountHolderName },
-    { label: 'Linked Account', value: bankMask },
-    { label: 'IFSC Code', value: ifscCode },
+    { label: 'Linked Account', value: displayBankMask },
+    { label: 'IFSC Code', value: displayIfscCode },
     { label: 'KYC Status', value: kycStatus },
     { label: 'Withdrawal Access', value: withdrawalAccess },
     { label: 'Profile Activated', value: memberSince },
@@ -262,7 +318,7 @@ export const BankDetailsScreen = () => {
 
       <SurfaceCard gradient={gradients.primary}>
         <Text style={styles.heroTitle}>Bank & Verification</Text>
-        <Text style={styles.heroSubtitle}>{bankMask}</Text>
+        <Text style={styles.heroSubtitle}>{displayBankMask}</Text>
       </SurfaceCard>
 
       <SurfaceCard>
