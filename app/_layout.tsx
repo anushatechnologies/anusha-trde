@@ -8,7 +8,7 @@ import { authService } from '../services/auth.service';
 import { useAppStore } from '../store/use-app-store';
 import { useAuthStore } from '../store/use-auth-store';
 
-const publicSegments = new Set(['(auth)', 'splash', 'onboarding', 'success', 'privacy-policy', 'terms-and-conditions']);
+const publicSegments = new Set(['(auth)', 'splash', 'onboarding', 'success', 'privacy', 'privacy-policy', 'terms', 'terms-and-conditions']);
 const protectedSegments = new Set([
   '(tabs)',
   'notifications',
@@ -80,7 +80,6 @@ function RootNavigator() {
       
       // STRICT ENFORCEMENT: If account registration is not fully complete
       if (onboardingRoute !== '/(tabs)') {
-        // We match against the segmentPath because routes like /signup/kyc map to segment paths like signup/kyc
         const currentPath = `/${segmentPath}`;
         if (currentPath !== onboardingRoute && !isMpinVerificationRoute) {
           router.replace(onboardingRoute);
@@ -106,8 +105,8 @@ function RootNavigator() {
       }
     }
 
-    if (topSegment === '' && !publicSegments.has(topSegment)) {
-      router.replace('/splash');
+    if (topSegment === '' || topSegment === 'investapp') {
+      router.replace(isAuthenticated ? '/(tabs)' : '/splash');
     }
   }, [hasCompletedOnboarding, isAuthenticated, ready, requiresMpinVerification, rootNavigationState?.key, router, segments, user]);
 

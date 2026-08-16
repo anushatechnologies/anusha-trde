@@ -1,4 +1,3 @@
-
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
@@ -44,7 +43,7 @@ const ProgressRing = ({ progress }: { progress: number }) => {
         cx={size / 2}
         cy={size / 2}
         r={radiusValue}
-        stroke={colors.secondary}
+        stroke={colors.primary}
         strokeWidth={strokeWidth}
         fill="none"
         strokeLinecap="round"
@@ -447,13 +446,17 @@ export const InvestmentStatusScreen = () => {
       <AppScreen>
         <ScreenHeader title="Investment Status" subtitle="Track progress, expected returns, and maturity details." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
         <SurfaceCard style={styles.emptyStatusCard}>
-          <Text style={styles.emptyStatusTitle}>Investment Status</Text>
-          <Text style={styles.emptyStatusSubtitle}>No active investments are available yet.</Text>
+          <View style={styles.emptyStatusIconWrap}>
+            <Ionicons name="trending-up-outline" size={32} color="#2563EB" />
+          </View>
+          <Text style={styles.emptyStatusTitle}>No Active Investments Yet</Text>
+          <Text style={styles.emptyStatusSubtitle}>
+            Your active investments, daily returns progress, and maturity timelines will appear here once you invest in a plan.
+          </Text>
+          <View style={{ width: '100%', marginTop: 8 }}>
+            <GradientButton label="Explore Plans & Invest" onPress={() => router.push('/(tabs)/invest')} />
+          </View>
         </SurfaceCard>
-        <SurfaceCard>
-          <Text style={styles.emptyText}>Your portfolio progress will appear here after the first investment is created.</Text>
-        </SurfaceCard>
-        <GradientButton label="Open Invest Screen" onPress={() => router.push('/(tabs)/invest')} />
       </AppScreen>
     );
   }
@@ -560,25 +563,42 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 28,
-    lineHeight: 34,
+    fontSize: 24,
+    lineHeight: 30,
     color: '#FFFFFF',
   },
   emptyStatusCard: {
-    backgroundColor: colors.surfaceSubtle,
-    borderColor: colors.border,
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    padding: 24,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    gap: 10,
+  },
+  emptyStatusIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
   },
   emptyStatusTitle: {
     fontFamily: fontFamily.heading,
-    fontSize: 28,
-    lineHeight: 34,
-    color: colors.textHeading,
+    fontSize: 19,
+    lineHeight: 26,
+    color: '#0F172A',
+    textAlign: 'center',
   },
   emptyStatusSubtitle: {
     fontFamily: fontFamily.body,
-    fontSize: 13,
+    fontSize: 13.5,
     lineHeight: 20,
-    color: colors.textBody,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   heroSubtitle: {
     fontFamily: fontFamily.body,
@@ -617,23 +637,23 @@ const styles = StyleSheet.create({
   breakdownTitle: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   breakdownMeta: {
     marginTop: 4,
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#64748B',
   },
   breakdownValue: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 18,
-    color: colors.cyan,
+    color: colors.primary,
   },
   emptyText: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    color: colors.textSecondary,
+    color: '#64748B',
   },
   receiptHeader: {
     flexDirection: 'row',
@@ -644,13 +664,13 @@ const styles = StyleSheet.create({
   receiptReference: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   receiptDate: {
     marginTop: 4,
     fontFamily: fontFamily.body,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#64748B',
   },
   receiptBadge: {
     borderRadius: radius.pill,
@@ -658,14 +678,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   receiptBadgeSuccess: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    backgroundColor: '#DCFCE7',
     borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.35)',
+    borderColor: '#BBF7D0',
   },
   receiptBadgeDefault: {
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderColor: '#BFDBFE',
   },
   receiptBadgeText: {
     fontFamily: fontFamily.bodyBold,
@@ -673,10 +693,10 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   receiptBadgeTextSuccess: {
-    color: colors.successLight,
+    color: '#166534',
   },
   receiptBadgeTextDefault: {
-    color: colors.cyan,
+    color: '#1D4ED8',
   },
   receiptAmountRow: {
     flexDirection: 'row',
@@ -687,17 +707,17 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fontFamily.bodyBold,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   receiptAmount: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 17,
   },
   amountPositive: {
-    color: colors.successLight,
+    color: '#16A34A',
   },
   amountDefault: {
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   receiptMetaGrid: {
     flexDirection: 'row',
@@ -706,30 +726,30 @@ const styles = StyleSheet.create({
   receiptMetaCell: {
     flex: 1,
     borderRadius: radius.md,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: '#E2E8F0',
     padding: 12,
     gap: 4,
   },
   receiptMetaLabel: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 11.5,
-    color: colors.textSecondary,
+    color: '#64748B',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   receiptMetaValue: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 14,
-    color: '#FFFFFF',
+    color: '#0F172A',
     textTransform: 'capitalize',
   },
   receiptNote: {
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 20,
-    color: colors.textSecondary,
+    color: '#64748B',
   },
   statusHeroRow: {
     flexDirection: 'row',
@@ -763,27 +783,27 @@ const styles = StyleSheet.create({
   },
   investmentStatusChip: {
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: '#DCFCE7',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderColor: '#BBF7D0',
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
   investmentStatusChipText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: colors.cyan,
+    color: '#166534',
   },
   statusBarTrack: {
     height: 8,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#E2E8F0',
     overflow: 'hidden',
   },
   statusBarFill: {
     height: '100%',
     borderRadius: radius.pill,
-    backgroundColor: colors.cyan,
+    backgroundColor: '#2563EB',
   },
   investmentStatusGrid: {
     flexDirection: 'row',
@@ -793,12 +813,10 @@ const styles = StyleSheet.create({
   investmentStatusCell: {
     width: '47%',
     borderRadius: radius.md,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: '#E2E8F0',
     padding: 12,
     gap: 4,
   },
 });
-
-

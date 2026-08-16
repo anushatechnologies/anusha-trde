@@ -621,22 +621,26 @@ export const dashboardService = {
   },
   getInvestments: async () => {
     const [plansResponse, investmentsResponse] = await Promise.all([
-      apiClient.get('/api/plans'),
-      apiClient.get('/api/investments'),
+      apiClient.get('/api/plans').catch(() => ({ data: [] })),
+      apiClient.get('/api/investments').catch(() => ({ data: [] })),
     ]);
 
-    const plansRaw = Array.isArray(plansResponse.data) ? plansResponse.data : pickArray(asRecord(plansResponse.data), ['plans', 'items', 'data', 'content']);
-    const investmentsSource = asRecord(investmentsResponse.data);
+    const plansRaw = Array.isArray(plansResponse.data)
+      ? plansResponse.data
+      : pickArray(asRecord(plansResponse.data), ['plans', 'items', 'data', 'content']);
+    const investmentItems = Array.isArray(investmentsResponse.data)
+      ? investmentsResponse.data
+      : pickArray(asRecord(investmentsResponse.data), ['investments', 'items', 'data', 'content']);
+
     const plans = plansRaw.map(mapPlan);
     const planLookup = new Map(plans.map((plan) => [plan.id, plan]));
-    const investmentItems = pickArray(investmentsSource, ['investments', 'items', 'data', 'content']);
     const activeInvestments = investmentItems
       .filter((item) => {
         const status = toStringValue(pickFirst(asRecord(item), ['status', 'investmentStatus'])).toUpperCase();
-        return !status || status.includes('ACTIVE') || status.includes('MATURED') || status.includes('COMPLETED');
+        return !status || status.includes('ACTIVE') || status.includes('APPROVED') || status.includes('RUNNING') || status.includes('MATURED') || status.includes('COMPLETED') || status.includes('PENDING');
       })
       .map((item, index) => mapActiveInvestment(item, index, planLookup));
-    const projectionSeries = pickArray(investmentsSource, ['projectionSeries', 'chart', 'earningsSeries']).map(mapSeriesPoint);
+    const projectionSeries = pickArray(asRecord(investmentsResponse.data), ['projectionSeries', 'chart', 'earningsSeries']).map(mapSeriesPoint);
 
     return {
       ...emptyInvestmentPayload,
