@@ -77,7 +77,8 @@ const confirmPendingPhoneOtp = async (otpCode: string) => {
 
 const configureTestingSettings = (authInstance: ReturnType<typeof getFirebaseAuth>) => {
   try {
-    authInstance.settings.appVerificationDisabledForTesting = true;
+    // Enable real SMS OTP delivery to real mobile numbers via Google Play Integrity
+    authInstance.settings.appVerificationDisabledForTesting = false;
   } catch {
     // ignore
   }
