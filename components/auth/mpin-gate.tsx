@@ -1,12 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { Alert, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, fontFamily, gradients, radius } from '../../constants/theme';
+import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
 import { authService } from '../../services/auth.service';
 import { getAuthErrorMessage } from '../../services/firebase-auth.service';
 import { useAuthStore } from '../../store/use-auth-store';
-import { GradientButton } from '../ui/gradient-button';
+import { PinBoxesInput } from '../ui/pin-boxes-input';
 import { SurfaceCard } from '../ui/surface-card';
 
 export const MpinGate = () => {
@@ -20,20 +20,24 @@ export const MpinGate = () => {
   const refreshToken = useAuthStore((state) => state.refreshToken);
   const expiresAt = useAuthStore((state) => state.expiresAt);
   const [mpin, setMpin] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (!requiresMpinVerification) {
       setMpin('');
+      setErrorMessage('');
     }
   }, [requiresMpinVerification]);
 
-  const verifyMpin = async () => {
+  const verifyMpin = async (pinValue?: string) => {
+    const pinToVerify = (pinValue || mpin).trim();
     if (!user) {
       return;
     }
 
-    if (!new RegExp(`^\\d{${MPIN_LENGTH}}$`).test(mpin.trim())) {
-      Alert.alert('Invalid MPIN', 'Enter your 4 digit MPIN to open the dashboard.');
+    if (pinToVerify.length !== MPIN_LENGTH) {
+      setErrorMessage('Enter your 4 digit MPIN.');
       return;
     }
 
@@ -41,6 +45,9 @@ export const MpinGate = () => {
       Alert.alert('Session expired', 'Please sign in again before verifying your MPIN.');
       return;
     }
+
+    setIsVerifying(true);
+    setErrorMessage('');
 
     try {
       const verifiedSession = await authService.verifyMpin(
@@ -52,14 +59,18 @@ export const MpinGate = () => {
             expiresAt: expiresAt ?? Date.now(),
           },
         },
-        mpin
+        pinToVerify
       );
 
       await setTokens(verifiedSession.tokens);
       markMpinVerified();
       setMpin('');
+      setErrorMessage('');
     } catch (error) {
-      Alert.alert('Incorrect MPIN', getAuthErrorMessage(error));
+      setErrorMessage(getAuthErrorMessage(error) || 'Incorrect MPIN. Please try again.');
+      setMpin('');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -69,25 +80,41 @@ export const MpinGate = () => {
         <View style={styles.backdrop} />
         <SurfaceCard style={styles.card}>
           <View style={styles.iconWrap}>
-            <Ionicons name="shield-checkmark-outline" size={28} color={colors.surface} />
+            <Ionicons name="shield-checkmark" size={32} color="#FFFFFF" />
           </View>
-          <Text style={styles.title}>Enter MPIN</Text>
-          <Text style={styles.subtitle}>For extra security, enter your MPIN before accessing the dashboard.</Text>
-          <View style={styles.inputShell}>
-            <TextInput
-              value={mpin}
-              onChangeText={(value) => setMpin(value.replace(/\D/g, '').slice(0, MPIN_LENGTH))}
-              keyboardType="number-pad"
-              maxLength={MPIN_LENGTH}
-              secureTextEntry
-              placeholder="Enter MPIN"
-              placeholderTextColor={colors.muted}
-              style={styles.input}
-            />
-          </View>
-          <GradientButton label="Verify MPIN" onPress={() => void verifyMpin()} />
+          <Text style={styles.title}>Unlock Anusha Trade</Text>
+          <Text style={styles.subtitle}>Enter your 4-digit security MPIN to continue.</Text>
+
+          <PinBoxesInput
+            value={mpin}
+            onChangeText={(val) => {
+              setMpin(val);
+              setErrorMessage('');
+              if (val.length === MPIN_LENGTH) {
+                void verifyMpin(val);
+              }
+            }}
+            length={MPIN_LENGTH}
+            secureTextEntry
+            autoFocus={true}
+            hasError={Boolean(errorMessage)}
+          />
+
+          {isVerifying ? (
+            <View style={styles.verifyingRow}>
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={styles.verifyingText}>Verifying MPIN...</Text>
+            </View>
+          ) : errorMessage ? (
+            <View style={styles.errorPill}>
+              <Ionicons name="alert-circle" size={15} color="#DC2626" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
           <Pressable onPress={() => void signOut()} style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutPressed]}>
-            <Text style={styles.logoutText}>Logout</Text>
+            <Ionicons name="log-out-outline" size={15} color="#DC2626" />
+            <Text style={styles.logoutText}>Sign Out / Switch Account</Text>
           </Pressable>
         </SurfaceCard>
       </View>
@@ -100,65 +127,92 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
+    padding: 20,
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(8, 17, 43, 0.58)',
+    backgroundColor: 'rgba(8, 17, 43, 0.72)',
   },
   card: {
     width: '100%',
-    maxWidth: 420,
+    maxWidth: 400,
     alignItems: 'center',
-    gap: 18,
-    paddingTop: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
   },
   iconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
+    width: 68,
+    height: 68,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: gradients.primary[0],
+    backgroundColor: colors.primary,
+    marginBottom: 8,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 4,
   },
   title: {
-    fontFamily: fontFamily.headingSemi,
-    fontSize: 24,
-    color: colors.text,
+    fontFamily: fontFamily.heading,
+    fontSize: 22,
+    color: '#0F172A',
+    marginBottom: 4,
   },
   subtitle: {
     fontFamily: fontFamily.body,
-    fontSize: 14,
-    lineHeight: 22,
-    color: colors.muted,
+    fontSize: 13,
+    lineHeight: 19,
+    color: '#64748B',
     textAlign: 'center',
+    marginBottom: 12,
   },
-  inputShell: {
-    width: '100%',
-    minHeight: 56,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: '#DBEAFE',
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
+  verifyingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
   },
-  input: {
+  verifyingText: {
     fontFamily: fontFamily.bodySemi,
-    fontSize: 18,
-    color: colors.text,
-    letterSpacing: 4,
+    fontSize: 12.5,
+    color: colors.primary,
+  },
+  errorPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    marginVertical: 4,
+  },
+  errorText: {
+    fontFamily: fontFamily.bodyBold,
+    fontSize: 12,
+    color: '#DC2626',
     textAlign: 'center',
   },
   logoutButton: {
-    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginTop: 8,
   },
   logoutPressed: {
-    opacity: 0.8,
+    opacity: 0.7,
   },
   logoutText: {
-    fontFamily: fontFamily.bodyBold,
-    fontSize: 14,
-    color: colors.danger,
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 13,
+    color: '#DC2626',
   },
 });

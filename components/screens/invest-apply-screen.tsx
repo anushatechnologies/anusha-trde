@@ -138,7 +138,10 @@ export const InvestApplyScreen = () => {
       const invId = checkoutData.investment.id;
       setInvestmentId(invId);
 
-      const razorpayKey = runtimeConfig.razorpayKeyId || checkoutData.checkout.keyId || 'rzp_live_TO6q7NUVnPM6bA';
+      const razorpayKey = runtimeConfig.razorpayKeyId || checkoutData.checkout.keyId;
+      if (!razorpayKey) {
+        throw new Error('Razorpay is not configured. Please contact support.');
+      }
 
       if (Platform.OS === 'web') {
         const loaded = await loadRazorpayScript();
