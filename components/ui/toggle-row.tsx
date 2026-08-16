@@ -37,14 +37,14 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   title: {
-    fontFamily: fontFamily.headingSemi,
+    fontFamily: fontFamily.heading,
     fontSize: 15,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   subtitle: {
     fontFamily: fontFamily.body,
     fontSize: 13,
     lineHeight: 18,
-    color: colors.textSecondary,
+    color: '#64748B',
   },
 });

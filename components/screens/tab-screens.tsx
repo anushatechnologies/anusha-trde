@@ -428,7 +428,7 @@ export const InvestScreen = () => {
 
           <View style={{ width: '48%', flexGrow: 1, backgroundColor: '#FFFFFF', borderRadius: radius.md, borderWidth: 1, borderColor: '#DBEAFE', padding: 12 }}>
             <Text style={styles.calcLabel}>Total at Maturity</Text>
-            <Text style={[styles.calcValue, { color: '#FFFFFF' }]}>{formatCurrency(totalMaturityPayout)}</Text>
+            <Text style={[styles.calcValue, { color: colors.primary }]}>{formatCurrency(totalMaturityPayout)}</Text>
           </View>
         </View>
 
@@ -557,10 +557,10 @@ export const TeamScreen = () => {
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
               <Text style={{ fontFamily: fontFamily.bodySemi, fontSize: 12, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 }}>Total Team Investment Volume</Text>
-              <Text style={{ fontFamily: fontFamily.heading, fontSize: 22, color: '#FFFFFF', marginTop: 2 }}>{formatCurrency(totalTeamInvested)}</Text>
+              <Text style={{ fontFamily: fontFamily.heading, fontSize: 22, color: '#0F172A', marginTop: 2 }}>{formatCurrency(totalTeamInvested)}</Text>
             </View>
-            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(56, 189, 248, 0.15)', alignItems: 'center', justifyContent: 'center' }}>
-              <Ionicons name="shield-checkmark-outline" size={22} color={colors.cyan} />
+            <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="shield-checkmark-outline" size={22} color={colors.primary} />
             </View>
           </View>
         </SurfaceCard>

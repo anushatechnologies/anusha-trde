@@ -84,32 +84,32 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    fontFamily: fontFamily.headingSemi,
+    fontFamily: fontFamily.heading,
     fontSize: 14.5,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   meta: {
     fontFamily: fontFamily.body,
     fontSize: 11.5,
-    color: colors.textSecondary,
+    color: '#64748B',
   },
   note: {
     fontFamily: fontFamily.body,
     fontSize: 11,
-    color: colors.muted,
+    color: '#94A3B8',
   },
   amountWrap: {
     alignItems: 'flex-end',
     gap: 6,
   },
   amount: {
-    fontFamily: fontFamily.headingSemi,
+    fontFamily: fontFamily.heading,
     fontSize: 15,
   },
   positive: {
-    color: colors.successLight,
+    color: colors.success,
   },
   negative: {
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
 });
