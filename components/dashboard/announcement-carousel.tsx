@@ -1,20 +1,16 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { FlatList, StyleSheet, Text, View, ViewToken } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
+import { colors, fontFamily, radius, shadows } from '../../constants/theme';
 import { Announcement } from '../../types';
 
 type AnnouncementCarouselProps = {
   items: Announcement[];
 };
 
-export const AnnouncementCarousel = ({ items }: AnnouncementCarouselProps) => {
+export const AnnouncementCarousel = React.memo(({ items }: AnnouncementCarouselProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
-
-  if (!items.length) {
-    return null;
-  }
 
   const onViewableItemsChanged = useRef(({
     viewableItems,
@@ -27,6 +23,10 @@ export const AnnouncementCarousel = ({ items }: AnnouncementCarouselProps) => {
   }).current;
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 }).current;
+
+  if (!items || !items.length) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -51,7 +51,7 @@ export const AnnouncementCarousel = ({ items }: AnnouncementCarouselProps) => {
                 <View style={styles.tag}>
                   <Text style={styles.tagText}>{item.tag || 'UPDATE'}</Text>
                 </View>
-                <View style={styles.livePulse} />
+                <View style={styles.liveDot} />
               </View>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.message}>{item.message}</Text>
@@ -69,11 +69,12 @@ export const AnnouncementCarousel = ({ items }: AnnouncementCarouselProps) => {
       ) : null}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: 10,
+    width: '100%',
   },
   cardWrapper: {
     width: 320,
@@ -81,12 +82,17 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 20,
-    padding: 18,
+    padding: 16,
     gap: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    ...shadows.card,
+    borderColor: '#BFDBFE',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
   topRow: {
     flexDirection: 'row',
@@ -95,50 +101,50 @@ const styles = StyleSheet.create({
   },
   tag: {
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: '#DBEAFE',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderColor: '#BFDBFE',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 3,
   },
   tagText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 10.5,
     letterSpacing: 0.8,
-    color: colors.cyan,
+    color: colors.primary,
     textTransform: 'uppercase',
   },
-  livePulse: {
+  liveDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.successLight,
+    backgroundColor: '#10B981',
   },
   title: {
     fontFamily: fontFamily.headingSemi,
-    fontSize: 17,
-    color: '#FFFFFF',
+    fontSize: 16,
+    color: '#0F172A',
   },
   message: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    lineHeight: 20,
-    color: colors.textSecondary,
+    lineHeight: 19,
+    color: '#475569',
   },
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 6,
+    marginTop: 2,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: '#CBD5E1',
   },
   dotActive: {
-    width: 20,
-    backgroundColor: colors.cyan,
+    width: 18,
+    backgroundColor: colors.primary,
   },
 });
-

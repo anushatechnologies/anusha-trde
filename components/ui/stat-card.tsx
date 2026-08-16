@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fontFamily, radius, shadows } from '../../constants/theme';
@@ -15,7 +15,7 @@ type StatCardProps = {
   actionLabel?: string;
 };
 
-export const StatCard = ({
+export const StatCard = React.memo(({
   label,
   value,
   icon,
@@ -70,7 +70,7 @@ export const StatCard = ({
       {cardContent}
     </Pressable>
   );
-};
+});
 
 const styles = StyleSheet.create({
   pressable: {
@@ -104,39 +104,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 8,
   },
   iconWrap: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
     borderWidth: 1,
-  },
-  chevronWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#EFF6FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   changeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    backgroundColor: '#DCFCE7',
-    borderColor: '#BBF7D0',
-    borderWidth: 1,
-    borderRadius: radius.pill,
+    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
+    borderRadius: radius.pill,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
   },
   changeText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
-    color: '#166534',
+    color: '#15803D',
+  },
+  chevronWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   copyBlock: {
     gap: 4,
@@ -144,14 +143,11 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: '#64748B',
   },
   value: {
-    fontFamily: fontFamily.headingSemi,
-    fontSize: 21,
-    color: '#111827',
-    letterSpacing: -0.3,
+    fontFamily: fontFamily.heading,
+    fontSize: 18,
+    color: '#0F172A',
   },
 });

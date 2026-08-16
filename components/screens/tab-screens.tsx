@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 
-import { FadeInView } from '../../animations/fade-in-view';
 import { LineChart } from '../../components/charts/line-chart';
 import { AnnouncementCarousel } from '../../components/dashboard/announcement-carousel';
 import { ReferralLinkCard } from '../../components/dashboard/referral-link-card';
@@ -155,7 +154,7 @@ export const HomeScreen = () => {
         </View>
       </View>
 
-      {isLoading || !data ? (
+      {isLoading && !data ? (
         <>
           <SkeletonBlock height={180} />
           <View style={styles.statsGrid}>
@@ -167,89 +166,87 @@ export const HomeScreen = () => {
           <SkeletonBlock height={120} />
           <SkeletonBlock height={210} />
         </>
-      ) : (
+      ) : data ? (
         <>
           {/* Light Fintech Portfolio Hero Card */}
-          <FadeInView>
-            <SurfaceCard style={styles.portfolioHeroCard}>
-              <View style={styles.portfolioTopRow}>
-                <View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={styles.portfolioLabel}>TOTAL ASSET VALUE</Text>
-                    <Pressable onPress={() => setShowBalance(!showBalance)} hitSlop={8}>
-                      <Ionicons
-                        name={showBalance ? 'eye-outline' : 'eye-off-outline'}
-                        size={16}
-                        color={colors.primary}
-                      />
-                    </Pressable>
-                  </View>
-                  <Text style={styles.portfolioBalance}>
-                    {showBalance ? formatCurrency((data.metrics.walletBalance || 0) + (data.metrics.totalInvested || 0)) : '••••••••'}
-                  </Text>
+          <SurfaceCard style={styles.portfolioHeroCard}>
+            <View style={styles.portfolioTopRow}>
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.portfolioLabel}>TOTAL ASSET VALUE</Text>
+                  <Pressable onPress={() => setShowBalance(!showBalance)} hitSlop={8}>
+                    <Ionicons
+                      name={showBalance ? 'eye-outline' : 'eye-off-outline'}
+                      size={16}
+                      color={colors.primary}
+                    />
+                  </Pressable>
                 </View>
-                <View style={styles.growthBadge}>
-                  <Ionicons name="trending-up" size={13} color="#166534" />
-                  <Text style={styles.growthBadgeText}>+{formatPercent(data.metrics.monthlyGrowth || 12.5)}</Text>
-                </View>
+                <Text style={styles.portfolioBalance}>
+                  {showBalance ? formatCurrency((data.metrics.walletBalance || 0) + (data.metrics.totalInvested || 0)) : '••••••••'}
+                </Text>
               </View>
-
-              {/* 3-Metric Asset Breakdown Strip */}
-              <View style={styles.portfolioSubMetricsRow}>
-                <View style={styles.portfolioSubMetricCol}>
-                  <Text style={styles.portfolioSubMetricLabel}>Invested</Text>
-                  <Text style={styles.portfolioSubMetricValue}>
-                    {showBalance ? formatCompactCurrency(data.metrics.totalInvested || 0) : '••••'}
-                  </Text>
-                </View>
-                <View style={styles.portfolioSubMetricDivider} />
-                <View style={styles.portfolioSubMetricCol}>
-                  <Text style={styles.portfolioSubMetricLabel}>Available</Text>
-                  <Text style={[styles.portfolioSubMetricValue, { color: colors.primary }]}>
-                    {showBalance ? formatCompactCurrency(data.metrics.walletBalance || 0) : '••••'}
-                  </Text>
-                </View>
-                <View style={styles.portfolioSubMetricDivider} />
-                <View style={styles.portfolioSubMetricCol}>
-                  <Text style={styles.portfolioSubMetricLabel}>Earnings</Text>
-                  <Text style={[styles.portfolioSubMetricValue, { color: colors.success }]}>
-                    {showBalance ? `+${formatCompactCurrency(data.metrics.referralEarnings || 0)}` : '••••'}
-                  </Text>
-                </View>
+              <View style={styles.growthBadge}>
+                <Ionicons name="trending-up" size={13} color="#166534" />
+                <Text style={styles.growthBadgeText}>+{formatPercent(data.metrics.monthlyGrowth || 12.5)}</Text>
               </View>
+            </View>
 
-              {/* 4 Fast Action Pills */}
-              <View style={styles.quickActionPillRow}>
-                <Pressable onPress={handleInvestPress} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' }]}>
-                    <Ionicons name="rocket-outline" size={20} color="#2563EB" />
-                  </View>
-                  <Text style={styles.actionPillText}>Invest</Text>
-                </Pressable>
-
-                <Pressable onPress={handleInvestPress} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#DCFCE7', borderColor: '#BBF7D0' }]}>
-                    <Ionicons name="wallet-outline" size={20} color="#16A34A" />
-                  </View>
-                  <Text style={styles.actionPillText}>Add Cash</Text>
-                </Pressable>
-
-                <Pressable onPress={() => router.push('/withdraw')} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
-                    <Ionicons name="arrow-up-outline" size={20} color="#D97706" />
-                  </View>
-                  <Text style={styles.actionPillText}>Withdraw</Text>
-                </Pressable>
-
-                <Pressable onPress={() => router.push('/referrals')} style={styles.actionPill}>
-                  <View style={[styles.actionPillIconWrap, { backgroundColor: '#F3E8FF', borderColor: '#E9D5FF' }]}>
-                    <Ionicons name="people-outline" size={20} color="#7C3AED" />
-                  </View>
-                  <Text style={styles.actionPillText}>Refer</Text>
-                </Pressable>
+            {/* 3-Metric Asset Breakdown Strip */}
+            <View style={styles.portfolioSubMetricsRow}>
+              <View style={styles.portfolioSubMetricCol}>
+                <Text style={styles.portfolioSubMetricLabel}>Invested</Text>
+                <Text style={styles.portfolioSubMetricValue}>
+                  {showBalance ? formatCompactCurrency(data.metrics.totalInvested || 0) : '••••'}
+                </Text>
               </View>
-            </SurfaceCard>
-          </FadeInView>
+              <View style={styles.portfolioSubMetricDivider} />
+              <View style={styles.portfolioSubMetricCol}>
+                <Text style={styles.portfolioSubMetricLabel}>Available</Text>
+                <Text style={[styles.portfolioSubMetricValue, { color: colors.primary }]}>
+                  {showBalance ? formatCompactCurrency(data.metrics.walletBalance || 0) : '••••'}
+                </Text>
+              </View>
+              <View style={styles.portfolioSubMetricDivider} />
+              <View style={styles.portfolioSubMetricCol}>
+                <Text style={styles.portfolioSubMetricLabel}>Earnings</Text>
+                <Text style={[styles.portfolioSubMetricValue, { color: colors.success }]}>
+                  {showBalance ? `+${formatCompactCurrency(data.metrics.referralEarnings || 0)}` : '••••'}
+                </Text>
+              </View>
+            </View>
+
+            {/* 4 Fast Action Pills */}
+            <View style={styles.quickActionPillRow}>
+              <Pressable onPress={handleInvestPress} style={styles.actionPill}>
+                <View style={[styles.actionPillIconWrap, { backgroundColor: '#EFF6FF', borderColor: '#DBEAFE' }]}>
+                  <Ionicons name="rocket-outline" size={20} color="#2563EB" />
+                </View>
+                <Text style={styles.actionPillText}>Invest</Text>
+              </Pressable>
+
+              <Pressable onPress={handleInvestPress} style={styles.actionPill}>
+                <View style={[styles.actionPillIconWrap, { backgroundColor: '#DCFCE7', borderColor: '#BBF7D0' }]}>
+                  <Ionicons name="wallet-outline" size={20} color="#16A34A" />
+                </View>
+                <Text style={styles.actionPillText}>Add Cash</Text>
+              </Pressable>
+
+              <Pressable onPress={() => router.push('/withdraw')} style={styles.actionPill}>
+                <View style={[styles.actionPillIconWrap, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+                  <Ionicons name="arrow-up-outline" size={20} color="#D97706" />
+                </View>
+                <Text style={styles.actionPillText}>Withdraw</Text>
+              </Pressable>
+
+              <Pressable onPress={() => router.push('/referrals')} style={styles.actionPill}>
+                <View style={[styles.actionPillIconWrap, { backgroundColor: '#F3E8FF', borderColor: '#E9D5FF' }]}>
+                  <Ionicons name="people-outline" size={20} color="#7C3AED" />
+                </View>
+                <Text style={styles.actionPillText}>Refer</Text>
+              </Pressable>
+            </View>
+          </SurfaceCard>
 
           {/* 2x2 Stat Cards Grid */}
           <View style={styles.statsGrid}>
@@ -365,7 +362,7 @@ export const HomeScreen = () => {
             </View>
           </Pressable>
         </>
-      )}
+      ) : null}
 
       <KycGateModal
         visible={kycGateVisible}
@@ -438,22 +435,22 @@ export const InvestScreen = () => {
 
       {/* Available Plans */}
       <SectionTitle title="Available Investment Plans" />
-      {isLoading || !data ? (
+      {isLoading && !data ? (
         <>
           <SkeletonBlock height={160} />
           <SkeletonBlock height={160} />
           <SkeletonBlock height={160} />
         </>
-      ) : (
-        data.plans.map((plan, index) => (
-          <FadeInView key={plan.id} delay={index * 80}>
+      ) : data ? (
+        data.plans.map((plan) => (
+          <View key={plan.id} style={{ width: '100%' }}>
             <PlanCard
               plan={plan}
               onInvest={() => openPlanWithKycStatus(plan.id, plan.name)}
             />
-          </FadeInView>
+          </View>
         ))
-      )}
+      ) : null}
 
       {/* Interactive ROI Calculator */}
       <SurfaceCard glass="dark">
