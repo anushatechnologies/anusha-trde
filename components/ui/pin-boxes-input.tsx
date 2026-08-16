@@ -125,22 +125,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: 14,
     paddingVertical: 6,
   },
   boxesRowSix: {
     gap: 8,
   },
   box: {
-    width: 60,
-    height: 64,
+    width: 62,
+    height: 66,
     borderRadius: radius.md,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.soft,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   boxSix: {
     width: 48,
@@ -150,6 +154,7 @@ const styles = StyleSheet.create({
   boxFilled: {
     borderColor: '#2563EB',
     backgroundColor: '#F8FAFC',
+    borderWidth: 2,
   },
   boxActive: {
     borderColor: '#2563EB',
@@ -157,23 +162,23 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     shadowColor: '#2563EB',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   digitText: {
     fontFamily: fontFamily.heading,
     fontSize: 26,
-    color: '#111827',
+    color: '#0F172A',
   },
   digitTextSix: {
     fontSize: 22,
   },
   bulletDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.cyan,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: colors.primary,
   },
   bulletDotSix: {
     width: 10,
@@ -181,10 +186,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   activeCursor: {
-    width: 2,
-    height: 22,
-    backgroundColor: colors.cyan,
-    borderRadius: 1,
+    width: 2.5,
+    height: 24,
+    backgroundColor: colors.primary,
+    borderRadius: 1.5,
   },
   eyeBtn: {
     flexDirection: 'row',
@@ -196,7 +201,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.22)',
+    borderColor: '#DBEAFE',
   },
   eyeBtnPressed: {
     opacity: 0.8,
@@ -204,7 +209,7 @@ const styles = StyleSheet.create({
   eyeBtnText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.cyan,
+    color: colors.primary,
   },
 });
 

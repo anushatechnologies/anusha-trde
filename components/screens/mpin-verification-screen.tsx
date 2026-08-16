@@ -174,11 +174,14 @@ export const MpinVerificationScreen = () => {
           <View style={styles.feedbackRow}>
             {isVerifying ? (
               <View style={styles.verifyingPill}>
-                <ActivityIndicator size="small" color={colors.cyan} />
+                <ActivityIndicator size="small" color={colors.primary} />
                 <Text style={styles.verifyingText}>Verifying MPIN...</Text>
               </View>
             ) : errorMessage ? (
-              <Text style={styles.errorText}>{errorMessage}</Text>
+              <View style={styles.errorPill}>
+                <Ionicons name="alert-circle" size={15} color="#DC2626" />
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
             ) : (
               <Text style={styles.securityNote}>🔒 End-to-end 256-bit encrypted security</Text>
             )}
@@ -199,7 +202,7 @@ export const MpinVerificationScreen = () => {
             onPress={() => router.push('/(auth)/forgot-mpin')}
             style={({ pressed }) => [styles.actionLink, pressed && styles.actionLinkPressed]}
           >
-            <Ionicons name="key-outline" size={15} color={colors.cyan} />
+            <Ionicons name="key-outline" size={15} color={colors.primary} />
             <Text style={styles.actionLinkText}>Forgot MPIN?</Text>
           </Pressable>
 
@@ -207,7 +210,7 @@ export const MpinVerificationScreen = () => {
             onPress={() => void signOut()}
             style={({ pressed }) => [styles.logoutBtn, pressed && styles.logoutBtnPressed]}
           >
-            <Ionicons name="log-out-outline" size={15} color={colors.dangerLight} />
+            <Ionicons name="log-out-outline" size={15} color="#DC2626" />
             <Text style={styles.logoutBtnText}>Switch Account / Logout</Text>
           </Pressable>
         </View>
@@ -228,11 +231,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   headerSection: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   logoBadgeWrap: {
     position: 'relative',
@@ -240,16 +243,20 @@ const styles = StyleSheet.create({
     height: 76,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
-    ...shadows.card,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   brandLogo: {
-    width: 54,
-    height: 54,
+    width: 52,
+    height: 52,
   },
   shieldMiniIcon: {
     position: 'absolute',
@@ -262,98 +269,109 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#E5E7EB',
+    borderColor: '#FFFFFF',
   },
   brandName: {
     fontFamily: fontFamily.heading,
     fontSize: 16,
     letterSpacing: 1.5,
-    color: colors.cyan,
-    marginBottom: 2,
+    color: colors.primary,
+    marginBottom: 4,
   },
   greetingText: {
     fontFamily: fontFamily.heading,
     fontSize: 22,
-    color: '#FFFFFF',
+    color: '#0F172A',
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitleText: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    lineHeight: 18,
-    color: colors.textSecondary,
+    lineHeight: 19,
+    color: '#64748B',
     textAlign: 'center',
     paddingHorizontal: 20,
   },
   pinSection: {
     width: '100%',
     alignItems: 'center',
-    marginVertical: 10,
+    marginVertical: 6,
   },
   feedbackRow: {
-    minHeight: 28,
+    minHeight: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: 6,
   },
   verifyingPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: '#EFF6FF',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.35)',
+    borderColor: '#DBEAFE',
   },
   verifyingText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12,
-    color: colors.cyan,
+    color: colors.primary,
+  },
+  errorPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
   },
   errorText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12,
-    color: colors.dangerLight,
+    color: '#DC2626',
     textAlign: 'center',
   },
   securityNote: {
     fontFamily: fontFamily.body,
     fontSize: 11,
-    color: colors.textSecondary,
+    color: '#94A3B8',
   },
   footerRow: {
-    marginTop: 16,
+    marginTop: 12,
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
   actionLink: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
   },
   actionLinkPressed: {
-    opacity: 0.8,
+    opacity: 0.7,
   },
   actionLinkText: {
     fontFamily: fontFamily.bodyBold,
-    fontSize: 13,
-    color: colors.cyan,
+    fontSize: 13.5,
+    color: colors.primary,
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: radius.pill,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    backgroundColor: '#FEF2F2',
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.25)',
+    borderColor: '#FEE2E2',
   },
   logoutBtnPressed: {
     opacity: 0.8,
@@ -361,7 +379,7 @@ const styles = StyleSheet.create({
   logoutBtnText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 12.5,
-    color: colors.dangerLight,
+    color: '#DC2626',
   },
 });
 
