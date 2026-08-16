@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(8, 13, 26, 0.85)',
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -492,9 +492,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     padding: 20,
-    ...shadows.card,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -505,11 +509,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: fontFamily.heading,
     fontSize: 18,
-    color: '#F8FAFC',
+    color: '#0F172A',
   },
   modalSubtitle: {
     fontFamily: fontFamily.bodySemi,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.primary,
     marginTop: 2,
   },
@@ -517,7 +521,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(51, 65, 85, 0.5)',
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -529,28 +533,29 @@ const styles = StyleSheet.create({
   },
   quickAgeLabel: {
     fontFamily: fontFamily.bodySemi,
-    fontSize: 11,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: '#64748B',
   },
   quickAgeChip: {
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: radius.pill,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   quickAgeChipActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.25)',
+    backgroundColor: '#EFF6FF',
     borderColor: colors.primary,
   },
   quickAgeChipText: {
     fontFamily: fontFamily.bodySemi,
-    fontSize: 11,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: '#64748B',
   },
   quickAgeChipTextActive: {
     color: colors.primary,
+    fontFamily: fontFamily.bodyBold,
   },
   navBar: {
     flexDirection: 'row',
@@ -561,22 +566,22 @@ const styles = StyleSheet.create({
   navSelectorButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: radius.md,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   navSelectorButtonActive: {
     borderColor: colors.primary,
-    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+    backgroundColor: '#EFF6FF',
   },
   navSelectorText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: '#F8FAFC',
+    color: '#0F172A',
   },
   monthArrows: {
     flexDirection: 'row',
@@ -587,7 +592,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: radius.md,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -602,8 +607,8 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontFamily: fontFamily.bodySemi,
-    fontSize: 11,
-    color: colors.textSecondary,
+    fontSize: 12,
+    color: '#64748B',
   },
   daysGrid: {
     flexDirection: 'row',
@@ -618,7 +623,7 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   dayCellOutside: {
-    opacity: 0.2,
+    opacity: 0.3,
   },
   dayCellSelected: {
     backgroundColor: colors.primary,
@@ -630,10 +635,10 @@ const styles = StyleSheet.create({
   dayCellText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: '#F1F5F9',
+    color: '#0F172A',
   },
   dayCellTextOutside: {
-    color: colors.textSecondary,
+    color: '#94A3B8',
   },
   dayCellTextSelected: {
     color: '#FFFFFF',
@@ -647,17 +652,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    paddingVertical: 12,
+    paddingVertical: 8,
     marginBottom: 16,
   },
   monthCell: {
-    width: '30%',
+    width: '31%',
     paddingVertical: 12,
     alignItems: 'center',
     borderRadius: radius.md,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   monthCellSelected: {
     backgroundColor: colors.primary,
@@ -666,7 +671,7 @@ const styles = StyleSheet.create({
   monthCellText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: '#F8FAFC',
+    color: '#1E293B',
   },
   monthCellTextSelected: {
     color: '#FFFFFF',
@@ -683,13 +688,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   yearCell: {
-    width: '22%',
+    width: '22.5%',
     paddingVertical: 10,
     alignItems: 'center',
     borderRadius: radius.md,
     backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
   },
   yearCellSelected: {
     backgroundColor: colors.primary,
@@ -698,7 +703,7 @@ const styles = StyleSheet.create({
   yearCellText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: '#F8FAFC',
+    color: '#1E293B',
   },
   yearCellTextSelected: {
     color: '#FFFFFF',
@@ -714,16 +719,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: radius.md,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelButtonText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 13,
-    color: colors.textSecondary,
+    color: '#475569',
   },
   confirmButton: {
     flex: 2,
@@ -731,7 +736,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   confirmButtonDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
   confirmGradient: {
     flexDirection: 'row',
