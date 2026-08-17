@@ -72,7 +72,16 @@ const confirmPendingPhoneOtp = async (otpCode: string) => {
     throw new Error('Enter the 6-digit OTP sent to your mobile.');
   }
 
-  return confirmation.confirm(otpCode.trim());
+  try {
+    return await confirmation.confirm(otpCode.trim());
+  } catch (error) {
+    const details = error as { code?: string; message?: string };
+    console.error('[Firebase OTP] confirmation failed', {
+      code: details?.code,
+      message: details?.message,
+    });
+    throw error;
+  }
 };
 
 const configureTestingSettings = (authInstance: ReturnType<typeof getFirebaseAuth>) => {
@@ -195,7 +204,16 @@ export const firebaseAuthService = {
 
     configureTestingSettings(authInstance);
 
-    pendingPhoneConfirmation = await authInstance.signInWithPhoneNumber(normalizedPhone, forceResend);
+    try {
+      pendingPhoneConfirmation = await authInstance.signInWithPhoneNumber(normalizedPhone, forceResend);
+    } catch (error) {
+      const details = error as { code?: string; message?: string };
+      console.error('[Firebase OTP] request failed', {
+        code: details?.code,
+        message: details?.message,
+      });
+      throw error;
+    }
 
     return {
       target: normalizedPhone,

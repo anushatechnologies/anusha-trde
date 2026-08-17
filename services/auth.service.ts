@@ -381,7 +381,7 @@ const hydrateSessionIfMinimal = async (baseSession: AuthSession, originalPayload
     });
     const data = dashboardResponse.data || {};
     const sourceUser = (data.user || data) as any;
-    
+
     if (sourceUser.accountStatus || sourceUser.onboardingStatus) {
       const enrichedPayload: Partial<AuthResponsePayload> = {
         ...originalPayload,
@@ -561,7 +561,13 @@ export const authService = {
       tokens,
     };
   },
-  requestOtp: async (target: string, purpose: OtpPurpose, mode: AuthMode, forceResend = false): Promise<OtpRequestResult> => {
+  requestOtp: async (
+    target: string,
+    purpose: OtpPurpose,
+    mode: AuthMode,
+    forceResend = false,
+    preferredProvider?: OtpProvider,
+  ): Promise<OtpRequestResult> => {
     if (purpose === 'reset') {
       throw new Error('Password reset now uses the reset link flow. Start again from Forgot Password.');
     }
@@ -593,6 +599,24 @@ export const authService = {
     }
 
     const normalizedPhone = firebaseAuthService.normalizePhoneNumber(target);
+
+    if (preferredProvider === 'MOBILE_OTP') {
+      const response = await requestBackendMobileOtp({
+        countryCode: extractCountryCode(normalizedPhone),
+        mobileNumber: normalizeMobileNumber(normalizedPhone),
+        purpose,
+      });
+
+      if (response.success === false || response.status === 'ERROR' || response.error) {
+        throw new Error(response.error || response.message || 'Backend OTP request failed.');
+      }
+
+      return {
+        ...response,
+        provider: 'MOBILE_OTP',
+        target: normalizedPhone,
+      };
+    }
 
     const provider = resolveMobileOtpProvider({ provider: 'FIREBASE_PHONE_AUTH' });
 
@@ -845,7 +869,7 @@ export const authService = {
             onboardingStatus?: string;
             userExists?: true;
           })
-        >('/api/auth/verify-otp', {
+        >('/api/auth/firebase-mobile/login', {
           idToken: firebaseVerification.idToken,
         });
 

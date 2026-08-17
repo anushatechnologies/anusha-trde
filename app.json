@@ -3,7 +3,7 @@
     "name": "Anusha Trade",
     "slug": "investapp",
     "scheme": "investapp",
-    "version": "1.0.17",
+    "version": "1.0.19",
     "orientation": "portrait",
     "icon": "./assets/brand-logo.png",
     "userInterfaceStyle": "dark",
@@ -19,7 +19,7 @@
     "android": {
       "package": "com.anushamilktrades",
       "minSdkVersion": 24,
-      "versionCode": 17,
+      "versionCode": 19,
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand-logo.png",

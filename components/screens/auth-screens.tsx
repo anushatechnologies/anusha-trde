@@ -788,7 +788,8 @@ export const OtpScreen = () => {
         },
       });
     },
-    onError: (error) => {
+    onError: async (error) => {
+      console.error('[OTP] verification failed', error);
       const attemptedOtp = lastSubmittedOtp.current;
       const message = getAuthErrorMessage(error);
       const isExpiredSession = /session expired|session-expired|code expired|code-expired/i.test(message);
@@ -797,6 +798,27 @@ export const OtpScreen = () => {
       // code. Firebase confirmation sessions are one-time and may be lost if
       // Android recreates the activity or a newer OTP was requested.
       lastSubmittedOtp.current = attemptedOtp || otp;
+
+      if (isExpiredSession && isFirebasePhoneOtp) {
+        try {
+          const fallback = await authService.requestOtp(target, purpose, 'mobile', false, 'MOBILE_OTP');
+          setOtpProvider(fallback.provider || 'MOBILE_OTP');
+          setOtp('');
+          lastSubmittedOtp.current = '';
+          setSeconds(60);
+          Alert.alert(
+            'New OTP sent',
+            'The Firebase OTP session expired. A new OTP was sent through the backup SMS service. Enter the newest code.'
+          );
+          focusOtpInput();
+        } catch (fallbackError) {
+          setOtp('');
+          lastSubmittedOtp.current = '';
+          setSeconds(0);
+          Alert.alert('OTP fallback failed', getAuthErrorMessage(fallbackError));
+        }
+        return;
+      }
 
       if (isExpiredSession) {
         setOtp('');
@@ -823,7 +845,13 @@ export const OtpScreen = () => {
   }, [otp, verifyOtp.isPending, verifyOtp.isSuccess]);
 
   const resendOtp = useMutation({
-    mutationFn: () => authService.requestOtp(target, purpose, mode === 'mobile' ? 'mobile' : 'email', true),
+    mutationFn: () => authService.requestOtp(
+      target,
+      purpose,
+      mode === 'mobile' ? 'mobile' : 'email',
+      true,
+      otpProvider === 'MOBILE_OTP' ? 'MOBILE_OTP' : undefined,
+    ),
     onSuccess: (data) => {
       setSeconds(60);
       const updatedProvider = data.provider || otpProvider;
