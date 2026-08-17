@@ -296,6 +296,14 @@ const mapTransaction = (value: unknown, index: number): TransactionItem => {
     ),
     note:
       toStringValue(pickFirst(source, ['note', 'remarks', 'description', 'reason', 'paymentMode', 'bankReference'])) || 'Recorded activity',
+    receipt: source.receipt || (source.receiptNumber || source.receiptUrl
+      ? {
+          receiptNumber: toStringValue(source.receiptNumber),
+          receiptUrl: toStringValue(source.receiptUrl),
+          emailStatus: toStringValue(source.emailStatus) as any,
+          available: true,
+        }
+      : undefined),
   };
 };
 
@@ -599,7 +607,11 @@ export const dashboardService = {
     const teamLevels = teamLevelsRaw.length ? teamLevelsRaw.map(mapTeamLevel) : pickArray(dashboardSource, ['teamLevels', 'levels', 'commissionLevels']).map(mapTeamLevel);
 
     const investmentsRaw = Array.isArray(investmentsResponse.data) ? investmentsResponse.data : pickArray(asRecord(investmentsResponse.data), ['investments', 'items', 'data', 'content']);
-    const totalInvestedFallback = investmentsRaw.reduce((sum, inv) => sum + toNumber(pickFirst(asRecord(inv), ['amount', 'investedAmount', 'principal'])), 0);
+    const totalInvestedFallback = investmentsRaw.reduce((sum, inv) => {
+      const status = toStringValue(pickFirst(asRecord(inv), ['status', 'investmentStatus'])).toUpperCase();
+      const funded = !status || ['ACTIVE', 'PAUSED', 'CLOSED', 'MATURED', 'EARLY_WITHDRAWAL'].some((value) => status.includes(value));
+      return funded ? sum + toNumber(pickFirst(asRecord(inv), ['amount', 'investedAmount', 'principal'])) : sum;
+    }, 0);
 
     const user = buildUserProfile(dashboardSource, bankSource);
     const metrics = buildDashboardMetrics(dashboardSource, walletSource, teamLevels, totalInvestedFallback);
@@ -637,7 +649,7 @@ export const dashboardService = {
     const activeInvestments = investmentItems
       .filter((item) => {
         const status = toStringValue(pickFirst(asRecord(item), ['status', 'investmentStatus'])).toUpperCase();
-        return !status || status.includes('ACTIVE') || status.includes('APPROVED') || status.includes('RUNNING') || status.includes('MATURED') || status.includes('COMPLETED') || status.includes('PENDING');
+        return !status || status.includes('ACTIVE') || status.includes('PAUSED') || status.includes('CLOSED') || status.includes('MATURED') || status.includes('EARLY_WITHDRAWAL') || status.includes('APPROVED') || status.includes('RUNNING') || status.includes('COMPLETED');
       })
       .map((item, index) => mapActiveInvestment(item, index, planLookup));
     const projectionSeries = pickArray(asRecord(investmentsResponse.data), ['projectionSeries', 'chart', 'earningsSeries']).map(mapSeriesPoint);

@@ -151,6 +151,14 @@ export const HomeScreen = () => {
             <Ionicons name="notifications-outline" size={20} color="#374151" />
             <View style={styles.notificationDot} />
           </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
+            onPress={() => router.push('/(tabs)/profile')}
+            style={({ pressed }) => [styles.profileShortcut, pressed && styles.notificationBtnPressed]}
+          >
+            <ProfileAvatar name={user?.name || 'Investor'} photoUrl={user?.profilePhoto} size={34} borderRadius={12} variant="gradient" />
+          </Pressable>
         </View>
       </View>
 
@@ -343,6 +351,16 @@ export const HomeScreen = () => {
             {data.recentEarnings.slice(0, 4).map((item) => (
               <TransactionRow key={item.id} item={item} />
             ))}
+          </SurfaceCard>
+
+          <SurfaceCard glass="dark">
+            <SectionTitle title="Payment Records" actionLabel="View All" onActionPress={() => router.push('/payment-receipts')} />
+            {data.recentTransactions?.length ? data.recentTransactions.slice(0, 3).map((item) => (
+              <TransactionRow key={item.id} item={item} />
+            )) : (
+              <Text style={styles.supportingText}>Your successful and failed payment records will appear here.</Text>
+            )}
+            <ListRow icon="receipt-outline" title="Invoices & receipts" subtitle="Open, download, or share payment records" onPress={() => router.push('/payment-receipts')} />
           </SurfaceCard>
 
           {/* VIP WhatsApp Support Desk */}
@@ -1003,6 +1021,7 @@ const styles = StyleSheet.create({
   },
   dashboardUserCopy: {
     gap: 2,
+    flexShrink: 1,
   },
   dashboardGreeting: {
     fontFamily: fontFamily.body,
@@ -1028,6 +1047,17 @@ const styles = StyleSheet.create({
   notificationBtnPressed: {
     backgroundColor: '#F8FAFC',
     transform: [{ scale: 0.96 }],
+  },
+  profileShortcut: {
+    width: 42,
+    height: 42,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    ...shadows.soft,
   },
   notificationDot: {
     position: 'absolute',

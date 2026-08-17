@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import RazorpayCheckout from 'react-native-razorpay';
 import { useCallback, useMemo, useState } from 'react';
 import {
@@ -20,6 +20,7 @@ import { runtimeConfig } from '../../constants/runtime-config';
 import { colors, fontFamily, gradients, radius, shadows } from '../../constants/theme';
 import { queryKeys, useInvestmentsQuery } from '../../hooks/use-app-queries';
 import { investmentService } from '../../services/investment.service';
+import { kycService } from '../../services/kyc.service';
 import { Plan, ReceiptDetails } from '../../types';
 import { formatCurrency, formatPercent } from '../../utils/format';
 import { useAuthStore } from '../../store/use-auth-store';
@@ -62,6 +63,14 @@ export const InvestApplyScreen = () => {
   const params = useLocalSearchParams<{ planId?: string }>();
   const { data, isLoading } = useInvestmentsQuery();
   const user = useAuthStore((state) => state.user);
+  const kycQuery = useQuery({
+    queryKey: ['kyc-status'],
+    queryFn: kycService.getKycStatus,
+    enabled: Boolean(user),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: false,
+  });
 
   const [step, setStep] = useState<Step>('configure');
   const [amountText, setAmountText] = useState('10000');
@@ -85,6 +94,9 @@ export const InvestApplyScreen = () => {
   }, [data?.plans, params.planId]);
 
   const amount = Number(amountText.replace(/[^0-9]/g, '')) || 0;
+  const effectiveKycStatus = (
+    kycQuery.data?.kycStatus || user?.kycStatus || 'NOT_SUBMITTED'
+  ).toUpperCase();
   const isAmountValid = plan ? amount >= plan.minInvestment && amount <= plan.maxInvestment : false;
 
   const dailyReturn = plan && isAmountValid ? (amount * plan.roi) / 100 : 0;
@@ -133,7 +145,7 @@ export const InvestApplyScreen = () => {
   const handlePayWithRazorpay = useCallback(async () => {
     if (!plan || !isAmountValid) return;
 
-    if (user?.kycStatus !== 'APPROVED') {
+    if (effectiveKycStatus !== 'APPROVED') {
       setKycGateVisible(true);
       return;
     }
@@ -346,24 +358,24 @@ export const InvestApplyScreen = () => {
           </SurfaceCard>
 
           {/* KYC Status Reminder if not approved */}
-          {user?.kycStatus !== 'APPROVED' ? (
+          {effectiveKycStatus !== 'APPROVED' ? (
             <Pressable
               onPress={() => setKycGateVisible(true)}
               style={styles.kycWarningBox}
             >
               <View style={styles.kycWarningIconWrap}>
                 <Ionicons
-                  name={user?.kycStatus === 'PENDING' ? 'time-outline' : 'shield-outline'}
+                  name={effectiveKycStatus === 'PENDING' ? 'time-outline' : 'shield-outline'}
                   size={20}
-                  color={user?.kycStatus === 'PENDING' ? colors.cyan : colors.warningLight}
+                  color={effectiveKycStatus === 'PENDING' ? colors.cyan : colors.warningLight}
                 />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.kycWarningTitle}>
-                  {user?.kycStatus === 'PENDING' ? 'KYC Under Verification' : 'KYC Verification Required'}
+                  {effectiveKycStatus === 'PENDING' ? 'KYC Under Verification' : 'KYC Verification Required'}
                 </Text>
                 <Text style={styles.kycWarningSubtitle}>
-                  {user?.kycStatus === 'PENDING'
+                  {effectiveKycStatus === 'PENDING'
                     ? 'Compliance review in progress. Tap to check status.'
                     : 'Verify your identity to activate automated daily payouts.'}
                 </Text>
@@ -545,28 +557,28 @@ export const InvestApplyScreen = () => {
               <Ionicons name="checkmark-done" size={38} color="#16A34A" />
             </View>
 
-            <Text style={styles.successTitle}>Investment Activated Successfully!</Text>
+            <Text style={styles.successTitle}>Payment Successful</Text>
             <Text style={styles.successSubtitle}>
               Your payment of <Text style={{ fontFamily: fontFamily.heading, color: '#0F172A' }}>{formatCurrency(amount)}</Text> has been verified and your investment plan is now active. Daily yields will automatically credit to your wallet.
             </Text>
 
             <View style={styles.successInfoBox}>
               <View style={styles.successInfoRow}>
-                <Text style={styles.successInfoLabel}>Plan Name</Text>
-                <Text style={styles.successInfoValue}>{plan.name}</Text>
+                <Text style={styles.successInfoLabel}>Plan</Text>
+                <Text style={styles.successInfoValue} numberOfLines={2}>{plan.name}</Text>
               </View>
               <View style={styles.successInfoRow}>
                 <Text style={styles.successInfoLabel}>Amount Paid</Text>
                 <Text style={[styles.successInfoValue, { color: colors.success }]}>{formatCurrency(amount)}</Text>
               </View>
               <View style={styles.successInfoRow}>
-                <Text style={styles.successInfoLabel}>Monthly ROI Rate</Text>
-                <Text style={styles.successInfoValue}>{formatPercent(plan.roi)}</Text>
+                <Text style={styles.successInfoLabel}>Payment Mode</Text>
+                <Text style={styles.successInfoValue}>Razorpay Online</Text>
               </View>
               {verifiedPayment?.paymentId ? (
                 <View style={styles.successInfoRow}>
                   <Text style={styles.successInfoLabel}>Payment ID</Text>
-                  <Text style={styles.successInfoValueMono}>{verifiedPayment.paymentId}</Text>
+                  <Text style={styles.successInfoValueMono} numberOfLines={1}>{verifiedPayment.paymentId}</Text>
                 </View>
               ) : null}
               <View style={styles.successInfoRow}>
@@ -578,7 +590,14 @@ export const InvestApplyScreen = () => {
               </View>
             </View>
 
-            {receipt && <ReceiptStatusCard receipt={receipt} />}
+            {receipt ? (
+              <ReceiptStatusCard receipt={receipt} title="Payment Receipt" showEmailStatus={false} />
+            ) : (
+              <View style={styles.receiptPendingBox}>
+                <Ionicons name="time-outline" size={18} color="#D97706" />
+                <Text style={styles.receiptPendingText}>Your invoice is being prepared. Refresh payment records shortly.</Text>
+              </View>
+            )}
 
             <View style={{ gap: 10, marginTop: 16, width: '100%' }}>
               <GradientButton
@@ -600,7 +619,7 @@ export const InvestApplyScreen = () => {
       <KycGateModal
         visible={kycGateVisible}
         onClose={() => setKycGateVisible(false)}
-        kycStatus={user?.kycStatus}
+        kycStatus={effectiveKycStatus}
         onProceedInvest={() => setKycGateVisible(false)}
       />
     </AppScreen>
@@ -985,11 +1004,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bodyBold,
     fontSize: 13,
     color: '#0F172A',
+    maxWidth: '62%',
+    textAlign: 'right',
   },
   successInfoValueMono: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11.5,
     color: colors.primary,
+    maxWidth: '62%',
   },
   activeStatusBadge: {
     flexDirection: 'row',
@@ -1004,6 +1026,25 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bodyBold,
     fontSize: 10,
     color: '#15803D',
+  },
+  receiptPendingBox: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 14,
+    borderRadius: radius.md,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginBottom: 4,
+  },
+  receiptPendingText: {
+    flex: 1,
+    fontFamily: fontFamily.bodySemi,
+    fontSize: 12,
+    lineHeight: 17,
+    color: '#92400E',
   },
   backToHomeBtn: {
     paddingVertical: 12,

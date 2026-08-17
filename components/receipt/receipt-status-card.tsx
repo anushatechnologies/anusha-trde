@@ -14,21 +14,24 @@ interface ReceiptStatusCardProps {
   amount?: number;
   showActions?: boolean;
   compact?: boolean;
+  showEmailStatus?: boolean;
   style?: ViewStyle;
   title?: string;
 }
 
-export const ReceiptStatusCard: React.FC<ReceiptStatusCardProps> = ({ receipt, investmentId, showActions = true, compact = false, style, title = 'Payment Receipt' }) => {
+export const ReceiptStatusCard: React.FC<ReceiptStatusCardProps> = ({ receipt, investmentId, showActions = true, compact = false, showEmailStatus = true, style, title = 'Payment Receipt' }) => {
   const [isOpeningView, setIsOpeningView] = useState(false);
   const [isOpeningDownload, setIsOpeningDownload] = useState(false);
   const receiptNumber = receipt?.receiptNumber || (investmentId ? `ATR-${investmentId.slice(-6).toUpperCase()}` : 'ATR-2026-000001');
-  const receiptUrl = receipt?.receiptUrl || 'https://anusha.trade/receipts/sample-receipt.pdf';
-  const emailStatus = receipt?.emailStatus || 'SENT';
+  const receiptUrl = receipt?.receiptUrl || '';
+  const emailStatus = receipt?.emailStatus || 'NOT_SENT';
+  const receiptAvailable = Boolean(receipt?.available && receiptUrl);
 
   const handleViewReceipt = async () => {
     setIsOpeningView(true);
     try {
-      if (!await receiptService.viewReceipt(receiptUrl)) Alert.alert('Receipt Viewer', 'Receipt PDF is available. Please check your network connection.');
+      if (!receiptAvailable) { Alert.alert('Receipt Pending', 'The invoice is not available yet. Please refresh payment records shortly.'); return; }
+      if (!await receiptService.viewReceipt(receiptUrl)) Alert.alert('Receipt Viewer', 'Unable to open the invoice right now.');
     } catch { Alert.alert('Error', 'Unable to open receipt viewer right now.'); }
     finally { setIsOpeningView(false); }
   };
@@ -36,19 +39,21 @@ export const ReceiptStatusCard: React.FC<ReceiptStatusCardProps> = ({ receipt, i
   const handleDownloadReceipt = async () => {
     setIsOpeningDownload(true);
     try {
-      if (!await receiptService.downloadReceipt(receiptUrl)) Alert.alert('Receipt Download', 'Downloading receipt... Check your device downloads folder.');
+      if (!receiptAvailable) { Alert.alert('Receipt Pending', 'The invoice is not available yet. Please refresh payment records shortly.'); return; }
+      if (!await receiptService.downloadReceipt(receiptUrl)) Alert.alert('Receipt Download', 'Unable to download the invoice right now.');
     } catch { Alert.alert('Error', 'Unable to download receipt right now.'); }
     finally { setIsOpeningDownload(false); }
   };
 
   const failed = emailStatus === 'FAILED';
   const pending = emailStatus === 'QUEUED' || emailStatus === 'SENDING';
+  const notSent = emailStatus === 'NOT_SENT';
   const emailBadge = (
     <View style={[styles.statusBadgeRow, failed ? styles.badgeError : pending ? styles.badgePending : styles.badgeSuccess]}>
-      {pending ? <ActivityIndicator size="small" color="#2563EB" /> : <Ionicons name={failed ? 'alert-circle' : 'checkmark-circle'} size={16} color={failed ? colors.danger : colors.success} />}
+      {pending ? <ActivityIndicator size="small" color="#2563EB" /> : <Ionicons name={failed ? 'alert-circle' : notSent ? 'mail-outline' : 'checkmark-circle'} size={16} color={failed ? colors.danger : notSent ? '#64748B' : colors.success} />}
       <View style={styles.badgeTextWrap}>
         <Text style={styles.badgeLabel}>Email Receipt</Text>
-        <Text style={[styles.badgeValue, { color: failed ? colors.danger : pending ? '#D97706' : colors.success }]}>{failed ? 'Email failed' : pending ? 'Sending...' : 'Sent'}</Text>
+        <Text style={[styles.badgeValue, { color: failed ? colors.danger : pending ? '#D97706' : notSent ? '#64748B' : colors.success }]}>{failed ? 'Email failed' : pending ? 'Sending...' : notSent ? 'Not sent' : 'Sent'}</Text>
       </View>
     </View>
   );
@@ -60,8 +65,8 @@ export const ReceiptStatusCard: React.FC<ReceiptStatusCardProps> = ({ receipt, i
     </View>
   );
 
-  if (compact) return <View style={[styles.compactContainer, style]}><View style={styles.compactRow}>{emailBadge}</View>{actions}</View>;
-  return <SurfaceCard style={style}><SectionTitle title={title} /><View style={styles.metaRow}><Text style={styles.metaLabel}>Receipt Number</Text><Text style={styles.metaValue}>{receiptNumber}</Text></View><View style={styles.badgesContainer}>{emailBadge}</View>{actions}</SurfaceCard>;
+  if (compact) return <View style={[styles.compactContainer, style]}>{showEmailStatus ? <View style={styles.compactRow}>{emailBadge}</View> : null}{actions}</View>;
+  return <SurfaceCard style={style}><SectionTitle title={title} /><View style={styles.metaRow}><Text style={styles.metaLabel}>Receipt Number</Text><Text style={styles.metaValue}>{receiptNumber}</Text></View>{showEmailStatus ? <View style={styles.badgesContainer}>{emailBadge}</View> : null}{actions}</SurfaceCard>;
 };
 
 const styles = StyleSheet.create({

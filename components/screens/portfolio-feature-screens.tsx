@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 
@@ -84,8 +84,10 @@ const ReceiptCard = ({
   index: number;
   paymentMethod: string;
 }) => {
-  const reference = `AT-INV-2026-${String(index + 1).padStart(4, '0')}`;
-  const positive = item.amount > 0;
+  const reference = item.receipt?.receiptNumber || item.id || `AT-INV-${String(index + 1).padStart(4, '0')}`;
+  const successful = item.status === 'credited';
+  const pending = item.status === 'processing';
+  const statusLabel = successful ? 'Success' : pending ? 'Pending' : 'Failed';
 
   return (
     <SurfaceCard>
@@ -94,17 +96,18 @@ const ReceiptCard = ({
           <Text style={styles.receiptReference}>{reference}</Text>
           <Text style={styles.receiptDate}>{item.timestamp}</Text>
         </View>
-        <View style={[styles.receiptBadge, positive ? styles.receiptBadgeSuccess : styles.receiptBadgeDefault]}>
-          <Text style={[styles.receiptBadgeText, positive ? styles.receiptBadgeTextSuccess : styles.receiptBadgeTextDefault]}>
-            {item.status}
+        <View style={[styles.receiptBadge, successful ? styles.receiptBadgeSuccess : pending ? styles.receiptBadgePending : styles.receiptBadgeFailed]}>
+          <Ionicons name={successful ? 'checkmark-circle' : pending ? 'time-outline' : 'close-circle'} size={13} color={successful ? '#16A34A' : pending ? '#D97706' : '#DC2626'} />
+          <Text style={[styles.receiptBadgeText, successful ? styles.receiptBadgeTextSuccess : pending ? styles.receiptBadgeTextPending : styles.receiptBadgeTextFailed]}>
+            {statusLabel}
           </Text>
         </View>
       </View>
 
       <View style={styles.receiptAmountRow}>
         <Text style={styles.receiptTitle}>{item.title}</Text>
-        <Text style={[styles.receiptAmount, positive ? styles.amountPositive : styles.amountDefault]}>
-          {positive ? '+' : '-'} {formatCurrency(Math.abs(item.amount))}
+        <Text style={[styles.receiptAmount, successful ? styles.amountPositive : styles.amountDefault]}>
+          {successful ? '+' : ''} {formatCurrency(Math.abs(item.amount))}
         </Text>
       </View>
 
@@ -121,14 +124,14 @@ const ReceiptCard = ({
 
       <Text style={styles.receiptNote}>{item.note}</Text>
 
-      <GradientButton
-        label="View / Download Official Receipt"
+      {item.receipt?.available && successful ? <GradientButton
+        label="View / Download Invoice"
         variant="secondary"
         compact
         style={{ marginTop: 10 }}
         icon={<Ionicons name="document-text-outline" size={16} color={colors.primary} />}
         onPress={() => {
-          receiptService.viewReceipt({
+          receiptService.viewReceipt(item.receipt?.receiptUrl || {
             receiptNo: reference,
             receiptDate: item.timestamp,
             status: 'PAID / RECEIVED',
@@ -139,7 +142,7 @@ const ReceiptCard = ({
             amount: Math.abs(item.amount),
           });
         }}
-      />
+      /> : null}
     </SurfaceCard>
   );
 };
@@ -373,6 +376,48 @@ export const WithdrawalHistoryScreen = () => {
 export const PaymentReceiptsScreen = () => {
   const router = useRouter();
   const { data, isLoading } = useWalletQuery();
+  const { data: investmentsData } = useInvestmentsQuery();
+  const [investorReceipts, setInvestorReceipts] = useState<TransactionItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    const investments = investmentsData?.activeInvestments ?? [];
+    if (!investments.length) {
+      setInvestorReceipts([]);
+      return () => { active = false; };
+    }
+
+    void Promise.all(investments.map(async (investment) => {
+      try {
+        const status = await receiptService.getReceiptStatus(investment.id);
+        return {
+          id: investment.id,
+          title: investment.planName,
+          amount: investment.amount,
+          type: 'deposit' as const,
+          status: status.paymentStatus === 'SUCCESS' ? 'credited' as const : status.paymentStatus === 'FAILED' ? 'debited' as const : 'processing' as const,
+          timestamp: investment.nextPayout || 'Recent payment',
+          note: `Investment payment • ${investment.status}`,
+          receipt: status.receipt,
+        };
+      } catch {
+        return null;
+      }
+    })).then((records) => {
+      if (active) setInvestorReceipts(records.filter(Boolean) as TransactionItem[]);
+    });
+
+    return () => { active = false; };
+  }, [investmentsData?.activeInvestments]);
+
+  const records = useMemo(() => {
+    const byId = new Map<string, TransactionItem>();
+    [...investorReceipts, ...(data?.transactions ?? [])].forEach((item) => byId.set(item.id, item));
+    return Array.from(byId.values());
+  }, [data?.transactions, investorReceipts]);
+  const successfulRecords = records.filter((item) => item.status === 'credited').length;
+  const pendingRecords = records.filter((item) => item.status === 'processing').length;
+  const failedRecords = records.filter((item) => item.status === 'debited').length;
 
   if (isLoading || !data) {
     return (
@@ -393,28 +438,32 @@ export const PaymentReceiptsScreen = () => {
         <Text style={styles.heroSubtitle}>Every wallet movement is logged here with reference numbers and receipt details.</Text>
         <View style={styles.metricStrip}>
           <View style={styles.metricStripItem}>
-            <Text style={styles.metricStripLabel}>Total Receipts</Text>
-            <Text style={styles.metricStripValue}>{data.transactions.length}</Text>
+            <Text style={styles.metricStripLabel}>Total Records</Text>
+            <Text style={styles.metricStripValue}>{records.length}</Text>
           </View>
           <View style={styles.metricStripItem}>
-            <Text style={styles.metricStripLabel}>Available Methods</Text>
-            <Text style={styles.metricStripValue}>{data.paymentMethods.length}</Text>
+            <Text style={styles.metricStripLabel}>Successful</Text>
+            <Text style={[styles.metricStripValue, { color: '#BBF7D0' }]}>{successfulRecords}</Text>
+          </View>
+          <View style={styles.metricStripItem}>
+            <Text style={styles.metricStripLabel}>Pending / Failed</Text>
+            <Text style={[styles.metricStripValue, { color: '#FEF3C7' }]}>{pendingRecords + failedRecords}</Text>
           </View>
         </View>
       </SurfaceCard>
 
-      {data.transactions.length ? (
-        data.transactions.map((item, index) => (
+      {records.length ? (
+        records.map((item, index) => (
           <ReceiptCard
             key={item.id}
             item={item}
             index={index}
-            paymentMethod={data.paymentMethods.length ? data.paymentMethods[index % data.paymentMethods.length] : ''}
+            paymentMethod={item.type === 'deposit' ? 'Razorpay Online' : (data.paymentMethods.length ? data.paymentMethods[index % data.paymentMethods.length] : '')}
           />
         ))
       ) : (
         <SurfaceCard>
-          <Text style={styles.emptyText}>No payment receipts available yet.</Text>
+          <Text style={styles.emptyText}>No payment receipts found for this investor account yet.</Text>
         </SurfaceCard>
       )}
     </AppScreen>
@@ -469,9 +518,9 @@ export const InvestmentStatusScreen = () => {
     <AppScreen>
       <ScreenHeader title="Investment Status" subtitle="Track progress, expected returns, and maturity details." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))} />
 
-      <SurfaceCard gradient={gradients.dark}>
-        <Text style={styles.heroTitle}>Investment Status</Text>
-        <Text style={styles.heroSubtitle}>View active plan completion, maturity timeline, and projected total return.</Text>
+      <SurfaceCard style={styles.statusHeroCard}>
+        <Text style={styles.statusHeroTitle}>Investment Status</Text>
+        <Text style={styles.statusHeroSubtitle}>View active plan completion, maturity timeline, and projected total return.</Text>
         <View style={styles.statusHeroRow}>
           <ProgressRing progress={featuredInvestment.progress} />
           <View style={styles.statusHeroCopy}>
@@ -542,6 +591,7 @@ export const InvestmentStatusScreen = () => {
                 investmentId={investment.id}
                 amount={investment.amount}
                 compact
+                showEmailStatus={false}
               />
             </View>
           </SurfaceCard>
@@ -566,6 +616,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 30,
     color: '#FFFFFF',
+  },
+  statusHeroCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 22,
+    borderRadius: radius.lg,
+  },
+  statusHeroTitle: {
+    fontFamily: fontFamily.heading,
+    fontSize: 24,
+    lineHeight: 30,
+    color: '#0F172A',
+  },
+  statusHeroSubtitle: {
+    fontFamily: fontFamily.body,
+    fontSize: 13,
+    lineHeight: 20,
+    color: '#64748B',
+    marginTop: 4,
   },
   emptyStatusCard: {
     backgroundColor: '#FFFFFF',
@@ -673,6 +743,9 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   receiptBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     borderRadius: radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -687,6 +760,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#BFDBFE',
   },
+  receiptBadgePending: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  receiptBadgeFailed: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
   receiptBadgeText: {
     fontFamily: fontFamily.bodyBold,
     fontSize: 11,
@@ -694,6 +777,12 @@ const styles = StyleSheet.create({
   },
   receiptBadgeTextSuccess: {
     color: '#166534',
+  },
+  receiptBadgeTextPending: {
+    color: '#92400E',
+  },
+  receiptBadgeTextFailed: {
+    color: '#991B1B',
   },
   receiptBadgeTextDefault: {
     color: '#1D4ED8',
@@ -763,17 +852,18 @@ const styles = StyleSheet.create({
   statusHeroPlan: {
     fontFamily: fontFamily.headingSemi,
     fontSize: 22,
-    color: '#FFFFFF',
+    color: '#0F172A',
+    lineHeight: 28,
   },
   statusHeroAmount: {
     fontFamily: fontFamily.heading,
     fontSize: 28,
-    color: '#FFFFFF',
+    color: '#0F172A',
   },
   statusHeroMeta: {
     fontFamily: fontFamily.body,
     fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
+    color: '#64748B',
   },
   investmentStatusHeader: {
     flexDirection: 'row',

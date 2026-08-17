@@ -680,6 +680,19 @@ export const TransactionsScreen = () => {
   return (
     <AppScreen>
       <ScreenHeader title="Transactions" subtitle="Deposits, withdrawals, commissions, and profit movements." onBackPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/wallet'))} />
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {[
+          ['All', transactions.length, '#2563EB'],
+          ['Success', transactions.filter((item) => item.status === 'credited').length, '#16A34A'],
+          ['Failed', transactions.filter((item) => item.status === 'debited').length, '#DC2626'],
+          ['Pending', transactions.filter((item) => item.status === 'processing').length, '#D97706'],
+        ].map(([label, value, color]) => (
+          <View key={String(label)} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7EB' }}>
+            <Text style={{ fontFamily: fontFamily.body, fontSize: 11, color: '#64748B' }}>{label}</Text>
+            <Text style={{ marginTop: 3, fontFamily: fontFamily.heading, fontSize: 18, color: String(color) }}>{value}</Text>
+          </View>
+        ))}
+      </View>
       <SurfaceCard>
         <View style={styles.filterWrap}>
           {(['all', 'credited', 'debited', 'processing'] as const).map((item) => (

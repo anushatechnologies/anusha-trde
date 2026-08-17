@@ -271,6 +271,7 @@ export const LoginScreen = () => {
       }
       passwordLoginMutation.mutate();
     } else {
+      if (otpLoginMutation.isPending) return;
       otpLoginMutation.mutate();
     }
   };
@@ -788,8 +789,27 @@ export const OtpScreen = () => {
       });
     },
     onError: (error) => {
-      lastSubmittedOtp.current = '';
-      Alert.alert('OTP verification failed', getAuthErrorMessage(error));
+      const attemptedOtp = lastSubmittedOtp.current;
+      const message = getAuthErrorMessage(error);
+      const isExpiredSession = /session expired|session-expired|code expired|code-expired/i.test(message);
+
+      // Do not let the auto-submit effect immediately retry the same failed
+      // code. Firebase confirmation sessions are one-time and may be lost if
+      // Android recreates the activity or a newer OTP was requested.
+      lastSubmittedOtp.current = attemptedOtp || otp;
+
+      if (isExpiredSession) {
+        setOtp('');
+        lastSubmittedOtp.current = '';
+        setSeconds(0);
+        Alert.alert(
+          'OTP session expired',
+          'This code is no longer linked to the current verification session. Tap “Resend OTP” and enter the newest code.'
+        );
+        return;
+      }
+
+      Alert.alert('OTP verification failed', message);
     },
   });
 
@@ -823,6 +843,10 @@ export const OtpScreen = () => {
 
   const handleVerifyOtp = () => {
     if (verifyOtp.isPending) return;
+    if (seconds === 0) {
+      Alert.alert('OTP expired', 'Please tap “Resend OTP” to request a fresh code.');
+      return;
+    }
     if (otp.trim().length !== 6) {
       Alert.alert('OTP required', 'Enter the 6 digit OTP to continue.');
       return;
@@ -1631,7 +1655,7 @@ export const SuccessScreen = () => {
       <Text style={styles.successSubtitle}>{subtitle}</Text>
       {showReceipt && (
         <View style={{ width: '100%', marginVertical: 12 }}>
-          <ReceiptStatusCard receipt={receipt} investmentId={investmentId} />
+          <ReceiptStatusCard receipt={receipt} investmentId={investmentId} showEmailStatus={false} />
         </View>
       )}
       <GradientButton label={cta} onPress={() => router.replace(redirect as never)} style={styles.successButton} />

@@ -106,6 +106,7 @@ type AuthResponsePayload = AuthStatusPayload & {
 
 const DEFAULT_COUNTRY_CODE = '+91';
 const DEFAULT_MOBILE_OTP_PROVIDER: OtpProvider = 'MOBILE_OTP';
+const FIREBASE_OTP_START_TIMEOUT_MS = 12000;
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 const normalizeDigits = (value: string) => value.replace(/\D/g, '');
@@ -145,9 +146,9 @@ const resolveMobileOtpProvider = ({
   provider?: OtpProvider;
   hasPreviewOtp?: boolean;
 }): OtpProvider => {
-  // Real Android builds must use Firebase Phone Auth so Firebase sends the SMS.
-  // The backend is used only after Firebase verifies the phone identity.
-  return 'FIREBASE_PHONE_AUTH';
+  // Prefer Firebase on recognized builds, but preserve the backend provider
+  // when Firebase bootstrap falls back for a sideloaded APK.
+  return provider === 'MOBILE_OTP' ? 'MOBILE_OTP' : 'FIREBASE_PHONE_AUTH';
 };
 
 const isRecoverableOtpBootstrapError = (error: unknown) => {
@@ -595,14 +596,53 @@ export const authService = {
 
     const provider = resolveMobileOtpProvider({ provider: 'FIREBASE_PHONE_AUTH' });
 
-    // Step 2: If Firebase is the provider, call signInWithPhoneNumber() —
-    // this is what ACTUALLY sends the OTP SMS to the user's phone.
-    await firebaseAuthService.requestPhoneOtp(normalizedPhone, forceResend);
+    // Firebase Phone Auth is preferred on Play-recognized builds. A manually
+    // installed APK can fail Play Integrity, so fall back to the backend OTP
+    // provider instead of leaving the user on a dead verification session.
+    try {
+      await Promise.race([
+        firebaseAuthService.requestPhoneOtp(normalizedPhone, forceResend),
+        new Promise<never>((_, reject) => {
+          setTimeout(
+            () => reject(new Error('Firebase OTP request timed out.')),
+            FIREBASE_OTP_START_TIMEOUT_MS
+          );
+        }),
+      ]);
 
-    return {
-      provider,
-      target: normalizedPhone,
-    };
+      return {
+        provider,
+        target: normalizedPhone,
+      };
+    } catch (firebaseError) {
+      if (!shouldFallbackToBackendMobileOtp(firebaseError)) {
+        throw firebaseError;
+      }
+
+      const response = await backendApiClient.post<{
+        status?: string;
+        success?: boolean;
+        message?: string;
+        error?: string;
+        userExists?: boolean;
+        smsSent?: boolean;
+        whatsappSent?: boolean;
+      }>('/api/auth/send-otp', {
+        mobileNumber: normalizedPhone,
+        phone: normalizedPhone,
+        type: purpose === 'login' ? 'LOGIN' : 'REGISTRATION',
+      });
+
+      if (response.data.success === false || response.data.status === 'ERROR' || response.data.error) {
+        throw new Error(response.data.error || response.data.message || 'Backend OTP request failed.');
+      }
+
+      return {
+        ...response.data,
+        provider: 'MOBILE_OTP',
+        target: normalizedPhone,
+      };
+    }
   },
   verifyOtp: async (
     target: string,
@@ -826,6 +866,13 @@ export const authService = {
           };
         }
 
+        // A login OTP must never fall through to registration when the backend
+        // identifies the number as an existing account but does not return a
+        // session. Surface the response instead of showing "New Account".
+        if (purpose === 'login' && (response.data as any).userExists === true) {
+          throw new Error('LOGIN_SESSION_MISSING: This mobile number is already registered, but login could not be completed. Please try again.');
+        }
+
         const registrationResponse = response.data as {
           firebaseUid?: string;
           message?: string;
@@ -843,6 +890,12 @@ export const authService = {
           signupVerificationToken: firebaseVerification.idToken,
         };
       } catch (backendErr) {
+        // Do not convert a failed existing-account login into a new signup.
+        // Registration may use the Firebase identity as a fallback, but login
+        // must require a backend-issued session and report the real error.
+        if (purpose === 'login') {
+          throw backendErr;
+        }
         console.warn('Backend verify-otp with idToken endpoint unreachable, completing verification via Firebase auth identity:', backendErr);
         return {
           outcome: 'register',

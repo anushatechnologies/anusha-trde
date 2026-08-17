@@ -657,11 +657,17 @@ export const CompleteSignupScreen = () => {
     switch (currentStep) {
       case 0: {
         const fullName = draft.fullName.trim();
+        const email = draft.email.trim().toLowerCase();
         const dateOfBirth = draft.dateOfBirth.trim();
         const address = draft.address.trim();
 
         if (!fullName) {
           Alert.alert('Full Name Required', 'Enter your full name to continue.');
+          return false;
+        }
+
+        if (!emailPattern.test(email)) {
+          Alert.alert('Email Required', 'Enter a valid email address to receive payment invoices and account updates.');
           return false;
         }
 
@@ -696,10 +702,9 @@ export const CompleteSignupScreen = () => {
           return false;
         }
 
-        const fallbackEmail = `${draft.mobile.replace(/\D/g, '')}@anusha.trade`;
         patchDraft(getStatusPatch('PROFILE_COMPLETED', {
           fullName,
-          email: draft.email?.trim() || fallbackEmail,
+          email,
           dateOfBirth,
           address,
         }));
@@ -1013,6 +1018,17 @@ export const CompleteSignupScreen = () => {
               required
               placeholder="Enter your full legal name"
               icon={<Ionicons name="person-outline" size={18} color={colors.primary} />}
+            />
+            <InputField labelStyle={styles.inputLabel}
+              label="Email Address"
+              value={draft.email}
+              onChangeText={(value) => patchDraft({ email: value.trim().toLowerCase() })}
+              required
+              placeholder="Enter your email address"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              icon={<Ionicons name="mail-outline" size={18} color={colors.primary} />}
             />
             <DatePickerInput
               label="Date of Birth"

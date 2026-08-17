@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: radius.xxl,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E2E8F0',
     padding: 22,
     ...shadows.card,
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   titleText: {
     fontFamily: fontFamily.heading,
     fontSize: 20,
-    color: '#FFFFFF',
+    color: '#0F172A',
     textAlign: 'center',
     marginTop: 14,
     marginBottom: 6,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#CBD5E1',
     marginBottom: 20,
   },
   featureRow: {
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   featureText: {
     fontFamily: fontFamily.bodySemi,
     fontSize: 12.5,
-    color: '#F1F5F9',
+    color: '#334155',
   },
   actionColumn: {
     gap: 10,
